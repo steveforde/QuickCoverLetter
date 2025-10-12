@@ -5,17 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QuickCoverLetter</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* 🔸 Smooth scroll effect */
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
 </head>
 <body>
+  <!-- 🟦 HERO SECTION -->
   <section class="hero">
     <div class="hero-content">
-     <h1>🚀 QuickCoverLetter</h1>
+      <h1>🚀 QuickCoverLetter</h1>
       <p>Create clean, personalized cover letters in seconds.</p>
-      <a href="#form" class="cta-button">Generate Your Letter</a>
+      <!-- ✅ Unique class added for hero button -->
+      <a href="#form" class="cta-button top-cta">Generate Your Letter</a>
     </div>
   </section>
+
+  <!-- 📝 FORM SECTION -->
   <main>
-    <div class="form-box">
+    <!-- ✅ Added id="form" -->
+    <div class="form-box" id="form">
       <label for="jobTitle">Job Title</label>
       <input type="text" id="jobTitle" placeholder="e.g. Customer Success Specialist" />
 
@@ -29,9 +40,10 @@
         <option value="friendly">Friendly</option>
       </select>
 
-      <button id="generateBtn">Generate Cover Letter</button>
+      <button class="cta-button">Generate Your Letter</button>
     </div>
 
+    <!-- 📄 RESULT SECTION -->
     <div id="resultBox" class="hidden">
       <h2>Your Cover Letter</h2>
       <textarea id="coverLetter" readonly></textarea>
@@ -42,6 +54,7 @@
     </div>
   </main>
 
+  <!-- 🦶 FOOTER -->
   <footer>
     <p>© 2025 QuickCoverLetter. All rights reserved.</p>
     <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
@@ -50,3 +63,4 @@
   <script src="script.js"></script>
 </body>
 </html>
+
