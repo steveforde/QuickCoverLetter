@@ -32,3 +32,15 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   link.download = 'cover_letter.txt';
   link.click();
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  const ctaButton = document.querySelector('.cta-button'); // or your actual button class/id
+  const formSection = document.querySelector('#form'); // replace with your actual form section id
+
+  if (ctaButton && formSection) {
+    ctaButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      formSection.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
+});
