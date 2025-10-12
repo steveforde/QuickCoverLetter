@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const generateBtn = document.querySelector('.form-box .cta-button');
   const jobInput = document.getElementById('jobTitle');
   const companyInput = document.getElementById('companyName');
+  const nameInput = document.getElementById('userName');
   const toneSelect = document.getElementById('tone');
   const resultBox = document.getElementById('resultBox');
   const coverLetter = document.getElementById('coverLetter');
@@ -25,14 +26,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const job = jobInput.value.trim();
     const company = companyInput.value.trim();
+    const name = nameInput.value.trim();
     const tone = toneSelect.value;
 
-    if (!job || !company) {
-      alert('Please fill out both Job Title and Company Name.');
+    if (!job || !company || !name) {
+      alert('Please fill out Job Title, Company Name, and Your Name.');
       return;
     }
 
-    const letter = `Dear Hiring Manager,\n\nI’m excited to apply for the ${job} role at ${company}. With my background in customer success and IT support, I’m confident I can make a meaningful contribution to your team.\n\nI look forward to the opportunity to discuss how my skills align with your company’s goals.\n\nBest regards,\nStephen Forde`;
+    const letter = `Dear Hiring Manager,\n\nI’m excited to apply for the ${job} role at ${company}. With my background in customer success and IT support, I’m confident I can make a meaningful contribution to your team.\n\nI look forward to the opportunity to discuss how my skills align with your company’s goals.\n\nBest regards,\n${name}`;
 
     coverLetter.value = letter;
     resultBox.classList.remove('hidden');
@@ -47,12 +49,26 @@ document.getElementById('copyBtn').addEventListener('click', () => {
   alert('✅ Cover letter copied to clipboard!');
 });
 
-// ===== Download Button =====
+// ===== Download Button (Formatted PDF) =====
 document.getElementById('downloadBtn').addEventListener('click', () => {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
   const letterText = document.getElementById('coverLetter').value;
-  const blob = new Blob([letterText], { type: 'text/plain' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'cover_letter.txt';
-  link.click();
+  const pageWidth = doc.internal.pageSize.getWidth();
+
+  // Header
+  const title = 'Cover Letter';
+  const titleWidth = doc.getTextWidth(title);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text(title, (pageWidth - titleWidth) / 2, 20);
+
+  // Body
+  doc.setFont('Helvetica', 'normal');
+  doc.setFontSize(12);
+  const splitText = doc.splitTextToSize(letterText, 180);
+  doc.text(splitText, 15, 40);
+
+  doc.save('cover_letter.pdf');
 });
