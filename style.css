@@ -1,0 +1,112 @@
+:root {
+  --primary: #0077ff;
+  --text-dark: #222;
+  --text-light: #fff;
+  --bg-light: #f5f6fa;
+  --bg-white: #ffffff;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-light);
+  color: var(--text-dark);
+}
+
+header {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: var(--primary);
+  color: var(--text-light);
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+header p {
+  margin-top: 0.5rem;
+  font-size: 1.1rem;
+}
+
+main {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+  background: var(--bg-white);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+input, select, textarea {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+button {
+  padding: 0.75rem;
+  background: var(--primary);
+  color: var(--text-light);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+button:hover {
+  background: #005ed6;
+}
+
+#resultBox {
+  margin-top: 2rem;
+}
+
+#resultBox h2 {
+  margin-bottom: 0.5rem;
+}
+
+#coverLetter {
+  width: 100%;
+  height: 200px;
+  resize: none;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+footer a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.hidden {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  main {
+    margin: 1rem;
+  }
+}

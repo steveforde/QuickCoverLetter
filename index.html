@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickCoverLetter</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>QuickCoverLetter</h1>
+    <p>Create a clean, professional cover letter in seconds.</p>
+  </header>
+
+  <main>
+    <div class="form-box">
+      <label for="jobTitle">Job Title</label>
+      <input type="text" id="jobTitle" placeholder="e.g. Customer Success Specialist" />
+
+      <label for="companyName">Company Name</label>
+      <input type="text" id="companyName" placeholder="e.g. Bitwarden" />
+
+      <label for="tone">Tone</label>
+      <select id="tone">
+        <option value="professional">Professional</option>
+        <option value="bold">Bold</option>
+        <option value="friendly">Friendly</option>
+      </select>
+
+      <button id="generateBtn">Generate Cover Letter</button>
+    </div>
+
+    <div id="resultBox" class="hidden">
+      <h2>Your Cover Letter</h2>
+      <textarea id="coverLetter" readonly></textarea>
+      <div class="actions">
+        <button id="downloadBtn">Download PDF</button>
+        <button id="copyBtn">Copy</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 QuickCoverLetter. All rights reserved.</p>
+    <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
