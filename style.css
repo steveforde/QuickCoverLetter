@@ -110,3 +110,36 @@ footer a {
     margin: 1rem;
   }
 }
+
+.hero {
+  background: linear-gradient(90deg, #007BFF, #0056b3);
+  color: white;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.hero-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 15px;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 12px 24px;
+  background: white;
+  color: #007BFF;
+  border-radius: 5px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.cta-button:hover {
+  background: #f2f2f2;
+}
+
