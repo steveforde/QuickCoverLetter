@@ -13,10 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ✨ Generate Cover Letter
   generateBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    generateBtn.disabled = true;          // disable button
-    generateBtn.textContent = "Generating...";  // change button text
-    spinner.classList.remove("hidden");   // show spinner
+    if (e.target === generateBtn) {
+      generateBtn.disabled = true;
+      generateBtn.textContent = "Generating...";
+      spinner.classList.remove("hidden");
+    }
 
     const jobTitle = jobInput.value.trim();
     const companyName = companyInput.value.trim();
@@ -25,10 +26,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!jobTitle || !companyName) {
       alert("Please fill out both Job Title and Company Name.");
+      spinner.classList.add("hidden");
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Generate Your Letter";
       return;
     }
-
-    spinner.classList.remove("hidden"); // show spinner
 
     try {
       const res = await fetch("/api/generate", {
@@ -48,9 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error(err);
       alert("Server error. Please try again.");
     } finally {
-       spinner.classList.add("hidden");      // hide spinner
-       generateBtn.disabled = false;         // enable button again
-       generateBtn.textContent = "Generate Your Letter";  // restore text
+      spinner.classList.add("hidden");
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Generate Your Letter";
     }
   });
 
