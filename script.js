@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const topCta = document.getElementById("topCta"); // scroll only
-  const generateBtn = document.getElementById("generateBtn"); // main trigger
+  const generateBtn = document.getElementById("generateBtn");
+  const clearBtn = document.getElementById("clearBtn");
   const jobInput = document.getElementById("jobTitle");
   const companyInput = document.getElementById("companyName");
   const userNameInput = document.getElementById("userName");
@@ -8,20 +8,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const coverLetter = document.getElementById("coverLetter");
   const resultBox = document.getElementById("resultBox");
   const spinner = document.getElementById("spinner");
-  const clearBtn = document.getElementById("clearBtn");
   const downloadBtn = document.getElementById("downloadBtn");
   const copyBtn = document.getElementById("copyBtn");
 
-  // ✨ scroll only (no spinner)
-  if (topCta) {
-    topCta.addEventListener("click", (e) => {
-      e.preventDefault();
-      document.getElementById("form")?.scrollIntoView({ behavior: "smooth" });
-    });
-  }
+  // ✅ Generate letter
+  generateBtn.addEventListener("click", async (e) => {
+    e.preventDefault();
 
-  // 💥 only start spinner when clicking generate
-  generateBtn.addEventListener("click", async () => {
     const jobTitle = jobInput.value.trim();
     const companyName = companyInput.value.trim();
     const userName = userNameInput.value.trim();
@@ -40,23 +33,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobTitle, companyName, tone, userName }),
+        body: JSON.stringify({ jobTitle, companyName, userName, tone }),
       });
-
-      if (!res.ok) {
-        throw new Error(`Server returned ${res.status}`);
-      }
 
       const data = await res.json();
       if (data.coverLetter) {
         coverLetter.value = data.coverLetter;
         resultBox.classList.remove("hidden");
-        resultBox.scrollIntoView({ behavior: "smooth" });
       } else {
         alert("Error generating cover letter. Try again.");
       }
     } catch (err) {
-      console.error("❌ Error:", err);
+      console.error(err);
       alert("Server error. Please try again.");
     } finally {
       spinner.classList.add("hidden");
@@ -65,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Clear
+  // ✅ Clear
   clearBtn.addEventListener("click", () => {
     jobInput.value = "";
     companyInput.value = "";
@@ -75,25 +63,30 @@ document.addEventListener("DOMContentLoaded", () => {
     resultBox.classList.add("hidden");
   });
 
-  // Download PDF
+  // ✅ Download
   downloadBtn.addEventListener("click", () => {
     const text = coverLetter.value.trim();
     if (!text) return alert("No cover letter to download.");
+
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 10;
+    const maxWidth = pageWidth - margin * 2;
+
     pdf.setFont("times", "normal");
     pdf.setFontSize(12);
-    pdf.text(text, 10, 20, { maxWidth: 180 });
+    pdf.text(text, margin, 20, { maxWidth, align: "left" });
     pdf.save("cover_letter.pdf");
   });
 
-  // Copy
+  // ✅ Copy
   copyBtn.addEventListener("click", () => {
     const text = coverLetter.value.trim();
     if (!text) return alert("Nothing to copy.");
     navigator.clipboard.writeText(text)
-      .then(() => alert("✅ Copied to clipboard"))
-      .catch(() => alert("❌ Failed to copy"));
+      .then(() => alert("✅ Cover letter copied to clipboard!"))
+      .catch(() => alert("❌ Failed to copy text."));
   });
 });
 
