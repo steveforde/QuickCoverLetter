@@ -7,41 +7,27 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- 🌟 HERO SECTION -->
+  <!-- HERO -->
   <section class="hero">
     <div class="hero-content">
       <h1>🚀 QuickCoverLetter</h1>
       <p>Create clean, personalized cover letters in seconds.</p>
-      <a href="#form" class="cta-button top-cta">Generate Your Letter</a>
+      <!-- scroll only -->
+      <a href="#form" id="topCta" class="cta-button top-cta">Generate Your Letter</a>
     </div>
   </section>
 
-  <!-- 📝 FORM SECTION -->
+  <!-- FORM -->
   <main id="form">
     <div class="form-box">
       <label for="jobTitle">Job Title</label>
-      <input 
-        type="text" 
-        id="jobTitle" 
-        placeholder="e.g. Customer Success Specialist" 
-        autocomplete="off"
-      />
+      <input type="text" id="jobTitle" placeholder="e.g. Customer Success Specialist" autocomplete="off"/>
 
       <label for="companyName">Company Name</label>
-      <input 
-        type="text" 
-        id="companyName" 
-        placeholder="e.g. Bitwarden" 
-        autocomplete="off"
-      />
+      <input type="text" id="companyName" placeholder="e.g. Bitwarden" autocomplete="off"/>
 
       <label for="userName">Your Name</label>
-      <input 
-        type="text" 
-        id="userName" 
-        placeholder="e.g. Stephen Forde" 
-        autocomplete="off"
-      />
+      <input type="text" id="userName" placeholder="e.g. Stephen Forde" autocomplete="off"/>
 
       <label for="tone">Tone</label>
       <select id="tone">
@@ -50,19 +36,19 @@
         <option value="friendly">Friendly</option>
       </select>
 
-  <button id="generateBtn" class="cta-button generate-btn" type="button">
-  Generate Your Letter
-</button>
-
-
+      <!-- generate button (click handler attaches to THIS id only) -->
+      <button id="generateBtn" class="cta-button generate-btn" type="button">
+        Generate Your Letter
+      </button>
     </div>
 
-   <div id="spinner" class="hidden">
-  <div class="spin"></div>
-  <span id="spinnerText">Generating your letter...</span>
-</div>
+    <!-- Spinner (single place) -->
+    <div id="spinner" class="hidden" aria-live="polite" style="text-align:center;margin-top:10px;">
+      <div class="spin" style="display:inline-block;width:16px;height:16px;border:3px solid #cde;border-top-color:#0077ff;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      <span style="margin-left:8px;">Generating your letter...</span>
+    </div>
 
-    <!-- 📨 Result -->
+    <!-- Result -->
     <div id="resultBox" class="hidden">
       <h2>Your Cover Letter</h2>
       <textarea id="coverLetter" readonly></textarea>
@@ -74,15 +60,20 @@
     </div>
   </main>
 
-  <!-- 📜 FOOTER -->
   <footer>
     <p>© 2025 QuickCoverLetter. All rights reserved.</p>
     <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
   </footer>
 
-  <!-- 📦 Scripts -->
+  <!-- jsPDF for download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="script.js"></script>
+  <!-- cache-bust so Vercel serves the new JS -->
+  <script src="script.js?v=5"></script>
+
+  <style>
+    .hidden { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </body>
 </html>
 
