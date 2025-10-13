@@ -25,7 +25,7 @@ export default async function handler(req, res) {
       ],
     });
 
-    const letter = completion.choices[0].message.content;
+    const letter = completion.choices[0].message?.content || "No content generated";
     res.status(200).json({ coverLetter: letter });
   } catch (err) {
     console.error("❌ OpenAI error:", err);
