@@ -1,72 +1,68 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const generateBtn = document.getElementById("generateBtn");
-  const clearBtn = document.getElementById("clearBtn");
-  const jobInput = document.getElementById("jobTitle");
-  const companyInput = document.getElementById("companyName");
-  const userNameInput = document.getElementById("userName");
-  const toneSelect = document.getElementById("tone");
-  const coverLetter = document.getElementById("coverLetter");
-  const resultBox = document.getElementById("resultBox");
-  const spinner = document.getElementById("spinner");
-  const downloadBtn = document.getElementById("downloadBtn");
-  const copyBtn = document.getElementById("copyBtn");
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('form');
+  const spinner = document.getElementById('spinner');
+  const resultBox = document.getElementById('resultBox');
+  const coverLetter = document.getElementById('coverLetter');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const clearBtn = document.getElementById('clearBtn');
 
-  // ✅ Generate letter
-  generateBtn.addEventListener("click", async (e) => {
+  // ✨ Handle Form Submit
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const jobTitle = jobInput.value.trim();
-    const companyName = companyInput.value.trim();
-    const userName = userNameInput.value.trim();
-    const tone = toneSelect.value;
+    spinner.classList.remove('hidden');
+    resultBox.classList.add('hidden');
 
-    if (!jobTitle || !companyName) {
-      alert("Please fill out both Job Title and Company Name.");
+    const jobTitle = document.getElementById('jobTitle').value.trim();
+    const companyName = document.getElementById('companyName').value.trim();
+    const userName = document.getElementById('userName').value.trim();
+    const tone = document.getElementById('tone').value;
+
+    if (!jobTitle || !companyName || !userName) {
+      spinner.classList.add('hidden');
+      alert('⚠️ Please fill out Job Title, Company Name, and Your Name.');
       return;
     }
 
-    generateBtn.disabled = true;
-    generateBtn.textContent = "Generating...";
-    spinner.classList.remove("hidden");
-
     try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobTitle, companyName, userName, tone }),
       });
 
-      const data = await res.json();
-      if (data.coverLetter) {
-        coverLetter.value = data.coverLetter;
-        resultBox.classList.remove("hidden");
-      } else {
-        alert("Error generating cover letter. Try again.");
-      }
+      if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+      const data = await response.json();
+
+      spinner.classList.add('hidden');
+      resultBox.classList.remove('hidden');
+      coverLetter.value = data.coverLetter || '⚠️ No letter generated';
     } catch (err) {
-      console.error(err);
-      alert("Server error. Please try again.");
-    } finally {
-      spinner.classList.add("hidden");
-      generateBtn.disabled = false;
-      generateBtn.textContent = "Generate Your Letter";
+      spinner.classList.add('hidden');
+      alert('❌ Error generating letter. Please try again.');
+      console.error('❌ Error:', err);
     }
   });
 
-  // ✅ Clear
-  clearBtn.addEventListener("click", () => {
-    jobInput.value = "";
-    companyInput.value = "";
-    userNameInput.value = "";
-    toneSelect.selectedIndex = 0;
-    coverLetter.value = "";
-    resultBox.classList.add("hidden");
+  // 🧼 Clear Button
+  clearBtn.addEventListener('click', () => {
+    document.getElementById('jobTitle').value = '';
+    document.getElementById('companyName').value = '';
+    document.getElementById('userName').value = '';
+    document.getElementById('tone').selectedIndex = 0;
+    coverLetter.value = '';
+    resultBox.classList.add('hidden');
   });
 
-  // ✅ Download
-  downloadBtn.addEventListener("click", () => {
+  // 📄 Download PDF
+  downloadBtn.addEventListener('click', () => {
     const text = coverLetter.value.trim();
-    if (!text) return alert("No cover letter to download.");
+    if (!text) {
+      alert('⚠️ No cover letter to download.');
+      return;
+    }
 
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF();
@@ -74,46 +70,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const margin = 10;
     const maxWidth = pageWidth - margin * 2;
 
-    pdf.setFont("times", "normal");
+    pdf.setFont('times', 'normal');
     pdf.setFontSize(12);
-    pdf.text(text, margin, 20, { maxWidth, align: "left" });
-    pdf.save("cover_letter.pdf");
+    pdf.text(text, margin, 20, { maxWidth, align: 'left' });
+    pdf.save('cover_letter.pdf');
   });
 
-  // ✅ Copy
-  copyBtn.addEventListener("click", () => {
+  // 📋 Copy to Clipboard
+  copyBtn.addEventListener('click', () => {
     const text = coverLetter.value.trim();
-    if (!text) return alert("Nothing to copy.");
+    if (!text) {
+      alert('⚠️ Nothing to copy.');
+      return;
+    }
+
     navigator.clipboard.writeText(text)
-      .then(() => alert("✅ Cover letter copied to clipboard!"))
-      .catch(() => alert("❌ Failed to copy text."));
+      .then(() => alert('✅ Cover letter copied to clipboard!'))
+      .catch(() => alert('❌ Failed to copy text.'));
   });
-});
 
-const form = document.querySelector("form");
-const output = document.getElementById("output");
-
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const jobTitle = document.querySelector("#jobTitle").value;
-  const companyName = document.querySelector("#companyName").value;
-  const userName = document.querySelector("#userName").value;
-  const tone = document.querySelector("#tone").value;
-
-  try {
-    const response = await fetch("/api/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobTitle, companyName, userName, tone }),
+  // 🧭 Scroll from top CTA button
+  const topCta = document.getElementById('topCta');
+  if (topCta) {
+    topCta.addEventListener('click', (e) => {
+      e.preventDefault();
+      form.scrollIntoView({ behavior: 'smooth' });
     });
-
-    if (!response.ok) throw new Error(`Server error: ${response.status}`);
-
-    const data = await response.json();
-    output.textContent = data.coverLetter;
-  } catch (err) {
-    console.error("❌ Error generating letter:", err);
-    alert("Failed to generate letter. Please try again.");
   }
 });
