@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -11,9 +10,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.post("/generate", async (req, res) => {
   const { jobTitle, companyName, userName, tone } = req.body;
@@ -34,10 +31,11 @@ app.post("/generate", async (req, res) => {
       ],
     });
 
-    res.json({ letter: completion.choices[0].message.content });
+    const letter = completion.choices[0].message?.content || "No content generated";
+    res.json({ letter });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to generate cover letter" });
+    console.error("❌ OpenAI error:", error);
+    res.status(500).json({ error: "Failed to generate letter" });
   }
 });
 
