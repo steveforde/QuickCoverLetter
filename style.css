@@ -389,3 +389,18 @@ button:disabled {
   opacity: 0.7;
 }
 
+.top-cta {
+  display: inline-block;
+  padding: 12px 24px;
+  background: #007BFF;
+  color: white;
+  border-radius: 5px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.top-cta:hover {
+  background: #005ec2;
+}
+
