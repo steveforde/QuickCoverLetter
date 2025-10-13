@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- 🌟 HERO SECTION -->
   <section class="hero">
     <div class="hero-content">
       <h1>🚀 QuickCoverLetter</h1>
@@ -15,16 +16,32 @@
     </div>
   </section>
 
+  <!-- 📝 FORM SECTION -->
   <main id="form">
     <div class="form-box">
       <label for="jobTitle">Job Title</label>
-      <input type="text" id="jobTitle" placeholder="e.g. Customer Success Specialist" />
+      <input 
+        type="text" 
+        id="jobTitle" 
+        placeholder="e.g. Customer Success Specialist" 
+        autocomplete="off"
+      />
 
       <label for="companyName">Company Name</label>
-      <input type="text" id="companyName" placeholder="e.g. Bitwarden" />
+      <input 
+        type="text" 
+        id="companyName" 
+        placeholder="e.g. Bitwarden" 
+        autocomplete="off"
+      />
 
       <label for="userName">Your Name</label>
-      <input type="text" id="userName" placeholder="e.g. Stephen Forde" />
+      <input 
+        type="text" 
+        id="userName" 
+        placeholder="e.g. Stephen Forde" 
+        autocomplete="off"
+      />
 
       <label for="tone">Tone</label>
       <select id="tone">
@@ -33,15 +50,18 @@
         <option value="friendly">Friendly</option>
       </select>
 
-      <button class="cta-button">Generate Your Letter</button>
-    </div>
-    
-    <!-- Spinner -->
-     <div id="spinner" class="hidden">
-     <div class="spinner-circle"></div>
-     <span>Generating your letter...</span>
+      <button id="generateBtn" class="cta-button" type="button">
+        Generate Your Letter
+      </button>
     </div>
 
+    <!-- ⏳ Spinner -->
+    <div id="spinner" class="hidden">
+      <div class="spin"></div>
+      <span>Generating your letter...</span>
+    </div>
+
+    <!-- 📨 Result -->
     <div id="resultBox" class="hidden">
       <h2>Your Cover Letter</h2>
       <textarea id="coverLetter" readonly></textarea>
@@ -49,20 +69,20 @@
         <button id="downloadBtn">Download PDF</button>
         <button id="copyBtn">Copy</button>
         <button type="button" id="clearBtn" class="secondary-btn">Clear</button>
-        
       </div>
     </div>
   </main>
 
-
-
-
+  <!-- 📜 FOOTER -->
   <footer>
     <p>© 2025 QuickCoverLetter. All rights reserved.</p>
     <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a>
   </footer>
+
+  <!-- 📦 Scripts -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
+
 
