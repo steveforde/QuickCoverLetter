@@ -19,24 +19,19 @@ export default async function handler(req, res) {
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content: "You are a professional cover letter writer.",
-        },
+        { role: "system", content: "You are a professional cover letter writer." },
         {
           role: "user",
-          content: `Write a ${tone} cover letter for ${userName || "the applicant"} applying for the ${jobTitle} role at ${companyName}. Keep it concise, professional and personal.`,
+          content: `Write a ${tone} cover letter for ${userName || "the applicant"} applying for the ${jobTitle} role at ${companyName}. Keep it short, professional and engaging.`,
         },
       ],
       max_tokens: 500,
     });
 
     const letter = completion.choices[0].message.content;
-    return res.status(200).json({ coverLetter: letter });
-
-  } catch (err) {
-    console.error("❌ API error:", err);
-    return res.status(500).json({ error: "Server failed to generate letter" });
+    res.status(200).json({ coverLetter: letter });
+  } catch (error) {
+    console.error("❌ OpenAI error:", error);
+    res.status(500).json({ error: "Failed to generate letter" });
   }
 }
-
