@@ -1,74 +1,83 @@
-// ===== Scroll to form section smoothly =====
-document.addEventListener('DOMContentLoaded', () => {
-  const ctaButton = document.querySelector('.top-cta');
-  const formSection = document.querySelector('#form');
-
-  if (ctaButton && formSection) {
-    ctaButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      formSection.scrollIntoView({ behavior: 'smooth' });
-    });
-  }
-});
-
-// ===== Generate Cover Letter =====
 document.addEventListener('DOMContentLoaded', () => {
   const generateBtn = document.querySelector('.form-box .cta-button');
   const jobInput = document.getElementById('jobTitle');
   const companyInput = document.getElementById('companyName');
-  const nameInput = document.getElementById('userName');
+  const userNameInput = document.getElementById('userName');
   const toneSelect = document.getElementById('tone');
-  const resultBox = document.getElementById('resultBox');
   const coverLetter = document.getElementById('coverLetter');
+  const resultBox = document.getElementById('resultBox');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const copyBtn = document.getElementById('copyBtn');
 
-  generateBtn.addEventListener('click', (e) => {
+  // 🪄 Generate Cover Letter
+  generateBtn.addEventListener('click', async (e) => {
     e.preventDefault();
 
-    const job = jobInput.value.trim();
-    const company = companyInput.value.trim();
-    const name = nameInput.value.trim();
+    const jobTitle = jobInput.value.trim();
+    const companyName = companyInput.value.trim();
+    const userName = userNameInput.value.trim();
     const tone = toneSelect.value;
 
-    if (!job || !company || !name) {
-      alert('Please fill out Job Title, Company Name, and Your Name.');
+    if (!jobTitle || !companyName) {
+      alert('Please fill out both Job Title and Company Name.');
       return;
     }
 
-    const letter = `Dear Hiring Manager,\n\nI’m excited to apply for the ${job} role at ${company}. With my background in customer success and IT support, I’m confident I can make a meaningful contribution to your team.\n\nI look forward to the opportunity to discuss how my skills align with your company’s goals.\n\nBest regards,\n${name}`;
+    // 🧹 Reset previous animation state if any
+    resultBox.classList.remove('show');
 
-    coverLetter.value = letter;
-    resultBox.classList.remove('hidden');
+    try {
+      const res = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobTitle, companyName, tone, userName }),
+      });
+
+      const data = await res.json();
+      if (data.coverLetter) {
+        coverLetter.value = data.coverLetter;
+        resultBox.classList.remove('hidden');
+        // ✨ Trigger fade-in animation
+        setTimeout(() => resultBox.classList.add('show'), 10);
+      } else {
+        alert('Error generating cover letter. Try again.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Server error. Please try again.');
+    }
   });
-});
 
-// ===== Copy Button =====
-document.getElementById('copyBtn').addEventListener('click', () => {
-  const text = document.getElementById('coverLetter');
-  text.select();
-  document.execCommand('copy');
-  alert('✅ Cover letter copied to clipboard!');
-});
+  // 📄 Download PDF
+  downloadBtn.addEventListener('click', () => {
+    const text = coverLetter.value.trim();
+    if (!text) {
+      alert('No cover letter to download.');
+      return;
+    }
 
-// ===== Download Button (Formatted PDF) =====
-document.getElementById('downloadBtn').addEventListener('click', () => {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const margin = 10;
+    const maxWidth = pageWidth - margin * 2;
 
-  const letterText = document.getElementById('coverLetter').value;
-  const pageWidth = doc.internal.pageSize.getWidth();
+    pdf.setFont('times', 'normal');
+    pdf.setFontSize(12);
+    pdf.text(text, margin, 20, { maxWidth, align: 'left' });
+    pdf.save('cover_letter.pdf');
+  });
 
-  // Header
-  const title = 'Cover Letter';
-  const titleWidth = doc.getTextWidth(title);
-  doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text(title, (pageWidth - titleWidth) / 2, 20);
+  // 📋 Copy to Clipboard
+  copyBtn.addEventListener('click', () => {
+    const text = coverLetter.value.trim();
+    if (!text) {
+      alert('Nothing to copy.');
+      return;
+    }
 
-  // Body
-  doc.setFont('Helvetica', 'normal');
-  doc.setFontSize(12);
-  const splitText = doc.splitTextToSize(letterText, 180);
-  doc.text(splitText, 15, 40);
-
-  doc.save('cover_letter.pdf');
+    navigator.clipboard.writeText(text)
+      .then(() => alert('✅ Cover letter copied to clipboard!'))
+      .catch(() => alert('❌ Failed to copy text.'));
+  });
 });
