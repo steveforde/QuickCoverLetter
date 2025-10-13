@@ -12,9 +12,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
@@ -22,16 +20,15 @@ export default async function handler(req, res) {
         { role: "system", content: "You are a professional cover letter writer." },
         {
           role: "user",
-          content: `Write a ${tone} cover letter for ${userName || "the applicant"} applying for the ${jobTitle} role at ${companyName}. Keep it short, professional and engaging.`,
+          content: `Write a ${tone} cover letter for ${userName || "the applicant"} applying for the ${jobTitle} role at ${companyName}. Keep it short, professional, and clear.`,
         },
       ],
-      max_tokens: 500,
     });
 
     const letter = completion.choices[0].message.content;
     res.status(200).json({ coverLetter: letter });
-  } catch (error) {
-    console.error("❌ OpenAI error:", error);
+  } catch (err) {
+    console.error("❌ OpenAI error:", err);
     res.status(500).json({ error: "Failed to generate letter" });
   }
 }
