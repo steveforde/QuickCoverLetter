@@ -90,3 +90,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+const form = document.querySelector("form");
+const output = document.getElementById("output");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const jobTitle = document.querySelector("#jobTitle").value;
+  const companyName = document.querySelector("#companyName").value;
+  const userName = document.querySelector("#userName").value;
+  const tone = document.querySelector("#tone").value;
+
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jobTitle, companyName, userName, tone }),
+    });
+
+    if (!response.ok) throw new Error(`Server error: ${response.status}`);
+
+    const data = await response.json();
+    output.textContent = data.coverLetter;
+  } catch (err) {
+    console.error("❌ Error generating letter:", err);
+    alert("Failed to generate letter. Please try again.");
+  }
+});
