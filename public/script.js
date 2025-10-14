@@ -85,24 +85,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function cleanLetterContent(text, userName) {
-    // Start from "Dear"
-    const dearIndex = text.search(/Dear/i);
-    let cleaned = dearIndex !== -1 ? text.slice(dearIndex).trim() : text.trim();
+  function cleanLetterContent(text, userName, company) {
+  let cleaned = text.trim();
 
-    // Remove leftover placeholders like [Your Address]
-    cleaned = cleaned.replace(/\[.*?\]/g, '').trim();
-
-    // Remove any repeated “Hiring Manager ...” lines
-    cleaned = cleaned.replace(/^(?:.*Hiring Manager.*\n)+/mi, '').trim();
-
-    // Add signature if missing
-    if (!/(Sincerely|Yours sincerely|Best regards)/i.test(cleaned)) {
-      cleaned += `\n\nYours sincerely,\n${userName}`;
-    }
-
-    return cleaned;
+  // Check for "Dear"
+  const dearIndex = cleaned.search(/Dear/i);
+  if (dearIndex !== -1) {
+    cleaned = cleaned.slice(dearIndex).trim();
+  } else {
+    // 👇 Fallback if no salutation found
+    cleaned = `Dear Hiring Manager,\n\n${cleaned}`;
   }
+
+  // Remove any placeholders like [Your Address]
+  cleaned = cleaned.replace(/\[.*?\]/g, '').trim();
+
+  // Remove any repeated Hiring Manager lines from bad generations
+  cleaned = cleaned.replace(/^(?:.*Hiring Manager.*\n)+/mi, '').trim();
+
+  // Add signature if missing
+  if (!/(Sincerely|Yours sincerely|Best regards)/i.test(cleaned)) {
+    cleaned += `\n\nYours sincerely,\n${userName}`;
+  }
+
+  return cleaned;
+}
+
 
   downloadBtn.addEventListener('click', () => {
     let letterText = coverLetter.value.trim();
