@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickCoverLetter</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <form id="coverForm">
+    <label for="jobTitle">Job Title</label>
+    <input id="jobTitle" placeholder="e.g. Customer Success Specialist" />
+
+    <label for="companyName">Company Name</label>
+    <input id="companyName" placeholder="e.g. Bitwarden" />
+
+    <label for="userName">Your Name</label>
+    <input id="userName" placeholder="e.g. Stephen Forde" />
+
+    <label for="tone">Tone</label>
+    <select id="tone">
+      <option value="professional">Professional</option>
+      <option value="bold">Bold</option>
+      <option value="friendly">Friendly</option>
+    </select>
+
+    <button type="submit" id="generateBtn">Generate Your Letter</button>
+  </form>
+
+  <div id="spinner" class="hidden">
+    <p>Generating your letter...</p>
+  </div>
+
+  <div id="resultBox" class="hidden">
+    <textarea id="coverLetter" readonly></textarea>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="script.js?v=10"></script>
+
+  <style>
+    .hidden { display: none; }
+  </style>
+</body>
+</html>
+
+
+
