@@ -99,12 +99,28 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const userName = document.getElementById('userName').value || 'Your Name';
 
   function cleanLetterContent(text) {
-  // Remove any lines at the top that look like address/email/date
-  return text.replace(
+  // Remove any lines at the top that look like address/email/date info
+  text = text.replace(
     /^(\s*(\[.*?\]|[A-Za-z0-9 ,.@]+)\s*\n){1,6}/,
     ''
-  ).trim();
+  );
+
+  // Remove any inline address blocks like:
+  // [Your Address] [City, State, Zip] [Email Address] [Phone Number] [Date]
+  text = text.replace(
+    /\[Your Address\].*?\[Date\]\s*/i,
+    ''
+  );
+
+  // Remove the inline "Hiring Manager Company [Company Address] ..." line
+  text = text.replace(
+    /Hiring Manager.*?\[City,\s*State.*?\]\s*/i,
+    ''
+  );
+
+  return text.trim();
 }
+
 
 
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
