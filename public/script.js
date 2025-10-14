@@ -43,13 +43,45 @@ document.addEventListener('DOMContentLoaded', () => {
     resultBox.classList.add('hidden');
   });
 
-  // 📝 Download PDF
+  downloadBtn.addEventListener("click", () => {
+  const text = coverLetter.value.trim();
+  let job = document.getElementById("jobTitle").value.trim();
+  let company = document.getElementById("companyName").value.trim();
+
+  if (!text) {
+    showToast("⚠️ No cover letter to download", "error");
+    return;
+  }
+
+  // 🧹 Clean and format names
+  const formatName = (str) => {
+    if (!str) return "";
+    const capped = str.charAt(0).toUpperCase() + str.slice(1);
+    return capped.replace(/\s+/g, "_").slice(0, 20); // limit length
+  };
+
+  const safeJob = formatName(job) || "Job";
+  const safeCompany = formatName(company) || "Company";
+  const fileName = `CoverLetter_${safeCompany}_${safeJob}.pdf`;
+
+  // 📝 Create PDF
   const { jsPDF } = window.jspdf;
-  downloadBtn.addEventListener('click', () => {
-    const doc = new jsPDF();
-    doc.text(coverLetter.value, 10, 10);
-    doc.save('cover_letter.pdf');
-  });
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+
+  const margin = 15;
+  const pageWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+  const lines = pdf.splitTextToSize(text, pageWidth);
+
+  pdf.setFont("times", "normal");
+  pdf.setFontSize(12);
+  pdf.text(lines, margin, 20);
+
+  pdf.save(fileName);
+  showToast(`📄 ${fileName} downloaded`, "success");
+});
+
+
+
 
   copyBtn.addEventListener('click', () => {
   if (!coverLetter.value.trim()) return;
