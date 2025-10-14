@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
       resultBox.classList.remove('hidden');
     } catch (err) {
       spinner.classList.add('hidden');
-      alert('❌ Something went wrong. Check server logs.');
+      alert('Something went wrong. Please try again.');
       console.error(err);
     }
   });
@@ -38,5 +38,12 @@ document.addEventListener('DOMContentLoaded', () => {
   clearBtn.addEventListener('click', () => {
     coverLetter.value = '';
     resultBox.classList.add('hidden');
+   const { jsPDF } = window.jspdf;
+   document.getElementById('downloadBtn').addEventListener('click', () => {
+   const doc = new jsPDF();
+   doc.text(coverLetter.value, 10, 10);
+   doc.save('cover_letter.pdf');
+  });
+
   });
 });
