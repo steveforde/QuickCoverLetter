@@ -68,13 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
-  const margin = 15;
+  const margin = 22;
   const pageWidth = pdf.internal.pageSize.getWidth() - margin * 2;
   const lines = pdf.splitTextToSize(text, pageWidth);
 
   pdf.setFont("times", "normal");
-  pdf.setFontSize(12);
-  pdf.text(lines, margin, 20);
+  pdf.setFontSize(13);
+  pdf.text(lines, margin, 30);
 
   pdf.save(fileName);
   showToast(`📄 ${fileName} downloaded`, "success");
