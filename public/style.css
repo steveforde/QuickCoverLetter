@@ -1,18 +1,41 @@
+/* 🔹 General layout */
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: #f5f6fa;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
   min-height: 100vh;
+  margin: 0;
 }
 
+/* 🔷 Hero banner */
+.hero {
+  width: 100%;
+  background: #0077ff;
+  color: white;
+  text-align: center;
+  padding: 2rem 1rem;
+  margin-bottom: 2rem;
+}
+
+.hero h1 {
+  font-size: 1.8rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.hero p {
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* 🧾 Form box */
 .form-box {
   background: white;
   padding: 2rem;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 320px;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
@@ -26,22 +49,43 @@ textarea {
   border-radius: 6px;
 }
 
-.cta-button {
-  background: #0077ff;
-  color: white;
-  border: none;
-  padding: 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
+.form-box label {
+  font-weight: 600;
+  font-size: 0.9rem;
 }
 
-.cta-button:hover {
+/* 🎯 Buttons */
+.btn {
+  padding: 0.8rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.btn-primary {
+  background: #0077ff;
+  color: white;
+}
+
+.btn-primary:hover {
   background: #005fcc;
 }
 
+.btn-secondary {
+  background: #00c853; /* green */
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #009e42;
+}
+
+/* ⏳ Spinner */
 #spinner {
   text-align: center;
-  margin-top: 1rem;
+  margin-top: 1.5rem;
 }
 
 .spin {
@@ -62,25 +106,83 @@ textarea {
   to { transform: rotate(360deg); }
 }
 
-#coverLetter {
-  width: 100%;
-  height: 200px;
-  margin-top: 1rem;
-}
-
-
+/* 📄 Result box */
 #resultBox {
   background: white;
   padding: 1.5rem;
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   max-width: 500px;
+  width: 90%;
 }
 
+#coverLetter {
+  width: 100%;
+  height: 220px;
+  margin-top: 1rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* 📱 Responsive */
 @media (max-width: 600px) {
   .form-box, #resultBox {
     width: 90%;
   }
 }
 
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.actions .btn {
+  flex: 1;
+  min-width: 100px;
+}
+
+/* ✅ Toast notification */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  padding: 0.8rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 1000;
+  min-width: 200px;
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+.toast.hidden {
+  display: none;
+}
+
+/* 🟢 Success toast */
+.toast.success {
+  background: #00c853;
+}
+
+/* 🔴 Error toast */
+.toast.error {
+  background: #d32f2f;
+}

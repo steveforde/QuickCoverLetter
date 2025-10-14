@@ -7,6 +7,14 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- 🔹 Banner -->
+  <header class="hero">
+    <div class="hero-content">
+      <h1>🚀 QuickCoverLetter</h1>
+      <p>Create clean, personalized cover letters in seconds.</p>
+    </div>
+  </header>
+
   <main>
     <form id="form" class="form-box">
       <label for="jobTitle">Job Title</label>
@@ -25,26 +33,31 @@
         <option value="bold">Bold</option>
       </select>
 
-      <button type="submit" class="cta-button">Generate Your Letter</button>
+      <button type="submit" class="btn btn-primary">Generate Your Letter</button>
     </form>
 
-    <!-- Spinner -->
     <div id="spinner" class="hidden">
       <div class="spin"></div>
       <span>Generating your letter...</span>
     </div>
 
-    <!-- Result -->
     <div id="resultBox" class="hidden">
       <h2>Your Cover Letter</h2>
       <textarea id="coverLetter" readonly></textarea>
-      <button id="clearBtn">Clear</button>
-      <button id="downloadBtn">Download PDF</button>
+      <div class="actions">
+       <button id="downloadBtn" class="btn btn-primary">Download PDF</button>
+       <button id="copyBtn" class="btn btn-secondary">Copy</button>
+       <button id="clearBtn" class="btn btn-secondary">Clear</button>
+   </div>
     </div>
   </main>
 
-  <script src="script.js?v=7"></script>
+  <!-- jsPDF for PDF download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="script.js?v=8"></script>
+  <!-- ✅ Toast Notification -->
+  <div id="toast" class="toast hidden">Copied to clipboard ✅</div>
+
 </body>
 </html>
-
 

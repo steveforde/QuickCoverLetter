@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultBox = document.getElementById('resultBox');
   const coverLetter = document.getElementById('coverLetter');
   const clearBtn = document.getElementById('clearBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const toast = document.getElementById('toast');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -30,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       resultBox.classList.remove('hidden');
     } catch (err) {
       spinner.classList.add('hidden');
-      alert('Something went wrong. Please try again.');
+      alert('❌ Something went wrong. Check server logs.');
       console.error(err);
     }
   });
@@ -38,12 +41,40 @@ document.addEventListener('DOMContentLoaded', () => {
   clearBtn.addEventListener('click', () => {
     coverLetter.value = '';
     resultBox.classList.add('hidden');
-   const { jsPDF } = window.jspdf;
-   document.getElementById('downloadBtn').addEventListener('click', () => {
-   const doc = new jsPDF();
-   doc.text(coverLetter.value, 10, 10);
-   doc.save('cover_letter.pdf');
   });
 
+  // 📝 Download PDF
+  const { jsPDF } = window.jspdf;
+  downloadBtn.addEventListener('click', () => {
+    const doc = new jsPDF();
+    doc.text(coverLetter.value, 10, 10);
+    doc.save('cover_letter.pdf');
   });
+
+  copyBtn.addEventListener('click', () => {
+  if (!coverLetter.value.trim()) return;
+  navigator.clipboard.writeText(coverLetter.value)
+    .then(() => {
+      showToast('Copied to clipboard ✅', 'success');
+    })
+    .catch((err) => {
+      console.error('Failed to copy: ', err);
+      showToast('❌ Failed to copy', 'error');
+    });
 });
+
+// ✅ Reusable toast function with type
+function showToast(message, type = 'success') {
+  toast.textContent = message;
+  toast.classList.remove('hidden', 'success', 'error');
+  toast.classList.add(type);
+  toast.classList.add('show');
+
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.classList.add('hidden'), 300);
+  }, 2000);
+}
+
+});
+
