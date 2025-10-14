@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 const { jsPDF } = window.jspdf;
 
 function drawJustifiedParagraph(pdf, text, x, y, maxWidth, lineHeight = 7) {
-  const paragraphs = text.split(/\n\s*\n/); // split by blank line
+  const paragraphs = text.split(/\n\s*\n/); // Split by blank lines
   paragraphs.forEach(para => {
     const words = para.trim().split(/\s+/);
     let line = '';
@@ -65,7 +65,7 @@ function drawJustifiedParagraph(pdf, text, x, y, maxWidth, lineHeight = 7) {
       pdf.text(line.trim(), x, y);
       y += lineHeight;
     }
-    y += lineHeight; // extra space between paragraphs
+    y += lineHeight; // Space between paragraphs
   });
   return y;
 }
@@ -101,7 +101,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
   let y = 30;
 
-  // HEADER BLOCK — once, clean
+  // 📌 Header Block
   const headerLines = [
     userName,
     '[Your Address]',
@@ -115,16 +115,32 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
     y += 7;
   });
 
-  y += 10; // spacing after header
+  y += 10;
 
-  // BODY — preserves paragraph breaks and spacing
+  // 🏢 Company Block
+  const companyBlock = [
+    'Hiring Manager',
+    company,
+    '[Company Address]',
+    '[City, State, Zip Code]'
+  ];
+  companyBlock.forEach(line => {
+    pdf.text(line, margin, y);
+    y += 7;
+  });
+
+  y += 10;
+
+  // 📝 Letter Body
   drawJustifiedParagraph(pdf, letterText, margin, y, maxWidth);
 
-  // FILE NAME
+  // 💾 File Name
   const fileName = `CoverLetter_${company}_${jobTitle}.pdf`;
   pdf.save(fileName);
   showToast(`📄 ${fileName} downloaded`, "success");
 });
+
+
 
   
   copyBtn.addEventListener('click', () => {
