@@ -45,8 +45,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const { jsPDF } = window.jspdf;
 
+function cleanLetterContent(text) {
+  // Remove leading address or company lines if they appear
+  return text.replace(/^\[?Your.*?\]\s*/i, '').trim();
+}
+
 function drawJustifiedParagraph(pdf, text, x, y, maxWidth, lineHeight = 7) {
-  const paragraphs = text.split(/\n\s*\n/); // Split by blank lines
+  const paragraphs = text.split(/\n\s*\n/);
   paragraphs.forEach(para => {
     const words = para.trim().split(/\s+/);
     let line = '';
@@ -65,7 +70,7 @@ function drawJustifiedParagraph(pdf, text, x, y, maxWidth, lineHeight = 7) {
       pdf.text(line.trim(), x, y);
       y += lineHeight;
     }
-    y += lineHeight; // Space between paragraphs
+    y += lineHeight;
   });
   return y;
 }
@@ -86,12 +91,15 @@ function justifyLine(pdf, line, x, y, maxWidth) {
 }
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
-  const letterText = document.getElementById('coverLetter').value.trim();
+  let letterText = document.getElementById('coverLetter').value.trim();
   if (!letterText) return;
 
   const jobTitle = document.getElementById('jobTitle').value || 'CoverLetter';
   const company = document.getElementById('companyName').value || 'Company';
   const userName = document.getElementById('userName').value || 'Your Name';
+
+  // 🧹 Clean up repeated header
+  letterText = cleanLetterContent(letterText);
 
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   pdf.setFont('times', 'normal');
@@ -132,9 +140,15 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   y += 10;
 
   // 📝 Letter Body
-  drawJustifiedParagraph(pdf, letterText, margin, y, maxWidth);
+  y = drawJustifiedParagraph(pdf, letterText, margin, y, maxWidth);
 
-  // 💾 File Name
+  // ✍️ Signature Block
+  y += 10;
+  pdf.text('Sincerely,', margin, y);
+  y += 10;
+  pdf.text(userName, margin, y);
+
+  // 💾 Save
   const fileName = `CoverLetter_${company}_${jobTitle}.pdf`;
   pdf.save(fileName);
   showToast(`📄 ${fileName} downloaded`, "success");
@@ -142,7 +156,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 
 
 
-  
+
   copyBtn.addEventListener('click', () => {
   if (!coverLetter.value.trim()) return;
   navigator.clipboard.writeText(coverLetter.value)
