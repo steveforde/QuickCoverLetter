@@ -64,20 +64,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const safeCompany = formatName(company) || "Company";
   const fileName = `CoverLetter_${safeCompany}_${safeJob}.pdf`;
 
-  // 📝 Create PDF
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+ const { jsPDF } = window.jspdf;
+const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
-  const margin = 35;
-  const pageWidth = pdf.internal.pageSize.getWidth() - margin * 2;
-  const lines = pdf.splitTextToSize(text, pageWidth);
+// Adjust margins to center content
+const margin = 25; // try between 20–30
+const startY = 30;
+const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
 
-  pdf.setFont("times", "normal");
-  pdf.setFontSize(13);
-  pdf.text(lines, margin, 30);
+// ✨ Split and justify text
+const lines = pdf.splitTextToSize(text, maxWidth);
 
-  pdf.save(fileName);
-  showToast(`📄 ${fileName} downloaded`, "success");
+pdf.setFont("times", "normal");
+pdf.setFontSize(12);
+
+// Justified text for each line
+let y = startY;
+lines.forEach(line => {
+  pdf.text(line, margin, y, { maxWidth, align: "justify" });
+  y += 7; // line spacing
+});
+pdf.save(fileName);
+showToast(`📄 ${fileName} downloaded`, "success");
 });
 
 
