@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
-  const margin = 22;
+  const margin = 35;
   const pageWidth = pdf.internal.pageSize.getWidth() - margin * 2;
   const lines = pdf.splitTextToSize(text, pageWidth);
 
