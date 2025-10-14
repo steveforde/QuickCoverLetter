@@ -93,14 +93,25 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const company = document.getElementById('companyName').value || 'Company';
   const userName = document.getElementById('userName').value || 'Your Name';
 
-  function cleanLetterContent(text) {
-  // Find the first occurrence of "Dear" and keep everything from there
+  function cleanLetterContent(text, userName) {
+  // 1. Find the first "Dear" and keep the letter from there
   const dearIndex = text.search(/Dear/i);
-  if (dearIndex !== -1) {
-    return text.slice(dearIndex).trim();
+  let cleaned = dearIndex !== -1 ? text.slice(dearIndex).trim() : text.trim();
+
+  // 2. Strip out leftover placeholder blocks like [Your Address]
+  cleaned = cleaned.replace(/\[.*?\]/g, '').trim();
+
+  // 3. Ensure we don’t accidentally keep any duplicate address lines
+  cleaned = cleaned.replace(/^(?:\s*\S.*Hiring Manager.*\n)+/mi, '').trim();
+
+  // 4. Add signature dynamically if it’s not already present
+  if (!/(Sincerely|Yours sincerely|Best regards)/i.test(cleaned)) {
+    cleaned += `\n\nYours sincerely,\n${userName}`;
   }
-  return text.trim();
+
+  return cleaned;
 }
+
 
 
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
