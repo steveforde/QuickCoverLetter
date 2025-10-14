@@ -43,26 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     resultBox.classList.add('hidden');
   });
 
-  downloadBtn.addEventListener("click", () => {
-  const text = coverLetter.value.trim();
-  let job = document.getElementById("jobTitle").value.trim();
-  let company = document.getElementById("companyName").value.trim();
+ const { jsPDF } = window.jspdf;
 
-  if (!text) {
-    showToast("⚠️ No cover letter to download", "error");
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-const pdf = new jsPDF({ unit: "mm", format: "a4" });
-
-const margin = 25;
-const startY = 30;
-const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
-pdf.setFont("times", "normal");
-pdf.setFontSize(12);
-
-function drawJustifiedText(text, x, y, maxWidth, lineHeight = 7) {
+function drawJustifiedText(pdf, text, x, y, maxWidth, lineHeight = 7) {
   const words = text.split(/\s+/);
   let line = '';
   let lineY = y;
@@ -74,10 +57,10 @@ function drawJustifiedText(text, x, y, maxWidth, lineHeight = 7) {
     if (testWidth > maxWidth && line !== '') {
       const lineWords = line.trim().split(/\s+/);
       const gaps = lineWords.length - 1;
+
       if (gaps > 0) {
         const extraSpace = (maxWidth - pdf.getTextWidth(line.trim())) / gaps;
         let cursorX = x;
-
         lineWords.forEach((w, idx) => {
           pdf.text(w, cursorX, lineY);
           if (idx < gaps) cursorX += pdf.getTextWidth(w + ' ') + extraSpace;
@@ -93,29 +76,32 @@ function drawJustifiedText(text, x, y, maxWidth, lineHeight = 7) {
     }
   }
 
-  // Last line (left aligned)
+  // Render last line (left-aligned)
   pdf.text(line.trim(), x, lineY);
   return lineY + lineHeight;
 }
 
-// Example
-const header = `[Your Name]
-[Your Address]
-[City, Zip]
-[Email]
-[Phone]
-[Date]`;
-const body = `I am writing to express my interest in the Computer Support role at Dell, as advertised. With a strong background in IT support and a commitment to providing exceptional customer service, I am excited about the opportunity to contribute to your team. In my previous role...`;
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const text = document.getElementById('coverLetter').value;
+  if (!text.trim()) return;
 
-pdf.text(header, margin, startY);
-drawJustifiedText(body, margin, startY + 40, maxWidth);
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(12);
 
-pdf.save("CoverLetter_Justified.pdf");
+  const margin = 25;
+  const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
+  const startY = 30;
 
-showToast(`📄 ${fileName} downloaded`, "success");
+  drawJustifiedText(pdf, text, margin, startY, maxWidth);
+
+  const jobTitle = document.getElementById('jobTitle').value || 'CoverLetter';
+  const company = document.getElementById('companyName').value || 'Company';
+  const fileName = `CoverLetter_${company}_${jobTitle}.pdf`;
+
+  pdf.save(fileName);
+  showToast(`📄 ${fileName} downloaded`, "success");
 });
-
-
 
 
   copyBtn.addEventListener('click', () => {
