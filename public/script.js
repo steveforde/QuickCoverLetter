@@ -53,38 +53,65 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // 🧹 Clean and format names
-  const formatName = (str) => {
-    if (!str) return "";
-    const capped = str.charAt(0).toUpperCase() + str.slice(1);
-    return capped.replace(/\s+/g, "_").slice(0, 20); // limit length
-  };
-
-  const safeJob = formatName(job) || "Job";
-  const safeCompany = formatName(company) || "Company";
-  const fileName = `CoverLetter_${safeCompany}_${safeJob}.pdf`;
-
- const { jsPDF } = window.jspdf;
+  const { jsPDF } = window.jspdf;
 const pdf = new jsPDF({ unit: "mm", format: "a4" });
 
-// Adjust margins to center content
-const margin = 25; // try between 20–30
+const margin = 25;
 const startY = 30;
 const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
-
-// ✨ Split and justify text
-const lines = pdf.splitTextToSize(text, maxWidth);
-
 pdf.setFont("times", "normal");
 pdf.setFontSize(12);
 
-// Justified text for each line
-let y = startY;
-lines.forEach(line => {
-  pdf.text(line, margin, y, { maxWidth, align: "justify" });
-  y += 7; // line spacing
-});
-pdf.save(fileName);
+function drawJustifiedText(text, x, y, maxWidth, lineHeight = 7) {
+  const words = text.split(/\s+/);
+  let line = '';
+  let lineY = y;
+
+  for (let i = 0; i < words.length; i++) {
+    const testLine = line + words[i] + ' ';
+    const testWidth = pdf.getTextWidth(testLine);
+
+    if (testWidth > maxWidth && line !== '') {
+      const lineWords = line.trim().split(/\s+/);
+      const gaps = lineWords.length - 1;
+      if (gaps > 0) {
+        const extraSpace = (maxWidth - pdf.getTextWidth(line.trim())) / gaps;
+        let cursorX = x;
+
+        lineWords.forEach((w, idx) => {
+          pdf.text(w, cursorX, lineY);
+          if (idx < gaps) cursorX += pdf.getTextWidth(w + ' ') + extraSpace;
+        });
+      } else {
+        pdf.text(line.trim(), x, lineY);
+      }
+
+      line = words[i] + ' ';
+      lineY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+
+  // Last line (left aligned)
+  pdf.text(line.trim(), x, lineY);
+  return lineY + lineHeight;
+}
+
+// Example
+const header = `[Your Name]
+[Your Address]
+[City, Zip]
+[Email]
+[Phone]
+[Date]`;
+const body = `I am writing to express my interest in the Computer Support role at Dell, as advertised. With a strong background in IT support and a commitment to providing exceptional customer service, I am excited about the opportunity to contribute to your team. In my previous role...`;
+
+pdf.text(header, margin, startY);
+drawJustifiedText(body, margin, startY + 40, maxWidth);
+
+pdf.save("CoverLetter_Justified.pdf");
+
 showToast(`📄 ${fileName} downloaded`, "success");
 });
 
