@@ -43,101 +43,68 @@ document.addEventListener('DOMContentLoaded', () => {
     resultBox.classList.add('hidden');
   });
 
-  const { jsPDF } = window.jspdf;
+  // --- EXACT PDF RENDER (no edits, no auto headers, no auto signature) ---
+const { jsPDF } = window.jspdf;
 
-  function drawJustifiedParagraph(pdf, text, x, y, maxWidth, lineHeight = 7) {
-    const paragraphs = text.split(/\n\s*\n/);
-    paragraphs.forEach(para => {
-      const words = para.trim().split(/\s+/);
-      let line = '';
-      for (let i = 0; i < words.length; i++) {
-        const testLine = line + words[i] + ' ';
-        const testWidth = pdf.getTextWidth(testLine);
-        if (testWidth > maxWidth && line !== '') {
-          justifyLine(pdf, line.trim(), x, y, maxWidth);
-          y += lineHeight;
-          line = words[i] + ' ';
-        } else {
-          line = testLine;
-        }
+// Render the textarea exactly as-is, preserving blank lines.
+// Only wraps long lines to fit the printable width.
+function renderExact(pdf, text, x, y, maxWidth, lineHeight = 7) {
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = x; // we use x as the left margin
+
+  // Normalize line endings, then iterate line-by-line
+  const lines = text.replace(/\r\n/g, "\n").split("\n");
+
+  for (const rawLine of lines) {
+    // Wrap this single logical line to the page width
+    const chunks = rawLine.length
+      ? pdf.splitTextToSize(rawLine, maxWidth)
+      : [""]; // preserve blank lines
+
+    for (const chunk of chunks) {
+      // new page if we’re near the bottom
+      if (y > pageH - margin) {
+        pdf.addPage();
+        y = margin;
       }
-      if (line.trim()) {
-        pdf.text(line.trim(), x, y);
+
+      if (chunk === "") {
+        // blank line: just advance
+        y += lineHeight;
+      } else {
+        pdf.text(chunk, x, y);
         y += lineHeight;
       }
-      y += lineHeight;
-    });
-    return y;
-  }
-
-  function justifyLine(pdf, line, x, y, maxWidth) {
-    const words = line.split(/\s+/);
-    if (words.length === 1) {
-      pdf.text(line, x, y);
-      return;
     }
-    const lineWidth = pdf.getTextWidth(line);
-    const extraSpace = (maxWidth - lineWidth) / (words.length - 1);
-    let cursorX = x;
-    words.forEach((w, idx) => {
-      pdf.text(w, cursorX, y);
-      if (idx < words.length - 1) cursorX += pdf.getTextWidth(w + ' ') + extraSpace;
-    });
   }
-
-  function cleanLetterContent(text, userName, company) {
-  let cleaned = text.trim();
-
-  // Check for "Dear"
-  const dearIndex = cleaned.search(/Dear/i);
-  if (dearIndex !== -1) {
-    cleaned = cleaned.slice(dearIndex).trim();
-  } else {
-    // 👇 Fallback if no salutation found
-    cleaned = `Dear Hiring Manager,\n\n${cleaned}`;
-  }
-
-  // Remove any placeholders like [Your Address]
-  cleaned = cleaned.replace(/\[.*?\]/g, '').trim();
-
-  // Remove any repeated Hiring Manager lines from bad generations
-  cleaned = cleaned.replace(/^(?:.*Hiring Manager.*\n)+/mi, '').trim();
-
-  // Add signature if missing
-  if (!/(Sincerely|Yours sincerely|Best regards)/i.test(cleaned)) {
-    cleaned += `\n\nYours sincerely,\n${userName}`;
-  }
-
-  return cleaned;
+  return y;
 }
 
+downloadBtn.addEventListener('click', () => {
+  const letterText = coverLetter.value || '';
+  if (!letterText.trim()) return;
 
-  downloadBtn.addEventListener('click', () => {
-    let letterText = coverLetter.value.trim();
-    if (!letterText) return;
+  const jobTitle = (document.getElementById('jobTitle').value || 'CoverLetter').trim();
+  const company  = (document.getElementById('companyName').value || 'Company').trim();
 
-    const jobTitle = document.getElementById('jobTitle').value || 'CoverLetter';
-    const company = document.getElementById('companyName').value || 'Company';
-    const userName = document.getElementById('userName').value || 'Your Name';
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+  pdf.setFont('times', 'normal');
+  pdf.setFontSize(12);
 
-    const finalText = cleanLetterContent(letterText, userName);
+  const margin   = 20; // left/right/top/bottom visual margin
+  const pageW    = pdf.internal.pageSize.getWidth();
+  const maxWidth = pageW - margin * 2;
+  let y          = margin;
 
-    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
-    pdf.setFont('times', 'normal');
-    pdf.setFontSize(12);
+  // Draw the textarea content verbatim
+  renderExact(pdf, letterText, margin, y, maxWidth, 7);
 
-    const margin = 25;
-    const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
-    let y = 30;
+  const safe = (s) => s.replace(/[^\w\-]+/g, '_');
+  const fileName = `CoverLetter_${safe(company)}_${safe(jobTitle)}.pdf`;
+  pdf.save(fileName);
+  showToast(`📄 ${fileName} downloaded`, 'success');
+});
 
-    // 📝 Letter Body (no address duplication)
-    y = drawJustifiedParagraph(pdf, finalText, margin, y, maxWidth);
-
-    // 💾 Save
-    const fileName = `CoverLetter_${company}_${jobTitle}.pdf`;
-    pdf.save(fileName);
-    showToast(`📄 ${fileName} downloaded`, "success");
-  });
 
   copyBtn.addEventListener('click', () => {
     if (!coverLetter.value.trim()) return;
