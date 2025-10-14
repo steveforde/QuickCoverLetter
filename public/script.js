@@ -129,3 +129,41 @@ downloadBtn.addEventListener('click', () => {
   }
 });
 
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  // 1️⃣ Check payment status
+  const hasPaid = localStorage.getItem('paid') === 'true';
+  if (!hasPaid) {
+    alert('⚠️ Please pay €1.99 to generate your cover letter.');
+    window.location.href = '/checkout'; // redirect to payment page
+    return;
+  }
+
+  spinner.classList.remove('hidden');
+  resultBox.classList.add('hidden');
+
+  const jobTitle = document.getElementById('jobTitle').value;
+  const companyName = document.getElementById('companyName').value;
+  const userName = document.getElementById('userName').value;
+  const tone = document.getElementById('tone').value;
+
+  try {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jobTitle, companyName, userName, tone })
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    const data = await res.json();
+
+    coverLetter.value = data.coverLetter || '⚠️ No letter generated.';
+    spinner.classList.add('hidden');
+    resultBox.classList.remove('hidden');
+  } catch (err) {
+    spinner.classList.add('hidden');
+    alert('❌ Something went wrong. Check server logs.');
+    console.error(err);
+  }
+});
