@@ -43,42 +43,46 @@ document.addEventListener('DOMContentLoaded', () => {
     resultBox.classList.add('hidden');
   });
 
- const { jsPDF } = window.jspdf;
+const { jsPDF } = window.jspdf;
 
-function drawJustifiedText(pdf, text, x, y, maxWidth, lineHeight = 7) {
-  const words = text.split(/\s+/);
-  let line = '';
-  let lineY = y;
-
-  for (let i = 0; i < words.length; i++) {
-    const testLine = line + words[i] + ' ';
-    const testWidth = pdf.getTextWidth(testLine);
-
-    if (testWidth > maxWidth && line !== '') {
-      const lineWords = line.trim().split(/\s+/);
-      const gaps = lineWords.length - 1;
-
-      if (gaps > 0) {
-        const extraSpace = (maxWidth - pdf.getTextWidth(line.trim())) / gaps;
-        let cursorX = x;
-        lineWords.forEach((w, idx) => {
-          pdf.text(w, cursorX, lineY);
-          if (idx < gaps) cursorX += pdf.getTextWidth(w + ' ') + extraSpace;
-        });
+function drawJustifiedParagraph(pdf, text, x, y, maxWidth, lineHeight = 7) {
+  const paragraphs = text.split(/\n\s*\n/); // split by blank line
+  paragraphs.forEach(para => {
+    const words = para.trim().split(/\s+/);
+    let line = '';
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + ' ';
+      const testWidth = pdf.getTextWidth(testLine);
+      if (testWidth > maxWidth && line !== '') {
+        justifyLine(pdf, line.trim(), x, y, maxWidth);
+        y += lineHeight;
+        line = words[i] + ' ';
       } else {
-        pdf.text(line.trim(), x, lineY);
+        line = testLine;
       }
-
-      line = words[i] + ' ';
-      lineY += lineHeight;
-    } else {
-      line = testLine;
     }
-  }
+    if (line.trim()) {
+      pdf.text(line.trim(), x, y);
+      y += lineHeight;
+    }
+    y += lineHeight; // extra space between paragraphs
+  });
+  return y;
+}
 
-  // Render last line (left aligned)
-  pdf.text(line.trim(), x, lineY);
-  return lineY + lineHeight;
+function justifyLine(pdf, line, x, y, maxWidth) {
+  const words = line.split(/\s+/);
+  if (words.length === 1) {
+    pdf.text(line, x, y);
+    return;
+  }
+  const lineWidth = pdf.getTextWidth(line);
+  const extraSpace = (maxWidth - lineWidth) / (words.length - 1);
+  let cursorX = x;
+  words.forEach((w, idx) => {
+    pdf.text(w, cursorX, y);
+    if (idx < words.length - 1) cursorX += pdf.getTextWidth(w + ' ') + extraSpace;
+  });
 }
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
@@ -97,7 +101,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
   let y = 30;
 
-  // ✨ HEADER BLOCK (stacked neatly)
+  // HEADER BLOCK — once, clean
   const headerLines = [
     userName,
     '[Your Address]',
@@ -108,21 +112,21 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   ];
   headerLines.forEach(line => {
     pdf.text(line, margin, y);
-    y += 7; // line spacing for header
+    y += 7;
   });
 
-  y += 10; // extra space after header
+  y += 10; // spacing after header
 
-  // ✨ BODY (justified)
-  drawJustifiedText(pdf, letterText, margin, y, maxWidth);
+  // BODY — preserves paragraph breaks and spacing
+  drawJustifiedParagraph(pdf, letterText, margin, y, maxWidth);
 
+  // FILE NAME
   const fileName = `CoverLetter_${company}_${jobTitle}.pdf`;
   pdf.save(fileName);
   showToast(`📄 ${fileName} downloaded`, "success");
 });
 
-
-
+  
   copyBtn.addEventListener('click', () => {
   if (!coverLetter.value.trim()) return;
   navigator.clipboard.writeText(coverLetter.value)
