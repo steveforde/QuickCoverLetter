@@ -7,42 +7,43 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <form id="form">
-  <label for="jobTitle">Job Title</label>
-  <input type="text" id="jobTitle" placeholder="e.g. Customer Support" required />
+  <main>
+    <form id="form" class="form-box">
+      <label for="jobTitle">Job Title</label>
+      <input type="text" id="jobTitle" placeholder="e.g. Customer Support" required>
 
-  <label for="companyName">Company Name</label>
-  <input type="text" id="companyName" placeholder="e.g. Google" required />
+      <label for="companyName">Company Name</label>
+      <input type="text" id="companyName" placeholder="e.g. Google" required>
 
-  <label for="userName">Your Name</label>
-  <input type="text" id="userName" placeholder="e.g. Steve Forde" required />
+      <label for="userName">Your Name</label>
+      <input type="text" id="userName" placeholder="e.g. Steve Forde" required>
 
-  <label for="tone">Tone</label>
-  <select id="tone">
-    <option value="professional">Professional</option>
-    <option value="friendly">Friendly</option>
-    <option value="bold">Bold</option>
-  </select>
+      <label for="tone">Tone</label>
+      <select id="tone">
+        <option value="professional">Professional</option>
+        <option value="friendly">Friendly</option>
+        <option value="bold">Bold</option>
+      </select>
 
-  <button type="submit" class="cta-button">Generate Your Letter</button>
-</form>
+      <button type="submit" class="cta-button">Generate Your Letter</button>
+    </form>
 
-<div id="spinner" class="hidden" style="text-align:center;margin-top:10px;">
-  <div class="spin" style="display:inline-block;width:16px;height:16px;border:3px solid #cde;border-top-color:#0077ff;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
-  <span>Generating your letter...</span>
-</div>
+    <!-- Spinner -->
+    <div id="spinner" class="hidden">
+      <div class="spin"></div>
+      <span>Generating your letter...</span>
+    </div>
 
-<div id="resultBox" class="hidden">
-  <h2>Your Cover Letter</h2>
-  <textarea id="coverLetter" readonly></textarea>
-  <button id="clearBtn">Clear</button>
-</div>
+    <!-- Result -->
+    <div id="resultBox" class="hidden">
+      <h2>Your Cover Letter</h2>
+      <textarea id="coverLetter" readonly></textarea>
+      <button id="clearBtn">Clear</button>
+    </div>
+  </main>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="script.js?v=6"></script>
-
+  <script src="script.js?v=7"></script>
 </body>
 </html>
-
 
 
