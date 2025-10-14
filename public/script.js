@@ -45,11 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const { jsPDF } = window.jspdf;
 
-function cleanLetterContent(text) {
-  // Remove leading address or company lines if they appear
-  return text.replace(/^\[?Your.*?\]\s*/i, '').trim();
-}
-
 function drawJustifiedParagraph(pdf, text, x, y, maxWidth, lineHeight = 7) {
   const paragraphs = text.split(/\n\s*\n/);
   paragraphs.forEach(para => {
@@ -99,28 +94,13 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const userName = document.getElementById('userName').value || 'Your Name';
 
   function cleanLetterContent(text) {
-  // Remove any lines at the top that look like address/email/date info
-  text = text.replace(
-    /^(\s*(\[.*?\]|[A-Za-z0-9 ,.@]+)\s*\n){1,6}/,
-    ''
-  );
-
-  // Remove any inline address blocks like:
-  // [Your Address] [City, State, Zip] [Email Address] [Phone Number] [Date]
-  text = text.replace(
-    /\[Your Address\].*?\[Date\]\s*/i,
-    ''
-  );
-
-  // Remove the inline "Hiring Manager Company [Company Address] ..." line
-  text = text.replace(
-    /Hiring Manager.*?\[City,\s*State.*?\]\s*/i,
-    ''
-  );
-
+  // Find the first occurrence of "Dear" and keep everything from there
+  const dearIndex = text.search(/Dear/i);
+  if (dearIndex !== -1) {
+    return text.slice(dearIndex).trim();
+  }
   return text.trim();
 }
-
 
 
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
