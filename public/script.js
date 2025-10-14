@@ -98,8 +98,14 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   const company = document.getElementById('companyName').value || 'Company';
   const userName = document.getElementById('userName').value || 'Your Name';
 
-  // 🧹 Clean up repeated header
-  letterText = cleanLetterContent(letterText);
+  function cleanLetterContent(text) {
+  // Remove any lines at the top that look like address/email/date
+  return text.replace(
+    /^(\s*(\[.*?\]|[A-Za-z0-9 ,.@]+)\s*\n){1,6}/,
+    ''
+  ).trim();
+}
+
 
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   pdf.setFont('times', 'normal');
