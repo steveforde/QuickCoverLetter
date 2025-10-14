@@ -76,14 +76,18 @@ function drawJustifiedText(pdf, text, x, y, maxWidth, lineHeight = 7) {
     }
   }
 
-  // Render last line (left-aligned)
+  // Render last line (left aligned)
   pdf.text(line.trim(), x, lineY);
   return lineY + lineHeight;
 }
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
-  const text = document.getElementById('coverLetter').value;
-  if (!text.trim()) return;
+  const letterText = document.getElementById('coverLetter').value.trim();
+  if (!letterText) return;
+
+  const jobTitle = document.getElementById('jobTitle').value || 'CoverLetter';
+  const company = document.getElementById('companyName').value || 'Company';
+  const userName = document.getElementById('userName').value || 'Your Name';
 
   const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   pdf.setFont('times', 'normal');
@@ -91,17 +95,32 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 
   const margin = 25;
   const maxWidth = pdf.internal.pageSize.getWidth() - margin * 2;
-  const startY = 30;
+  let y = 30;
 
-  drawJustifiedText(pdf, text, margin, startY, maxWidth);
+  // ✨ HEADER BLOCK (stacked neatly)
+  const headerLines = [
+    userName,
+    '[Your Address]',
+    '[City, State, Zip]',
+    '[Your Email]',
+    '[Your Phone Number]',
+    '[Date]'
+  ];
+  headerLines.forEach(line => {
+    pdf.text(line, margin, y);
+    y += 7; // line spacing for header
+  });
 
-  const jobTitle = document.getElementById('jobTitle').value || 'CoverLetter';
-  const company = document.getElementById('companyName').value || 'Company';
+  y += 10; // extra space after header
+
+  // ✨ BODY (justified)
+  drawJustifiedText(pdf, letterText, margin, y, maxWidth);
+
   const fileName = `CoverLetter_${company}_${jobTitle}.pdf`;
-
   pdf.save(fileName);
   showToast(`📄 ${fileName} downloaded`, "success");
 });
+
 
 
   copyBtn.addEventListener('click', () => {
