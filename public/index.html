@@ -14,8 +14,9 @@
       <p>Create clean, personalized cover letters in seconds.</p>
     </div>
   </header>
-
+  <div id="toast" class="toast hidden"></div>
   <main>
+
     <form id="form" class="form-box">
       <label for="jobTitle">Job Title</label>
       <input type="text" id="jobTitle" placeholder="e.g. Customer Support" required>
@@ -32,9 +33,16 @@
         <option value="friendly">Friendly</option>
         <option value="bold">Bold</option>
       </select>
-
-      <button type="submit" class="btn btn-primary">Generate Your Letter</button>
+       <button id="payButton" class="pay-btn">💳 Pay €1.99 to Unlock</button>
     </form>
+
+    <!-- Template buttons (after form) -->
+    <div class="template-buttons">
+      <button class="template-btn" data-type="professional">Professional</button>
+      <button class="template-btn" data-type="formal">Formal</button>
+      <button class="template-btn" data-type="friendly">Friendly</button>
+      <button class="template-btn" data-type="artistic">Artistic</button>
+    </div>
 
     <div id="spinner" class="hidden">
       <div class="spin"></div>
@@ -55,8 +63,7 @@
   <!-- jsPDF for PDF download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js?v=8"></script>
-  <!-- ✅ Toast Notification -->
-  <div id="toast" class="toast hidden">Copied to clipboard ✅</div>
+
 
 </body>
 </html>

@@ -63,6 +63,14 @@ textarea {
   font-weight: 600;
   transition: 0.2s;
 }
+.btn[disabled],
+button:disabled {
+  background-color: #a9a9a9 !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 
 .btn-primary {
   background: #0077ff;
@@ -150,39 +158,95 @@ textarea {
   min-width: 100px;
 }
 
-/* ✅ Toast notification */
 .toast {
   position: fixed;
-  bottom: 30px;
+  top: -80px; /* starts hidden above viewport */
   left: 50%;
   transform: translateX(-50%);
-  color: white;
-  padding: 0.8rem 1.2rem;
+  background-color: #28a745;
+  color: #fff;
+  padding: 12px 24px;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    top 0.6s ease,
+    opacity 0.6s ease;
   z-index: 1000;
-  min-width: 200px;
-  text-align: center;
 }
 
+/* When toast is visible */
 .toast.show {
+  top: 25px; /* moves down into view */
   opacity: 1;
-  transform: translateX(-50%) translateY(-10px);
+  pointer-events: auto;
 }
 
+/* When toast hides */
 .toast.hidden {
   display: none;
 }
 
-/* 🟢 Success toast */
+/* Optional color variants */
 .toast.success {
-  background: #00c853;
+  background-color: #28a745;
+}
+.toast.error {
+  background-color: #dc3545;
+}
+.toast.info {
+  background-color: #0070f3;
 }
 
-/* 🔴 Error toast */
-.toast.error {
-  background: #d32f2f;
+.pay-btn {
+  display: block;
+  margin: 15px auto;
+  background: #0070f3;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.pay-btn:hover {
+  background: #0059c9;
+}
+.template-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.template-btn {
+  background-color: #0070f3;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+.template-btn:hover {
+  background-color: #0059c9;
+}
+
+/* --- Disabled template buttons --- */
+.template-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #ccc;
+  border: 1px solid #999;
+  color: #666;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* Optional: locked style hover hint */
+.template-btn:disabled::after {
+  content: " 🔒";
 }

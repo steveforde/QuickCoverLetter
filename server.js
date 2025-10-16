@@ -1,48 +1,43 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import OpenAI from 'openai';
+import Stripe from 'stripe';
 
 dotenv.config();
-
 const app = express();
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+// Middleware
 app.use(cors());
 app.use(express.json());
-
-// serve static files (your index.html, script.js, style.css)
 app.use(express.static('public'));
 
-// API route for generating the cover letter
-app.post('/api/generate', async (req, res) => {
-  const { jobTitle, companyName, userName, tone } = req.body;
+// === COVER LETTER GENERATOR ROUTE ===
 
-  if (!jobTitle || !companyName) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
 
+// === STRIPE CHECKOUT ROUTE ===
+app.post('/create-checkout-session', async (req, res) => {
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: 'You are a professional cover letter writer.' },
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [
         {
-          role: 'user',
-          content: `Write a ${tone} cover letter for ${userName || 'the applicant'} applying for the ${jobTitle} role at ${companyName}. Keep it short, clear, and professional.`
-        }
-      ]
+          price: process.env.PRICE_ID,
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.DOMAIN}/success.html`,
+      cancel_url: `${process.env.DOMAIN}/index.html`,
     });
-
-    const letter = completion.choices[0].message.content;
-    res.json({ coverLetter: letter });
+    res.json({ url: session.url });
   } catch (err) {
-    console.error('OpenAI error:', err);
-    res.status(500).json({ error: 'Failed to generate letter' });
+    console.error('Stripe checkout error:', err.message);
+    res.status(500).json({ error: 'Unable to create checkout session' });
   }
 });
 
-
-// Use PORT for Render
+// === SERVER START ===
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
