@@ -276,16 +276,16 @@ clearBtn.addEventListener('click', () => {
   document.getElementById('companyName').value = '';
   document.getElementById('userName').value = '';
 
-  // Re-lock template buttons (user must pay again next time)
-  const hasPaid = localStorage.getItem('hasPaid') === 'true';
-  const templateButtons = document.querySelectorAll('.template-btn');
-  templateButtons.forEach(btn => {
-    if (!hasPaid) {
-      btn.disabled = true;
-      btn.classList.add('locked');
-      if (!btn.textContent.includes('🔒')) btn.textContent += ' 🔒';
-    }
-  });
+ // Re-lock template buttons (user must pay again next time)
+const hasPaid = localStorage.getItem('hasPaid') === 'true';
+const templateButtons = document.querySelectorAll('.template-btn');
+templateButtons.forEach(btn => {
+  if (!hasPaid) {
+    btn.disabled = true;
+    btn.classList.add('locked');
+    // 🔒 Removed to prevent double lock
+  }
+});
 
   // Toast confirmation
   showToast('🧹 Cleared successfully — ready to start fresh.', 'info', 4000);
