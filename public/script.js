@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyBtn = document.getElementById('copyBtn');
   const toast = document.getElementById('toast');
   
-
+  // --- Reset payment state on each fresh load ---
+  localStorage.removeItem('hasPaid');
 
   // === FOUR FULL LETTER TEMPLATES ===
 const templates = {
@@ -95,12 +96,13 @@ const templateButtons = document.querySelectorAll('.template-btn');
 // Initially disable all template buttons
 templateButtons.forEach(btn => btn.disabled = true);
 
-// Enable buttons only after successful payment
+// Check payment flag and unlock if set
 if (localStorage.getItem('hasPaid') === 'true') {
   templateButtons.forEach(btn => btn.disabled = false);
   showToast('✅ Payment confirmed — templates unlocked.', 'success', 4000);
+  // Once unlocked, clear the flag so it won’t falsely persist next time
+  localStorage.removeItem('hasPaid');
 }
-
 
 
 document.querySelectorAll('.template-btn').forEach(btn => {

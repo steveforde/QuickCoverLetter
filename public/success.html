@@ -39,13 +39,14 @@
   <div class="loader"></div>
 
   <script>
-    // Save unlock flag
-    localStorage.setItem('hasPaid', 'true');
+  // ✅ Set the unlock flag
+  localStorage.setItem('hasPaid', 'true');
 
-    // Redirect to main app after 3 seconds
-    setTimeout(() => {
-      window.location.href = 'index.html';
-    }, 3000);
-  </script>
+  // ✅ Delay to show animation before redirect
+  setTimeout(() => {
+    window.location.href = '/index.html';
+  }, 3000);
+</script>
+
 </body>
 </html>
