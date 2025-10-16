@@ -255,7 +255,7 @@ button:disabled {
 
 /* Single lock appended once only */
 .template-btn:disabled::after {
-  content: " 🔒";
+  content: " ";
   font-size: 14px;
   opacity: 0.9;
   position: static;
