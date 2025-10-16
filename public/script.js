@@ -9,36 +9,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const toast = document.getElementById('toast');
   
 
-  // === FOUR FULL LETTER TEMPLATES ===
+// === FOUR FULL LETTER TEMPLATES ===
 const templates = {
-  professional: (name, job, company, date) => `
-${name}
+  professional(name, jobTitle, company, date) {
+    return `${name}
 [Your Address]
 [City, County]
 ${date}
 
 Dear Hiring Manager,
 
-I am writing to express my interest in the ${job} position at ${company}. With a strong background in delivering high-quality results and a commitment to professional excellence, I believe I can contribute effectively to your organisation’s goals.
+I am writing to apply for the ${jobTitle} position at ${company}. With a proven track record of delivering high-quality results and a strong commitment to professional excellence, I am confident in my ability to make a valuable contribution to your team.
 
 Throughout my career, I have developed a reputation for reliability, attention to detail, and the ability to perform under pressure. I take pride in working collaboratively while maintaining accountability for my own responsibilities. My focus has always been on providing consistent, accurate, and professional outcomes that reflect well on both myself and the company I represent.
 
 I am confident that my work ethic, adaptability, and communication skills will make me a valuable addition to your team. I am eager to bring my skills to ${company} and continue developing within a professional environment that values dedication and quality.
 
-Thank you for your time and consideration. I would welcome the opportunity to discuss how I can contribute to your organisation’s success.
+Thank you for taking the time to consider my application. I would be delighted to discuss how my background and work ethic align with the needs of ${company}.
 
 Sincerely,
-${name}`,
+${name}`;
+  },
 
-  formal: (name, job, company, date) => `
-${name}
+  formal(name, jobTitle, company, date) {
+    return `${name}
 [Your Address]
 [City, County]
 ${date}
 
 Dear Hiring Manager,
 
-I wish to formally apply for the ${job} position with ${company}. I am a motivated and dependable individual who takes great care in upholding the highest standards of professionalism and integrity in all aspects of work.
+I wish to formally apply for the ${jobTitle} position with ${company}. I am a motivated and dependable individual who takes great care in upholding the highest standards of professionalism and integrity in all aspects of work.
 
 Over the years, I have developed strong organisational skills and the ability to manage multiple priorities while maintaining accuracy and attention to detail. I take pride in being efficient, dependable, and committed to completing every task to the best of my ability.
 
@@ -47,17 +48,18 @@ I am particularly drawn to ${company} because of its commitment to excellence an
 Thank you for considering my application. I would appreciate the opportunity to meet and discuss how my skills and approach could add value to your team.
 
 Yours faithfully,
-${name}`,
+${name}`;
+  },
 
-  friendly: (name, job, company, date) => `
-${name}
+  friendly(name, jobTitle, company, date) {
+    return `${name}
 [Your Address]
 [City, County]
 ${date}
 
 Dear Hiring Manager,
 
-I’m excited to apply for the ${job} role at ${company}. I’ve always believed that great results come from teamwork, clear communication, and genuine enthusiasm for what you do — values that I bring to every job I take on.
+I’m excited to apply for the ${jobTitle} role at ${company}. I’ve always believed that great results come from teamwork, clear communication, and genuine enthusiasm for what you do — values that I bring to every job I take on.
 
 In previous roles, I’ve built strong relationships with colleagues and customers alike by being approachable, dependable, and eager to help. Whether solving problems, learning new systems, or supporting a busy team, I always aim to make a positive impact and create a friendly working atmosphere.
 
@@ -66,17 +68,18 @@ What attracts me most to ${company} is its reputation for quality and care. I’
 Thank you for taking the time to review my application. I look forward to the chance to speak further about how I can help your company thrive.
 
 Best regards,
-${name}`,
+${name}`;
+  },
 
-  artistic: (name, job, company, date) => `
-${name}
+  artistic(name, jobTitle, company, date) {
+    return `${name}
 [Your Address]
 [City, County]
 ${date}
 
 Dear Hiring Manager,
 
-I am reaching out to express my interest in the ${job} position at ${company}. Creativity, precision, and dedication are the principles that drive my work, and I believe they align perfectly with the innovative values your organisation represents.
+I am reaching out to express my interest in the ${jobTitle} position at ${company}. Creativity, precision, and dedication are the principles that drive my work, and I believe they align perfectly with the innovative values your organisation represents.
 
 Throughout my professional journey, I have developed a unique ability to blend creativity with structure. I take great pride in producing work that is both imaginative and refined, ensuring that every project I undertake reflects thought, care, and attention to detail.
 
@@ -85,8 +88,11 @@ I am inspired by ${company}’s forward-thinking approach and commitment to qual
 Thank you for considering my application. I would welcome the opportunity to bring my creative strengths and collaborative spirit to ${company}.
 
 Warm regards,
-${name}`
+${name}`;
+  }
 };
+
+
 
 // --- DISABLE TEMPLATE BUTTONS UNTIL PAYMENT IS CONFIRMED ---
 const templateButtons = document.querySelectorAll('.template-btn');
@@ -263,7 +269,7 @@ if (payButton) {
         showToast('❌ Failed to copy', 'error');
       });
   });
-});
+
 
 // --- CLEAR BUTTON ---
 clearBtn.addEventListener('click', () => {
@@ -289,4 +295,5 @@ templateButtons.forEach(btn => {
 
   // Toast confirmation
   showToast('🧹 Cleared successfully — ready to start fresh.', 'info', 4000);
-});
+  });
+}); 
