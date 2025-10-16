@@ -216,48 +216,62 @@ button:disabled {
   background-color: #0070f3;
 }
 
-/* 🧩 Template buttons (fixed width + single lock) */
+/* 🧩 Template Buttons - Unified Professional Style */
 .template-buttons {
   display: flex;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
   gap: 14px;
-  max-width: 400px;
-  margin: 10px auto 50px auto; /* reduced gap for tighter layout */
+  margin-top: 25px;
 }
 
+/* Default button style */
 .template-btn {
-  background-color: #0070f3;
-  color: #fff;
+  min-width: 140px;
+  background: #0070f3;
+  color: white;
   border: none;
-  padding: 10px 0; /* equal padding all buttons */
-  border-radius: 8px;
-  cursor: pointer;
+  padding: 12px 20px;
+  border-radius: 10px;
   font-weight: 600;
+  cursor: pointer;
   transition: all 0.3s ease;
-  width: 160px; /* ✅ fixed uniform width */
-  text-align: center;
+  box-shadow: 0 4px 10px rgba(0, 112, 243, 0.2);
 }
 
+/* Hover animation for unlocked buttons */
 .template-btn:hover:not(:disabled) {
-  background-color: #005ad1;
+  background: #0059c9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 112, 243, 0.25);
 }
 
-/* 🔒 Locked (disabled) template buttons — single lock only */
+/* Locked (disabled) buttons — single lock visible */
 .template-btn:disabled {
-  background-color: #0070f3;
-  color: rgba(255, 255, 255, 0.75);
-  border: none;
+  background: #cfdfff; /* lighter blue */
+  color: #3576e0;
+  opacity: 1;
   cursor: not-allowed;
-  opacity: 0.75;
+  box-shadow: none;
   position: relative;
 }
 
-/* Single lock appended once only */
+/* One lock symbol */
 .template-btn:disabled::after {
-  content: " ";
-  font-size: 14px;
-  opacity: 0.9;
-  position: static;
+  content: "🔒";
+  font-size: 15px;
+  margin-left: 6px;
+  opacity: 0.8;
 }
 
+/* Subtle shake when hovered */
+.template-btn:disabled:hover {
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
