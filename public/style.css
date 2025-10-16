@@ -276,14 +276,15 @@ button:disabled {
   transform: translateY(-2px);
 }
 
+/* 💬 Tooltip for locked buttons — appears above instead of below */
 .template-btn:disabled:hover::after {
   content: "Unlock this template for €1.99";
   position: absolute;
-  bottom: -35px;
+  top: -38px; /* 👈 appears above the button */
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.85);
-  color: white;
+  color: #fff;
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 0.8rem;
