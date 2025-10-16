@@ -224,29 +224,23 @@ button:disabled {
 
 .template-btn {
   background-color: #0070f3;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
+  color: #fff;
   border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
-}
-.template-btn:hover {
-  background-color: #0059c9;
+  transition: 0.3s ease;
 }
 
-/* --- Disabled template buttons --- */
+.template-btn:hover:not(:disabled) {
+  background-color: #005ad1;
+}
+
+.template-btn.locked,
 .template-btn:disabled {
-  opacity: 0.5;
+  background-color: #dce2ea;
+  color: #808080;
   cursor: not-allowed;
-  background-color: #ccc;
-  border: 1px solid #999;
-  color: #666;
-  pointer-events: none;
-  transition: all 0.3s ease;
-}
-
-/* Optional: locked style hover hint */
-.template-btn:disabled::after {
-  content: " 🔒";
+  opacity: 0.85;
 }

@@ -8,8 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyBtn = document.getElementById('copyBtn');
   const toast = document.getElementById('toast');
   
-  // --- Reset payment state on each fresh load ---
-  localStorage.removeItem('hasPaid');
 
   // === FOUR FULL LETTER TEMPLATES ===
 const templates = {
@@ -93,14 +91,21 @@ ${name}`
 // --- DISABLE TEMPLATE BUTTONS UNTIL PAYMENT IS CONFIRMED ---
 const templateButtons = document.querySelectorAll('.template-btn');
 
-// Initially disable all template buttons
-templateButtons.forEach(btn => btn.disabled = true);
+// Initially disable and show lock
+templateButtons.forEach(btn => {
+  btn.disabled = true;
+  btn.classList.add('locked');
+  if (!btn.textContent.includes('🔒')) btn.textContent += ' 🔒';
+});
 
-// Check payment flag and unlock if set
+// Enable after payment
 if (localStorage.getItem('hasPaid') === 'true') {
-  templateButtons.forEach(btn => btn.disabled = false);
+  templateButtons.forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove('locked');
+    btn.textContent = btn.textContent.replace(' 🔒', ''); // remove lock icon
+  });
   showToast('✅ Payment confirmed — templates unlocked.', 'success', 4000);
-  // Once unlocked, clear the flag so it won’t falsely persist next time
   localStorage.removeItem('hasPaid');
 }
 
@@ -258,4 +263,30 @@ if (payButton) {
         showToast('❌ Failed to copy', 'error');
       });
   });
+});
+
+// --- CLEAR BUTTON ---
+clearBtn.addEventListener('click', () => {
+  // Reset text area + hide result box
+  coverLetter.value = '';
+  resultBox.classList.add('hidden');
+
+  // Clear form fields
+  document.getElementById('jobTitle').value = '';
+  document.getElementById('companyName').value = '';
+  document.getElementById('userName').value = '';
+
+  // Re-lock template buttons (user must pay again next time)
+  const hasPaid = localStorage.getItem('hasPaid') === 'true';
+  const templateButtons = document.querySelectorAll('.template-btn');
+  templateButtons.forEach(btn => {
+    if (!hasPaid) {
+      btn.disabled = true;
+      btn.classList.add('locked');
+      if (!btn.textContent.includes('🔒')) btn.textContent += ' 🔒';
+    }
+  });
+
+  // Toast confirmation
+  showToast('🧹 Cleared successfully — ready to start fresh.', 'info', 4000);
 });
