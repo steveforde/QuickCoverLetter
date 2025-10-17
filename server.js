@@ -16,27 +16,28 @@ app.use(express.static('public'));
 // === COVER LETTER GENERATOR ROUTE ===
 
 
-// === STRIPE CHECKOUT ROUTE ===
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card'],
       line_items: [
         {
-          price: process.env.PRICE_ID,
+          price: 'price_1SIkTMQRh7jNBCuPMjkvpyFh', // ✅ use your real Stripe price ID
           quantity: 1,
         },
       ],
-      success_url: `${process.env.DOMAIN}/success.html`,
-      cancel_url: `${process.env.DOMAIN}/index.html`,
+      success_url: 'https://quickcoverletter.onrender.com/success.html',
+      cancel_url: 'https://quickcoverletter.onrender.com/',
     });
+
     res.json({ url: session.url });
   } catch (err) {
-    console.error('Stripe checkout error:', err.message);
-    res.status(500).json({ error: 'Unable to create checkout session' });
+    console.error('❌ Stripe error:', err.message);
+    res.status(500).json({ error: err.message });
   }
 });
+
+
 
 // === SERVER START ===
 const PORT = process.env.PORT || 3000;
