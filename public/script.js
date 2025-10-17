@@ -32,65 +32,67 @@ ${name}`;
   },
 
   formal(name, jobTitle, company, date) {
-    return `${name}
+  return `${name}
 [Your Address]
 [City, County]
 ${date}
 
 Dear Hiring Manager,
 
-I wish to formally apply for the ${jobTitle} position with ${company}. I am a motivated and dependable individual who takes great care in upholding the highest standards of professionalism and integrity in all aspects of work.
+I am writing to formally express my interest in the ${jobTitle} position at ${company}. With a consistent record of professionalism, reliability, and attention to detail, I take pride in maintaining the highest standards of performance in every role I undertake.
 
-Over the years, I have developed strong organisational skills and the ability to manage multiple priorities while maintaining accuracy and attention to detail. I take pride in being efficient, dependable, and committed to completing every task to the best of my ability.
+Throughout my career, I have developed strong organisational and communication skills, alongside the ability to manage multiple priorities with precision and care. I am known for my commitment to accuracy, dependability, and a methodical approach to achieving results.
 
-I am particularly drawn to ${company} because of its commitment to excellence and customer satisfaction. I believe my background, combined with a strong sense of responsibility and respect for process, aligns well with your company’s culture.
+I am particularly drawn to ${company} because of its reputation for excellence and its dedication to fostering a professional and supportive working environment. I believe my background, work ethic, and respect for process align closely with your company’s values.
 
-Thank you for considering my application. I would appreciate the opportunity to meet and discuss how my skills and approach could add value to your team.
+Thank you for taking the time to consider my application. I would welcome the opportunity to discuss how my experience and dedication could contribute to the continued success of ${company}.
 
 Yours faithfully,
 ${name}`;
-  },
+},
+
 
   friendly(name, jobTitle, company, date) {
-    return `${name}
+  return `${name}
 [Your Address]
 [City, County]
 ${date}
 
 Dear Hiring Manager,
 
-I’m excited to apply for the ${jobTitle} role at ${company}. I’ve always believed that great results come from teamwork, clear communication, and genuine enthusiasm for what you do — values that I bring to every job I take on.
+I’m excited to apply for the ${jobTitle} position at ${company}. I’ve always believed that great results come from teamwork, clear communication, and a genuine passion for helping others — values I bring to every role I take on.
 
-In previous roles, I’ve built strong relationships with colleagues and customers alike by being approachable, dependable, and eager to help. Whether solving problems, learning new systems, or supporting a busy team, I always aim to make a positive impact and create a friendly working atmosphere.
+In my previous positions, I’ve developed a reputation for being approachable, dependable, and proactive. I take pride in supporting colleagues and customers alike, solving challenges with patience, positivity, and a can-do attitude. Whether assisting a busy team or managing day-to-day responsibilities, I strive to create a positive and productive working environment.
 
-What attracts me most to ${company} is its reputation for quality and care. I’d love the opportunity to bring my energy and reliability to your team and contribute to your ongoing success.
+What stands out to me about ${company} is its commitment to quality, collaboration, and care — qualities I deeply value. I would love the opportunity to bring my enthusiasm and reliability to your team and play a part in ${company}’s continued success.
 
-Thank you for taking the time to review my application. I look forward to the chance to speak further about how I can help your company thrive.
+Thank you for taking the time to consider my application. I look forward to the opportunity to discuss how my approach and energy can contribute to your organisation.
 
-Best regards,
+Kind regards,
 ${name}`;
-  },
+},
+
 
   artistic(name, jobTitle, company, date) {
-    return `${name}
+  return `${name}
 [Your Address]
 [City, County]
 ${date}
 
 Dear Hiring Manager,
 
-I am reaching out to express my interest in the ${jobTitle} position at ${company}. Creativity, precision, and dedication are the principles that drive my work, and I believe they align perfectly with the innovative values your organisation represents.
+I’m excited to express my interest in the ${jobTitle} position at ${company}. My approach to work is guided by creativity, precision, and purpose — qualities that allow me to bring fresh ideas to life while maintaining a high standard of professionalism.
 
-Throughout my professional journey, I have developed a unique ability to blend creativity with structure. I take great pride in producing work that is both imaginative and refined, ensuring that every project I undertake reflects thought, care, and attention to detail.
+Throughout my career, I’ve honed the ability to balance imagination with structure. Whether developing concepts, solving visual challenges, or collaborating on campaigns, I take pride in producing work that is both innovative and thoughtfully executed. Every project I undertake is an opportunity to craft something meaningful and memorable.
 
-I am inspired by ${company}’s forward-thinking approach and commitment to quality. Joining your team would give me the opportunity to contribute my ideas, artistic mindset, and disciplined work ethic toward meaningful, impactful results.
+What draws me to ${company} is its forward-thinking vision and commitment to creative excellence. I’m inspired by organisations that value originality and collaboration, and I’m eager to contribute my ideas, design sense, and dedication to ${company}’s continued growth and success.
 
-Thank you for considering my application. I would welcome the opportunity to bring my creative strengths and collaborative spirit to ${company}.
+Thank you for considering my application. I would welcome the opportunity to discuss how my creative perspective and professional discipline can add value to your team.
 
 Warm regards,
 ${name}`;
-  }
-};
+}}
+
 
 
 
