@@ -352,3 +352,19 @@ button:disabled {
 .template-option .template-btn {
   width: 160px;
 }
+
+/* ✅ FINAL FIX — Toast colors override everything */
+.toast.success {
+  background-color: #28a745 !important;  /* bright green */
+  color: #fff !important;
+}
+
+.toast.error {
+  background-color: #dc3545 !important;  /* red */
+  color: #fff !important;
+}
+
+.toast.info {
+  background-color: #0070f3 !important;  /* blue */
+  color: #fff !important;
+}
