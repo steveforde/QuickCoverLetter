@@ -152,6 +152,11 @@ document.querySelectorAll('.template-btn').forEach(btn => {
     coverLetter.value = templates[type](name, job, company, date);
     resultBox.classList.remove('hidden');
     showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} letter loaded ✅`, 'info', 4000);
+    // 👇 Automatically scroll to the generated letter
+    setTimeout(() => {
+    resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+
   });
 });
 
