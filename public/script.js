@@ -200,18 +200,7 @@ if (payButton) {
 
 
 
- clearBtn.addEventListener('click', () => {
-  coverLetter.value = '';
-  resultBox.classList.add('hidden');
-
-  // Disable Generate button again
-  if (generateBtn) {
-    generateBtn.disabled = true;
-  }
-
-  // Optional: toast feedback
-  showToast('Form cleared — payment required to generate again.', 'info', 4000);
-});
+ 
 
 
   // --- EXACT PDF RENDER (no auto headers or signature) ---
@@ -278,9 +267,8 @@ if (payButton) {
   });
 
 
-// --- CLEAR BUTTON ---
 clearBtn.addEventListener('click', () => {
-  // Reset text area + hide result box
+  // Clear letter and hide result box
   coverLetter.value = '';
   resultBox.classList.add('hidden');
 
@@ -289,18 +277,21 @@ clearBtn.addEventListener('click', () => {
   document.getElementById('companyName').value = '';
   document.getElementById('userName').value = '';
 
- // Re-lock template buttons (user must pay again next time)
-const hasPaid = localStorage.getItem('hasPaid') === 'true';
-const templateButtons = document.querySelectorAll('.template-btn');
-templateButtons.forEach(btn => {
-  if (!hasPaid) {
-    btn.disabled = true;
-    btn.classList.add('locked');
-    // 🔒 Removed to prevent double lock
-  }
+  // Re-lock template buttons (user must pay again next time)
+  const hasPaid = localStorage.getItem('hasPaid') === 'true';
+  const templateButtons = document.querySelectorAll('.template-btn');
+  templateButtons.forEach(btn => {
+    if (!hasPaid) {
+      btn.disabled = true;
+      btn.classList.add('locked');
+    }
+  });
+
+  // ✅ Scroll to top smoothly
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // ✅ Show confirmation toast (green)
+  showToast('🧹 Cleared successfully — ready to start fresh.', 'success', 4000);
 });
 
-  // Toast confirmation
-  showToast('🧹 Cleared successfully — ready to start fresh.', 'info', 4000);
-  });
 }); 

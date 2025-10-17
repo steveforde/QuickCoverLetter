@@ -223,17 +223,22 @@ button:disabled {
   display: none;
 }
 
+/* ✅ Toast Colors (Fixed) */
 .toast.success {
-  background-color: #28a745;
+  background-color: #28a745 !important; /* bright green */
+  color: #fff !important;
 }
 
 .toast.error {
-  background-color: #dc3545;
+  background-color: #dc3545 !important; /* red */
+  color: #fff !important;
 }
 
 .toast.info {
-  background-color: #0070f3;
+  background-color: #0070f3 !important; /* blue for info only */
+  color: #fff !important;
 }
+
 
 /* 🧩 Template Buttons - Unified Professional Style */
 .template-buttons {
