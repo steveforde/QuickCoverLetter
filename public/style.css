@@ -142,16 +142,33 @@ button:disabled {
   }
 }
 
-/* 📄 Result box */
+/* 📄 Result box - centered and polished */
 #resultBox {
-  background: white;
-  padding: 1.5rem;
-  margin-top: 2rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  background: #fff;
+  padding: 1.5rem 2rem;
+  margin: 40px auto; /* centers horizontally */
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  max-width: 600px; /* fixed width for symmetry */
   width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: left;
+  transition: all 0.3s ease;
 }
+
+/* Optional: smooth fade-in when revealed */
+#resultBox.hidden {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+#resultBox:not(.hidden) {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 
 #coverLetter {
   width: 100%;
