@@ -167,11 +167,16 @@ document.querySelectorAll('.template-btn').forEach(btn => {
 function showToast(message, type = 'success', duration = 4000) {
   if (!toast) return;
 
-  toast.textContent = message;
-  toast.classList.remove('hidden', 'success', 'error');
+  // 🔹 Always reset completely first
+  toast.className = 'toast'; // removes all existing classes (success, error, info, hidden, etc.)
+  
+  // 🔹 Add the right type (green/red/blue)
   toast.classList.add(type, 'show');
 
-  // Hide toast after given duration
+  // 🔹 Set message
+  toast.textContent = message;
+
+  // 🔹 Auto-hide after duration
   setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => toast.classList.add('hidden'), 600);
@@ -197,10 +202,6 @@ if (payButton) {
     }
   });
 }
-
-
-
- 
 
 
   // --- EXACT PDF RENDER (no auto headers or signature) ---
