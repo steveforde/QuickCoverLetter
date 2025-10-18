@@ -5,7 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QuickCoverLetter</title>
   <link rel="stylesheet" href="style.css" />
+
+  <!-- ✅ App Branding -->
+  <link rel="icon" type="image/png" href="/icon.png">
+  <link rel="apple-touch-icon" href="/icon.png">
+
+  <!-- ✅ Splash Screen (for mobile app mode) -->
+  <link rel="apple-touch-startup-image" href="/splash.png">
+  <meta name="theme-color" content="#0070f3">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
+
 <body>
   <!-- 🔹 Banner -->
   <header class="hero">
@@ -14,9 +25,10 @@
       <p>Create clean, personalized cover letters in seconds.</p>
     </div>
   </header>
-  <div id="toast" class="toast hidden"></div>
-  <main>
 
+  <div id="toast" class="toast hidden"></div>
+
+  <main>
     <form id="form" class="form-box">
       <label for="jobTitle">Job Title</label>
       <input type="text" id="jobTitle" placeholder="e.g. Customer Support" required>
@@ -30,59 +42,59 @@
       <label for="tone">Tone</label>
       <select id="tone">
         <option value="professional">Professional</option>
+        <option value="formal">Formal</option>
         <option value="friendly">Friendly</option>
-        <option value="bold">Bold</option>
+        <option value="artistic">Artistic</option>
       </select>
-       <button id="payButton" type="button" class="pay-btn">💳 Pay €1.99 to Unlock</button>
 
+      <button id="payButton" type="button" class="pay-btn">💳 Pay €1.99 to Unlock</button>
     </form>
 
-   <!-- Template Selection -->
-<div class="template-buttons">
-  <div class="template-option">
-    <button class="template-btn" data-type="professional">Professional</button>
-    <small>Clean and confident — ideal for corporate or tech roles or gov.</small>
-  </div>
+    <!-- 🔸 Template Selection -->
+    <div class="template-buttons">
+      <div class="template-option">
+        <button class="template-btn" data-type="professional">Professional</button>
+        <small>Clean and confident — ideal for corporate or tech roles or gov.</small>
+      </div>
 
-  <div class="template-option">
-    <button class="template-btn" data-type="formal">Formal</button>
-    <small>Traditional and respectful — great for finance senior positions or legal positions.</small>
-  </div>
+      <div class="template-option">
+        <button class="template-btn" data-type="formal">Formal</button>
+        <small>Traditional and respectful — great for finance senior positions or legal positions.</small>
+      </div>
 
-  <div class="template-option">
-    <button class="template-btn" data-type="friendly">Friendly</button>
-    <small>Warm and approachable — suited to customer-facing jobs or cust support roles.</small>
-  </div>
+      <div class="template-option">
+        <button class="template-btn" data-type="friendly">Friendly</button>
+        <small>Warm and approachable — suited to customer-facing jobs or customer support roles.</small>
+      </div>
 
-  <div class="template-option">
-    <button class="template-btn" data-type="artistic">Artistic</button>
-    <small>Creative and expressive — perfect for design or marketing roles or any creative positions.</small>
-  </div>
-</div>
+      <div class="template-option">
+        <button class="template-btn" data-type="artistic">Artistic</button>
+        <small>Creative and expressive — perfect for design or marketing roles or any creative positions.</small>
+      </div>
+    </div>
 
-
-
+    <!-- 🔸 Spinner -->
     <div id="spinner" class="hidden">
       <div class="spin"></div>
       <span>Generating your letter...</span>
     </div>
 
+    <!-- 🔸 Result Box -->
     <div id="resultBox" class="hidden">
       <h2>Your Cover Letter</h2>
       <textarea id="coverLetter" readonly></textarea>
+
       <div class="actions">
-       <button id="downloadBtn" class="btn btn-primary">Download PDF</button>
-       <button id="copyBtn" class="btn btn-secondary">Copy</button>
-       <button id="clearBtn" class="btn btn-secondary">Clear</button>
-   </div>
+        <button id="downloadBtn" class="btn btn-primary">Download PDF</button>
+        <button id="copyBtn" class="btn btn-secondary">Copy</button>
+        <button id="clearBtn" class="btn btn-secondary">Clear</button>
+      </div>
     </div>
   </main>
 
   <!-- jsPDF for PDF download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="script.js?v=8"></script>
-
-
+  <script src="script.js?v=9"></script>
 </body>
 </html>
 
