@@ -402,12 +402,13 @@ button:disabled {
   display: block;
   font-size: 0.85rem;
   color: #555;
-  margin-top: 10px;
+  margin-top: 8px;           /* ✅ slightly reduced gap */
   line-height: 1.4;
   max-width: 160px;
-  min-height: 48px; /* 🟡 this is the key — ensures all boxes have same height */
+  min-height: 48px;          /* equal height */
   display: flex;
-  align-items: center; /* aligns text to top consistently */
+  align-items: center;       /* centers text vertically inside fixed height */
   justify-content: center;
   text-align: center;
 }
+
