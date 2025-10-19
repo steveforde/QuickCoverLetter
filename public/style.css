@@ -368,3 +368,31 @@ button:disabled {
   background-color: #0070f3 !important;  /* blue */
   color: #fff !important;
 }
+
+
+/* ✨ Force equal height for button + description blocks */
+.template-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;  /* distributes button + text nicely */
+  min-height: 140px;               /* equal block height for all */
+  text-align: center;
+  flex: 1 1 160px;
+}
+
+/* Keep button widths consistent */
+.template-option .template-btn {
+  width: 160px;
+}
+
+/* Make text description consistent */
+.template-option small {
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 10px;
+  line-height: 1.4;
+  max-width: 160px;
+  min-height: 40px;  /* ensures each line-up stays even */
+}
