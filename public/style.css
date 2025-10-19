@@ -402,13 +402,49 @@ button:disabled {
   display: block;
   font-size: 0.85rem;
   color: #555;
-  margin-top: 8px;           /* ✅ slightly reduced gap */
+  margin-top: 8px;
   line-height: 1.4;
   max-width: 160px;
-  min-height: 48px;          /* equal height */
+  min-height: 48px;
   display: flex;
-  align-items: center;       /* centers text vertically inside fixed height */
+  align-items: flex-start;   /* ⬅ Top align instead of center */
   justify-content: center;
+  text-align: center;
+}
+
+/* === Tone option row: hard align with CSS Grid === */
+.template-buttons {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  justify-items: center;
+  align-items: start;
+  column-gap: 24px;
+  row-gap: 12px;
+  margin-top: 35px;
+}
+
+/* Each option = button + description with a fixed internal gap */
+.template-option {
+  display: grid !important;
+  grid-auto-rows: min-content;
+  justify-items: center;
+  width: 200px;         /* keeps all cells same visual width */
+  text-align: center;
+}
+
+/* Button: no random margins */
+.template-option .template-btn {
+  width: 160px;
+  margin: 0 !important;
+}
+
+/* Description: identical top gap + equal height block */
+.template-option small {
+  margin: 8px 0 0 0 !important;  /* fixed gap under every button */
+  max-width: 160px;
+  line-height: 1.4;
+  min-height: 3.2em;              /* ~2 lines height for consistency */
+  display: block;                 /* avoid flex weirdness */
   text-align: center;
 }
 
