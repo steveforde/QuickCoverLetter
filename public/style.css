@@ -1,5 +1,4 @@
 /* 🌐 General layout */
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background: linear-gradient(180deg, #f7f9fc 0%, #eef3fa 100%);
@@ -9,7 +8,6 @@ body {
   min-height: 100vh;
   margin: 0;
 }
-
 
 /* 🔷 Hero banner */
 .hero {
@@ -32,7 +30,7 @@ body {
   margin: 0;
 }
 
-/* 🧾 Form box (centered alignment fix) */
+/* 🧾 Form box */
 .form-box {
   background: #fff;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
@@ -43,7 +41,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  margin: 40px auto 25px auto; /* 👈 centers form perfectly */
+  margin: 40px auto 25px auto;
 }
 
 .form-box:hover {
@@ -79,7 +77,6 @@ button:hover:not(:disabled) {
   box-shadow: 0 4px 12px rgba(0, 112, 243, 0.2);
 }
 
-/* 🟦 Primary */
 .btn-primary,
 .pay-btn {
   background: #0070f3;
@@ -95,7 +92,6 @@ button:hover:not(:disabled) {
   background: #0059c9;
 }
 
-/* 🟩 Secondary */
 .btn-secondary {
   background: #00c853;
   color: white;
@@ -106,7 +102,6 @@ button:hover:not(:disabled) {
   background: #009e42;
 }
 
-/* Disabled buttons */
 button:disabled {
   background: #f2f4f7;
   color: #aaa;
@@ -114,6 +109,12 @@ button:disabled {
   cursor: not-allowed;
   opacity: 0.8;
   box-shadow: none;
+}
+
+.pay-btn:hover {
+  background: #0059c9;
+  box-shadow: 0 0 12px rgba(0, 112, 243, 0.4);
+  transform: translateY(-2px);
 }
 
 /* 🔄 Spinner */
@@ -132,24 +133,22 @@ button:disabled {
   animation: spin 0.8s linear infinite;
 }
 
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .hidden {
   display: none;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* 📄 Result box - centered and polished */
+/* 📄 Result box */
 #resultBox {
   background: #fff;
   padding: 1.5rem 2rem;
-  margin: 40px auto; /* centers horizontally */
+  margin: 40px auto;
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-  max-width: 600px; /* fixed width for symmetry */
+  max-width: 600px;
   width: 90%;
   display: flex;
   flex-direction: column;
@@ -158,7 +157,6 @@ button:disabled {
   transition: all 0.3s ease;
 }
 
-/* Optional: smooth fade-in when revealed */
 #resultBox.hidden {
   opacity: 0;
   transform: translateY(20px);
@@ -168,7 +166,6 @@ button:disabled {
   opacity: 1;
   transform: translateY(0);
 }
-
 
 #coverLetter {
   width: 100%;
@@ -223,34 +220,29 @@ button:disabled {
   display: none;
 }
 
-/* ✅ Toast Colors (Fixed) */
-.toast.success {
-  background-color: #28a745 !important; /* bright green */
-  color: #fff !important;
-}
+.toast.success { background-color: #28a745 !important; color: #fff !important; }
+.toast.error { background-color: #dc3545 !important; color: #fff !important; }
+.toast.info { background-color: #0070f3 !important; color: #fff !important; }
 
-.toast.error {
-  background-color: #dc3545 !important; /* red */
-  color: #fff !important;
-}
-
-.toast.info {
-  background-color: #0070f3 !important; /* blue for info only */
-  color: #fff !important;
-}
-
-
-/* 🧩 Template Buttons - Unified Professional Style */
+/* 🧩 Template Buttons - Grid layout */
 .template-buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  margin-top: 25px;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  justify-items: center;
+  align-items: start;
+  column-gap: 24px;
+  row-gap: 12px;
+  margin-top: 35px;
 }
 
-/* Default button style */
+.template-option {
+  display: grid !important;
+  grid-auto-rows: min-content;
+  justify-items: center;
+  width: 200px;
+  text-align: center;
+}
+
 .template-btn {
   min-width: 140px;
   background: #0070f3;
@@ -262,18 +254,18 @@ button:disabled {
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 10px rgba(0, 112, 243, 0.2);
+  width: 160px;
+  margin: 0 !important;
 }
 
-/* Hover animation for unlocked buttons */
 .template-btn:hover:not(:disabled) {
   background: #0059c9;
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(0, 112, 243, 0.25);
 }
 
-/* Locked (disabled) buttons — single lock visible */
 .template-btn:disabled {
-  background: #cfdfff; /* lighter blue */
+  background: #cfdfff;
   color: #3576e0;
   opacity: 1;
   cursor: not-allowed;
@@ -281,7 +273,6 @@ button:disabled {
   position: relative;
 }
 
-/* Subtle shake when hovered */
 .template-btn:disabled:hover {
   animation: shake 0.4s ease;
 }
@@ -292,17 +283,11 @@ button:disabled {
   75% { transform: translateX(3px); }
 }
 
-.pay-btn:hover {
-  background: #0059c9;
-  box-shadow: 0 0 12px rgba(0, 112, 243, 0.4);
-  transform: translateY(-2px);
-}
-
-/* 💬 Tooltip for locked buttons — appears above instead of below */
+/* Tooltip for locked buttons */
 .template-btn:disabled:hover::after {
   content: "Unlock this template for €1.99";
   position: absolute;
-  top: -38px; /* 👈 appears above the button */
+  top: -38px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.85);
@@ -316,135 +301,16 @@ button:disabled {
   animation: fadeIn 0.3s ease forwards;
 }
 
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
+@keyframes fadeIn { to { opacity: 1; } }
 
-/* Template Options Layout */
-.template-option {
-  text-align: center;
-  max-width: 200px;
-  flex: 1 1 200px;
-}
-
-/* Keep alignment balanced */
-.template-buttons {
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 35px; /* was 25px – increased for better spacing */
-}
-
-/* Descriptive text under buttons */
 .template-option small {
-  display: block;
-  font-size: 0.85rem;
-  color: #555;
-  margin-top: 10px; /* was 6px – adds clarity under buttons */
-  line-height: 1.4;
-  max-width: 180px;
-  text-align: center;
-}
-
-/* Ensure buttons keep consistent width and spacing */
-.template-option .template-btn {
-  width: 160px;
-}
-
-/* ✅ FINAL FIX — Toast colors override everything */
-.toast.success {
-  background-color: #28a745 !important;  /* bright green */
-  color: #fff !important;
-}
-
-.toast.error {
-  background-color: #dc3545 !important;  /* red */
-  color: #fff !important;
-}
-
-.toast.info {
-  background-color: #0070f3 !important;  /* blue */
-  color: #fff !important;
-}
-
-
-/* ✨ Force equal height for button + description blocks */
-.template-option {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;  /* distributes button + text nicely */
-  min-height: 140px;               /* equal block height for all */
-  text-align: center;
-  flex: 1 1 160px;
-}
-
-/* Keep button widths consistent */
-.template-option .template-btn {
-  width: 160px;
-}
-
-/* Make text description consistent */
-.template-option small {
-  display: block;
-  font-size: 0.85rem;
-  color: #555;
-  margin-top: 10px;
-  line-height: 1.4;
-  max-width: 160px;
-  min-height: 40px;  /* ensures each line-up stays even */
-}
-
-/* Make all tone descriptions align perfectly */
-.template-option small {
-  display: block;
-  font-size: 0.85rem;
-  color: #555;
-  margin-top: 8px;
-  line-height: 1.4;
-  max-width: 160px;
-  min-height: 48px;
-  display: flex;
-  align-items: flex-start;   /* ⬅ Top align instead of center */
-  justify-content: center;
-  text-align: center;
-}
-
-/* === Tone option row: hard align with CSS Grid === */
-.template-buttons {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  justify-items: center;
-  align-items: start;
-  column-gap: 24px;
-  row-gap: 12px;
-  margin-top: 35px;
-}
-
-/* Each option = button + description with a fixed internal gap */
-.template-option {
-  display: grid !important;
-  grid-auto-rows: min-content;
-  justify-items: center;
-  width: 200px;         /* keeps all cells same visual width */
-  text-align: center;
-}
-
-/* Button: no random margins */
-.template-option .template-btn {
-  width: 160px;
-  margin: 0 !important;
-}
-
-/* Description: identical top gap + equal height block */
-.template-option small {
-  margin: 8px 0 0 0 !important;  /* fixed gap under every button */
+  margin: 8px 0 0 0 !important;
   max-width: 160px;
   line-height: 1.4;
-  min-height: 3.2em;              /* ~2 lines height for consistency */
-  display: block;                 /* avoid flex weirdness */
+  min-height: 3.2em;
+  display: block;
   text-align: center;
+  font-size: 0.85rem;
+  color: #555;
 }
 
