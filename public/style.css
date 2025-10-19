@@ -396,3 +396,18 @@ button:disabled {
   max-width: 160px;
   min-height: 40px;  /* ensures each line-up stays even */
 }
+
+/* Make all tone descriptions align perfectly */
+.template-option small {
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 10px;
+  line-height: 1.4;
+  max-width: 160px;
+  min-height: 48px; /* 🟡 this is the key — ensures all boxes have same height */
+  display: flex;
+  align-items: center; /* aligns text to top consistently */
+  justify-content: center;
+  text-align: center;
+}
