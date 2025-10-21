@@ -224,93 +224,67 @@ button:disabled {
 .toast.error { background-color: #dc3545 !important; color: #fff !important; }
 .toast.info { background-color: #0070f3 !important; color: #fff !important; }
 
-/* 🧩 Template Buttons - Grid layout */
-.template-buttons {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  justify-items: center;
-  align-items: start;
-  column-gap: 24px;
-  row-gap: 12px;
-  margin-top: 35px;
-}
-
-.template-option {
-  display: grid !important;
-  grid-auto-rows: min-content;
-  justify-items: center;
-  width: 200px;
-  text-align: center;
-}
-
-.template-btn {
-  min-width: 140px;
-  background: #0070f3;
-  color: white;
+/* === 🌗 THEME TOGGLE BUTTON === */
+.theme-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.15);
   border: none;
-  padding: 12px 20px;
-  border-radius: 10px;
-  font-weight: 600;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(0, 112, 243, 0.2);
-  width: 160px;
-  margin: 0 !important;
+  color: white;
+  transition: background 0.3s, transform 0.2s, color 0.3s;
+  z-index: 9999;
+}
+.theme-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.1);
 }
 
-.template-btn:hover:not(:disabled) {
-  background: #0059c9;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0, 112, 243, 0.25);
+/* === 🌞 LIGHT MODE === */
+body {
+  background: linear-gradient(135deg, #0070f3, #3898ff);
+  color: white;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+button, .template-btn {
+  background-color: #0070f3;
+  border: none;
+  color: white;
+  transition: background 0.3s, transform 0.2s, color 0.3s;
+}
+button:hover, .template-btn:hover {
+  background-color: #3898ff;
+  transform: translateY(-1px);
 }
 
-.template-btn:disabled {
-  background: #cfdfff;
-  color: #3576e0;
-  opacity: 1;
-  cursor: not-allowed;
-  box-shadow: none;
-  position: relative;
+/* === 🌙 DARK MODE === */
+body.dark {
+  background: linear-gradient(135deg, #0c0c0c, #1c1c1e);
+  color: #f5f5f5;
+}
+body.dark button,
+body.dark .template-btn {
+  background-color: #0a84ff;
+  color: white;
+}
+body.dark button:hover,
+body.dark .template-btn:hover {
+  background-color: #4da3ff;
+}
+body.dark .theme-btn {
+  background: rgba(255,255,255,0.1);
+  color: #0a84ff;
+}
+body.dark footer {
+  opacity: 0.75;
 }
 
-.template-btn:disabled:hover {
-  animation: shake 0.4s ease;
+/* === 🌈 SOFT CROSSFADE TRANSITION === */
+body, button, .template-btn, .form-box, #resultBox {
+  transition: background 0.4s ease, color 0.4s ease, transform 0.2s ease;
 }
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
-}
-
-/* Tooltip for locked buttons */
-.template-btn:disabled:hover::after {
-  content: "Unlock this template for €1.99";
-  position: absolute;
-  top: -38px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  animation: fadeIn 0.3s ease forwards;
-}
-
-@keyframes fadeIn { to { opacity: 1; } }
-
-.template-option small {
-  margin: 8px 0 0 0 !important;
-  max-width: 160px;
-  line-height: 1.4;
-  min-height: 3.2em;
-  display: block;
-  text-align: center;
-  font-size: 0.85rem;
-  color: #555;
-}
-
