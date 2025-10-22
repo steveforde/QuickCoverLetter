@@ -762,3 +762,22 @@ section {
   #coverLetter { height: 260px; }
 }
 
+/* ✅ Fix dark mode color mismatch (kills the white patch) */
+body.dark,
+body.dark main,
+body.dark .template-buttons,
+body.dark section,
+body.dark .form-box {
+  background: linear-gradient(180deg, #0b0b0b 0%, #111 60%, #181818 100%) !important;
+  color: #f5f5f5 !important;
+  background-attachment: fixed;
+}
+
+/* ✅ Fix light mode full height */
+body,
+main,
+.template-buttons,
+section {
+  background: linear-gradient(180deg, #f4f7ff 0%, #edf2ff 50%, #e8eeff 100%) !important;
+  background-attachment: fixed;
+}
