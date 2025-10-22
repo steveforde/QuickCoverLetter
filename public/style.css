@@ -122,6 +122,25 @@ main, section, footer, .container, .template-buttons {
   z-index: -1;
 }
 
+.hero {
+  position: relative;
+  z-index: 0; /* ensures ::before at -1 sits “behind” the hero but above page bg */
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 28px;
+  background: radial-gradient(circle at center, rgba(0,112,243,0.45), transparent 70%);
+  border-radius: 50%;
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: -1;
+}
 
 /* Soft transparent fade under hero to blend into page bg */
 .hero::after {
