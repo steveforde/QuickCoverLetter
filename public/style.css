@@ -762,22 +762,45 @@ section {
   #coverLetter { height: 260px; }
 }
 
-/* ✅ Fix dark mode color mismatch (kills the white patch) */
-body.dark,
-body.dark main,
-body.dark .template-buttons,
-body.dark section,
-body.dark .form-box {
-  background: linear-gradient(180deg, #0b0b0b 0%, #111 60%, #181818 100%) !important;
-  color: #f5f5f5 !important;
+/* === 🌈 FIX: Full-page seamless background for light & dark === */
+
+/* Light mode full background */
+html, body {
+  min-height: 100%;
+  background: linear-gradient(180deg, #f7f9fc 0%, #eef3fa 60%, #e8efff 100%) !important;
+  background-repeat: no-repeat;
   background-attachment: fixed;
+  color: #111;
 }
 
-/* ✅ Fix light mode full height */
-body,
-main,
-.template-buttons,
-section {
-  background: linear-gradient(180deg, #f4f7ff 0%, #edf2ff 50%, #e8eeff 100%) !important;
+/* Dark mode full background */
+body.dark {
+  background: linear-gradient(180deg, #0b0b0b 0%, #141414 50%, #1c1c1e 100%) !important;
+  background-repeat: no-repeat;
   background-attachment: fixed;
+  color: #f5f5f5;
+}
+
+/* Transparent all inner containers so gradient shows through */
+main,
+.form-box,
+.template-buttons,
+section,
+footer {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Make form-box stand out slightly in dark mode */
+body.dark .form-box {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+/* Light mode form-box for contrast */
+body:not(.dark) .form-box {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(12px);
 }
