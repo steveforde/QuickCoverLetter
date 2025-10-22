@@ -105,6 +105,23 @@ main, section, footer, .container, .template-buttons {
 .hero h1 { font-size: 2rem; margin: 0 0 .5rem 0; }
 .hero p  { font-size: 1rem; margin: 0; opacity: .95; }
 
+
+
+.hero::before {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 28px;
+  background: radial-gradient(circle at center, rgba(0,112,243,0.3), transparent 70%);
+  border-radius: 50%;
+  filter: blur(10px);
+  pointer-events: none;
+  z-index: -1;
+}
+
 /* Soft transparent fade under hero to blend into page bg */
 .hero::after {
   content: "";
@@ -456,12 +473,32 @@ body.dark .theme-btn { background: rgba(255,255,255,.1); color: #0a84ff; }
 footer {
   width: 100%;
   text-align: center;
-  font-size: .9rem;
-  opacity: .85;
-  padding: 16px 10px 26px 10px;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  padding: 18px 10px 26px 10px;
   color: #333;
+  background: rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(0,0,0,0.05);
+  border-radius: 0 0 18px 18px;
+  backdrop-filter: blur(6px);
 }
-body.dark footer { color: #cfcfcf; opacity: .8; }
+
+footer a {
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode */
+body.dark footer {
+  color: #ccc;
+  background: rgba(0,0,0,0.25);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
 
 /* --------------------------
    13) Global smooth transitions
