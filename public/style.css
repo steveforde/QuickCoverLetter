@@ -830,3 +830,37 @@ html.dark, body.dark {
 main, .form-box, .template-buttons, section, footer {
   background: transparent !important;
 }
+
+/* 🌈 FINAL POLISHED BACKGROUNDS — QuickCoverLetter */
+
+/* LIGHT MODE — smooth, calm blue gradient */
+html:not(.dark), body:not(.dark) {
+  background: linear-gradient(180deg, #f8faff 0%, #edf3ff 45%, #dbe7ff 100%) fixed !important;
+  color: #111;
+}
+
+/* DARK MODE — modern dark gradient (not pure black) */
+html.dark, body.dark {
+  background: linear-gradient(180deg, #0f1115 0%, #16181c 50%, #1e2024 100%) fixed !important;
+  color: #f5f5f5;
+}
+
+/* Remove stray backgrounds so gradient shows through */
+main, section, footer, .template-buttons {
+  background: transparent !important;
+}
+
+/* Form box — frosted look on both modes */
+body:not(.dark) .form-box {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+body.dark .form-box {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+}
