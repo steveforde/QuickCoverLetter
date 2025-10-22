@@ -716,6 +716,14 @@ body::after {
   pointer-events: none;
 }
 
+/* Keep sections transparent so the gradient shows through */
+main,
+.template-buttons,
+.container,
+.page,
+section {
+  background: transparent !important;
+}
 /* ==============================
    📱 RESPONSIVE
    ============================== */
