@@ -97,16 +97,15 @@ main, section, footer, .container, .template-buttons {
   color: #fff;
   text-align: center;
   padding: 56px 20px;
-  /* Light-mode hero gradient */
   background: linear-gradient(135deg, var(--blue), var(--blue-500));
-  box-shadow: 0 10px 30px rgba(0,0,0,.10);
-  margin-bottom: 30px; /* room for the fade */
+  box-shadow: 0 10px 30px rgba(0,0,0,.10), 0 4px 20px rgba(0,112,243,.15);
+  margin-bottom: 30px;
 }
 .hero .hero-content { text-align: center; }
 .hero h1 { font-size: 2rem; margin: 0 0 .5rem 0; }
 .hero p  { font-size: 1rem; margin: 0; opacity: .95; }
 
-/* Soft transparent fade under hero to blend into page bg - Adjusted stops for better blend */
+/* Soft transparent fade under hero to blend into page bg */
 .hero::after {
   content: "";
   position: absolute;
@@ -114,7 +113,6 @@ main, section, footer, .container, .template-buttons {
   bottom: -28px;
   height: 56px;
   pointer-events: none;
-  /* Light fade uses hero’s blue, fading to transparent */
   background: linear-gradient(to bottom,
     rgba(56,152,255,0.35),
     rgba(56,152,255,0.15),
@@ -123,11 +121,12 @@ main, section, footer, .container, .template-buttons {
   );
 }
 
-/* Dark-mode hero: deeper blue fade */
+/* Dark-mode hero: deeper blue + stronger glow */
 body.dark .hero {
   background: linear-gradient(135deg, var(--dark-hero-1), var(--dark-hero-2));
-  box-shadow: 0 10px 40px rgba(0,0,0,.45);
+  box-shadow: 0 10px 40px rgba(0,0,0,.45), 0 6px 25px rgba(30,106,255,.25);
 }
+
 body.dark .hero::after {
   background: linear-gradient(to bottom,
     rgba(30,106,255,0.28),
@@ -136,6 +135,7 @@ body.dark .hero::after {
     rgba(30,106,255,0)
   );
 }
+
 
 /* --------------------------
    4) Main spacing
