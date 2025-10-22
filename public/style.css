@@ -21,7 +21,7 @@
   --green-700: #009e42;
 
   --text-dark: #111;
-  --text-muted: #555;
+  --text-muted: #555; /* Original light-mode muted text color */
   --border: #d9d9d9;
   --card-bg: #ffffff;
 
@@ -41,8 +41,7 @@
 html, body { height: 100%; margin: 0; padding: 0; }
 
 /* --------------------------
-   2) Page background (Light & Dark) — FIX APPLIED HERE
-   - Unified, radial gradients for smoother look
+   2) Page background (Light & Dark) - FIXED GRADIENTS
 --------------------------- */
 html, body {
   min-height: 100vh;
@@ -53,9 +52,8 @@ html, body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* 🌞 Light background (soft blue sky - now radial) */
+/* 🌞 Light background (soft blue sky - using radial for smoothness) */
 body:not(.dark) {
-  /* Removed: background: linear-gradient(180deg, #f6f9ff 0%, #eaf1ff 48%, #dce6ff 100%); */
   background: radial-gradient(circle at top center,
     #f9fbff 0%,
     #e7edff 40%,
@@ -63,14 +61,15 @@ body:not(.dark) {
   color: var(--text-dark);
 }
 
-/* 🌙 Dark background (matte charcoal - now radial) */
+/* 🌙 Dark background (matte charcoal - using radial for smoothness) */
 body.dark {
-  /* Removed: background: linear-gradient(180deg, #0e1013 0%, #15171b 50%, #1b1d22 100%); */
   background: radial-gradient(circle at 20% 10%,
     #0b1120 0%,
     #111625 40%,
     #181b26 100%) fixed;
   color: #f5f5f5;
+  /* NEW VARIABLE for dark mode muted text (for descriptions) */
+  --text-muted-dark: #b3b3b3; 
 }
 
 /* Ensure inner wrappers don’t override the gradient */
@@ -87,27 +86,27 @@ main, section, footer, .container, .template-buttons {
 }
 
 /* --------------------------
-   3) Hero (distinct, rounded, soft fade to page) — FIX APPLIED HERE
+   3) Hero (distinct, rounded, soft fade to page) - FIXED FADE
 --------------------------- */
 .hero {
   width: 100%;
   position: relative;
   overflow: visible;
-  border-bottom-left-radius: 32px; /* Adjusted from 30px */
-  border-bottom-right-radius: 32px; /* Adjusted from 30px */
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
   color: #fff;
   text-align: center;
   padding: 56px 20px;
   /* Light-mode hero gradient */
   background: linear-gradient(135deg, var(--blue), var(--blue-500));
   box-shadow: 0 10px 30px rgba(0,0,0,.10);
-  margin-bottom: 30px; /* room for the fade, adjusted from 26px */
+  margin-bottom: 30px; /* room for the fade */
 }
 .hero .hero-content { text-align: center; }
 .hero h1 { font-size: 2rem; margin: 0 0 .5rem 0; }
 .hero p  { font-size: 1rem; margin: 0; opacity: .95; }
 
-/* Soft transparent fade under hero to blend into page bg — Adjusted fade stops */
+/* Soft transparent fade under hero to blend into page bg - Adjusted stops for better blend */
 .hero::after {
   content: "";
   position: absolute;
@@ -117,24 +116,23 @@ main, section, footer, .container, .template-buttons {
   pointer-events: none;
   /* Light fade uses hero’s blue, fading to transparent */
   background: linear-gradient(to bottom,
-    rgba(56,152,255,0.35), /* Adjusted from 0.30 */
-    rgba(56,152,255,0.15), /* Adjusted from 0.18 */
-    rgba(56,152,255,0.05), /* Adjusted from 0.08 */
+    rgba(56,152,255,0.35),
+    rgba(56,152,255,0.15),
+    rgba(56,152,255,0.05),
     rgba(56,152,255,0)
   );
-  /* filter: blur(0.2px); - removed as it can cause its own issues */
 }
 
 /* Dark-mode hero: deeper blue fade */
 body.dark .hero {
   background: linear-gradient(135deg, var(--dark-hero-1), var(--dark-hero-2));
-  box-shadow: 0 10px 40px rgba(0,0,0,.45); /* Adjusted shadow */
+  box-shadow: 0 10px 40px rgba(0,0,0,.45);
 }
 body.dark .hero::after {
   background: linear-gradient(to bottom,
     rgba(30,106,255,0.28),
-    rgba(30,106,255,0.12), /* Adjusted from 0.16 */
-    rgba(30,106,255,0.05), /* Adjusted from 0.07 */
+    rgba(30,106,255,0.12),
+    rgba(30,106,255,0.05),
     rgba(30,106,255,0)
   );
 }
@@ -349,7 +347,12 @@ button:disabled {
   min-height: 3.0em;
   display: block;
   font-size: .86rem;
-  color: var(--text-muted);
+  color: var(--text-muted); /* Uses the dark muted text color for light mode */
+}
+
+/* Dark mode override for the button descriptions - FIXED VISIBILITY */
+body.dark .template-option small {
+  color: var(--text-muted-dark); /* Uses the new lighter color for dark mode */
 }
 
 /* --------------------------
@@ -475,11 +478,11 @@ body::after {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(255,255,255,0.015); /* Adjusted from 0.02 */
+  background: rgba(255,255,255,0.015);
   pointer-events: none;
 }
 body.dark::after {
-  background: rgba(0,0,0,0.03); /* Adjusted from 0.02 */
+  background: rgba(0,0,0,0.03);
 }
 
 /* --------------------------
@@ -513,7 +516,3 @@ body.dark::after {
   .template-btn { width: 100%; }
   #coverLetter { height: 260px; }
 }
-
-/* =========================================================
-   🎨 Removed old conflicting styles, integrated and refined patch
-========================================================= */
