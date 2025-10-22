@@ -34,19 +34,28 @@ body {
   margin: 0;
 }
 
-/* 🧾 Form box */
 .form-box {
-  background: #fff;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  border-radius: 16px;
-  padding: 30px 40px;
-  transition: all 0.3s ease;
-  width: 340px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08),
+              0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 18px;
+  padding: 35px 45px;
+  width: 360px;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  margin: 40px auto 25px auto;
+  gap: 1rem;
+  margin: 50px auto 30px auto;
+  transition: all 0.3s ease;
 }
+
+body.dark .form-box {
+  background: rgba(30, 30, 35, 0.85);
+  box-shadow: 0 8px 28px rgba(255, 255, 255, 0.05),
+              0 4px 10px rgba(255, 255, 255, 0.03);
+}
+
 
 .form-box:hover {
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
@@ -251,10 +260,18 @@ button:disabled {
 
 /* === 🌞 LIGHT MODE === */
 body {
-  background: linear-gradient(135deg, #0070f3, #3898ff);
-  color: white;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(180deg, #f7f9fc 0%, #eef3fa 45%, #e8eef8 75%, #dee6f5 100%);
+  background-attachment: fixed;
+  color: #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
   transition: background 0.4s ease, color 0.4s ease;
 }
+
 button, .template-btn {
   background-color: #0070f3;
   border: none;
@@ -651,12 +668,13 @@ footer {
   color: #333;
 }
 
-/* ==============================
-   🌙 DARK MODE
-   ============================== */
+
+/* === 🌙 DARK MODE === */
 body.dark {
-  background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1d 40%, #222326 100%);
+  background: linear-gradient(180deg, #0b0b0b 0%, #141416 45%, #1c1c1e 75%, #202124 100%);
+  background-attachment: fixed;
   color: #f5f5f5;
+  transition: background 0.4s ease, color 0.4s ease;
 }
 
 body.dark .form-box,
@@ -687,6 +705,14 @@ body.dark footer { color: #cfcfcf; opacity: .8; }
 /* Smooth cross-fade for color theming */
 body, button, .template-btn, .form-box, #resultBox, .form-box input, .form-box select, textarea {
   transition: background var(--transition-slow), color var(--transition-slow), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-med);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.02);
+  pointer-events: none;
 }
 
 /* ==============================
