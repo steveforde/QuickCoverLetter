@@ -284,10 +284,7 @@ button:disabled {
 .btn-secondary:hover { background: var(--green-700); }
 
 /* =====================================================
-   🎯 Unified Action Buttons (Copy / Clear / Download) - FIXED SIZING
-   ===================================================== */
-/* =====================================================
-   🎯 Unified Action Buttons (Copy / Clear / Download) - FIXED ALIGNMENT
+   🎯 Unified Action Buttons (Copy / Clear / Download) - FINAL FIX
    ===================================================== */
 .result-buttons button {
   font-family: inherit;
@@ -296,21 +293,38 @@ button:disabled {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  padding: 12px 22px;
+  padding: 0 22px; /* Remove vertical padding since we use fixed height/line-height */
   width: 130px; 
-  height: 46px;
-  display: inline-flex;
+  height: 50px; /* NEW: Fixed height tall enough for two lines */
+  
+  /* Reset button display to be safe, but align text content center */
+  display: flex; /* Changed to flex to internally center text */
   justify-content: center;
-  align-items: center; 
+  align-items: center;
+
+  text-align: center;
+  line-height: 1.1; /* Tighter line height for two lines */
+  
   color: #fff;
   transition: background var(--transition-fast),
               box-shadow var(--transition-fast),
               transform var(--transition-fast);
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  
-  /* NEW FIX: Use white-space and line-height to ensure single-line text rendering */
-  white-space: nowrap; /* Prevents text from wrapping */
-  line-height: 1;      /* Forces consistent line height for text alignment */
+}
+
+/* NEW: Styles for the single-line buttons (Copy/Clear) to match alignment */
+#copyBtn, #clearBtn {
+    /* Ensures single-line buttons align their text vertically inside the 50px height */
+    padding: 0 22px; 
+    line-height: 1; 
+}
+
+/* NEW: Styles for the text wrapper inside the Download PDF button */
+.result-buttons button .btn-text {
+    /* Use Flexbox internally to force multi-line text alignment */
+    display: block;
+    width: 100%;
+    /* No change to text-align, which is inherited */
 }
 
 /* --- Colors --- */
@@ -336,16 +350,15 @@ button:disabled {
 #clearBtn:hover { background: #b52b3a; }
 #downloadBtn:hover { background: var(--blue-700); }
 
-/*/* --- Layout --- */
+/* --- Layout --- */
 .result-buttons {
   display: flex;
   justify-content: center;
   gap: 14px;
   margin-top: 1rem;
-  /* Ensure the buttons are aligned relative to each other's center */
-  align-items: center; 
+  /* KEY ALIGNMENT FIX: Forces all buttons to align on their bottom edge (baseline) */
+  align-items: flex-end; 
 }
-
 
 /* --- Mobile --- */
 @media (max-width: 480px) {
@@ -354,7 +367,6 @@ button:disabled {
     align-items: center;
   }
   .result-buttons button {
-    /* CHANGED: Match the new standard button width */
     width: 80%;
   }
 }
