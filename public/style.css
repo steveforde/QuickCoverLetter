@@ -293,7 +293,7 @@ button:disabled {
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  padding: 0 22px; /* Remove vertical padding since we use fixed height/line-height */
+  padding: 15px 22px; /* Remove vertical padding since we use fixed height/line-height */
   width: 130px; 
   height: 50px; /* NEW: Fixed height tall enough for two lines */
   
