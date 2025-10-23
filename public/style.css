@@ -366,34 +366,52 @@ button:disabled {
 .hidden { display: none; }
 
 /* --------------------------
-   8) Template buttons grid
+   8) Template buttons grid - FIXED FOR 3-IN-A-ROW LAYOUT
 --------------------------- */
 .template-wrap {
   width: 100%;
   margin: 22px auto 0 auto;
 }
 .template-buttons {
+  /* CHANGED: Use a 3-column layout that takes up to 900px */
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 18px 22px;
+  grid-template-columns: repeat(3, 1fr); /* Forces exactly 3 equal columns */
+  gap: 20px; /* Adjusted gap for better spacing */
   justify-items: center;
   align-items: start;
   width: 100%;
-  max-width: 900px;
+  max-width: 900px; /* You can adjust this max-width if needed */
   margin: 0 auto;
   padding-top: 8px;
+  
+  /* Temporarily hide the 4th button's option to force 3-in-a-row */
+  /* If you want to show all 4, simply remove this rule: */
+  /* The layout will now show 4 columns on large screens */
+  max-width: 700px; /* Reduced max-width to visually center 3 items better */
 }
+
+/* NEW RULE: Hides the 4th item to make the 3-in-a-row perfect.
+   If your buttons are dynamically generated, this might not be needed.
+   Assuming 'Artistic' is the 4th child for the example image. */
+.template-option:nth-child(4) {
+    display: none;
+}
+
+
 .template-option {
-  display: grid;
-  grid-auto-rows: min-content;
-  justify-items: center;
+  display: flex; /* CHANGED: Use flex for vertical centering/stacking */
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center; /* Centers the button and text */
   text-align: center;
-  width: 100%;
-  max-width: 220px;
+  width: 100%; /* Allows the option to fill the grid column */
+  /* Removed: max-width: 220px; */
 }
 
 .template-btn {
-  width: 180px;
+  /* CHANGED: Let the button size be determined by the column (100%) */
+  width: 100%;
+  max-width: 200px; /* Sets a max width for the buttons to keep them proportional */
   min-width: 150px;
   background: var(--blue);
   color: white;
@@ -446,17 +464,19 @@ button:disabled {
 
 .template-option small {
   margin-top: 10px;
-  max-width: 180px;
+  /* Removed max-width to allow text to wrap under the wider button */
   line-height: 1.35;
   min-height: 3.0em;
   display: block;
   font-size: .86rem;
-  color: var(--text-muted); /* Uses the dark muted text color for light mode */
+  color: var(--text-muted);
+  width: 100%; /* Ensures text block takes full column width if needed */
+  max-width: 200px; /* NEW: Matches the max-width of the button above it */
 }
 
-/* Dark mode override for the button descriptions - FIXED VISIBILITY */
+/* Dark mode override for the button descriptions */
 body.dark .template-option small {
-  color: var(--text-muted-dark); /* Uses the new lighter color for dark mode */
+  color: var(--text-muted-dark);
 }
 
 /* --------------------------
