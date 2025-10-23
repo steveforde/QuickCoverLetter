@@ -283,6 +283,53 @@ button:disabled {
 }
 .btn-secondary:hover { background: var(--green-700); }
 
+/* --- Fix Copy and Clear Buttons (Match Download PDF) --- */
+#copyBtn, #clearBtn {
+  background: var(--green);
+  color: #fff;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  width: 150px;
+}
+
+#clearBtn {
+  background: #dc3545; /* red tone */
+}
+
+#copyBtn:hover {
+  background: var(--green-700);
+  transform: translateY(-2px);
+}
+
+#clearBtn:hover {
+  background: #b52b3a;
+  transform: translateY(-2px);
+}
+
+/* Layout for all result box buttons */
+.result-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 1rem;
+}
+
+/* Stack buttons neatly on mobile */
+@media (max-width: 480px) {
+  .result-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  #copyBtn, #clearBtn {
+    width: 80%;
+  }
+}
+
+
 /* --------------------------
    7) Spinner
 --------------------------- */
