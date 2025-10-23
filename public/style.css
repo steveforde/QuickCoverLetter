@@ -286,6 +286,9 @@ button:disabled {
 /* =====================================================
    🎯 Unified Action Buttons (Copy / Clear / Download) - FIXED SIZING
    ===================================================== */
+/* =====================================================
+   🎯 Unified Action Buttons (Copy / Clear / Download) - FIXED ALIGNMENT
+   ===================================================== */
 .result-buttons button {
   font-family: inherit;
   font-weight: 600;
@@ -294,19 +297,19 @@ button:disabled {
   border-radius: 8px;
   cursor: pointer;
   padding: 12px 22px;
-  /* CHANGED: Set a fixed width to ensure consistency. 
-     You had min-width: 150px; but a fixed width is cleaner here. */
-  width: 130px; /* NEW: Set a consistent width for all three buttons */
+  width: 130px; /* Ensures consistent size */
   height: 46px;
   display: inline-flex;
   justify-content: center;
-  align-items: center;
+  /* NEW FIX: Align the content (text) of the button to the center vertically */
+  align-items: center; 
   color: #fff;
   transition: background var(--transition-fast),
               box-shadow var(--transition-fast),
               transform var(--transition-fast);
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
+
 
 /* --- Colors --- */
 #copyBtn {
@@ -334,12 +337,11 @@ button:disabled {
 /* --- Layout --- */
 .result-buttons {
   display: flex;
-  /* CHANGED: Use space-between to evenly distribute the buttons 
-     within the container width (if desired), or keep 'center'. 
-     We'll stick to 'center' for now to keep them grouped under the text area. */
   justify-content: center;
   gap: 14px;
   margin-top: 1rem;
+  /* FIX: Align all flex items (the buttons) to the same vertical line */
+  align-items: center; /* Changed from flex-end to center for better visual balance */
 }
 
 /* --- Mobile --- */
