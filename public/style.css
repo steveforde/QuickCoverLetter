@@ -297,19 +297,21 @@ button:disabled {
   border-radius: 8px;
   cursor: pointer;
   padding: 12px 22px;
-  width: 130px; /* Ensures consistent size */
+  width: 130px; 
   height: 46px;
   display: inline-flex;
   justify-content: center;
-  /* NEW FIX: Align the content (text) of the button to the center vertically */
   align-items: center; 
   color: #fff;
   transition: background var(--transition-fast),
               box-shadow var(--transition-fast),
               transform var(--transition-fast);
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  
+  /* NEW FIX: Use white-space and line-height to ensure single-line text rendering */
+  white-space: nowrap; /* Prevents text from wrapping */
+  line-height: 1;      /* Forces consistent line height for text alignment */
 }
-
 
 /* --- Colors --- */
 #copyBtn {
@@ -334,15 +336,16 @@ button:disabled {
 #clearBtn:hover { background: #b52b3a; }
 #downloadBtn:hover { background: var(--blue-700); }
 
-/* --- Layout --- */
+/*/* --- Layout --- */
 .result-buttons {
   display: flex;
   justify-content: center;
   gap: 14px;
   margin-top: 1rem;
-  /* FIX: Align all flex items (the buttons) to the same vertical line */
-  align-items: center; /* Changed from flex-end to center for better visual balance */
+  /* Ensure the buttons are aligned relative to each other's center */
+  align-items: center; 
 }
+
 
 /* --- Mobile --- */
 @media (max-width: 480px) {
