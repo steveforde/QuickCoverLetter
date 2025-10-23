@@ -284,7 +284,7 @@ button:disabled {
 .btn-secondary:hover { background: var(--green-700); }
 
 /* =====================================================
-   🎯 Unified Action Buttons (Copy / Clear / Download)
+   🎯 Unified Action Buttons (Copy / Clear / Download) - FIXED SIZING
    ===================================================== */
 .result-buttons button {
   font-family: inherit;
@@ -294,7 +294,9 @@ button:disabled {
   border-radius: 8px;
   cursor: pointer;
   padding: 12px 22px;
-  min-width: 150px;
+  /* CHANGED: Set a fixed width to ensure consistency. 
+     You had min-width: 150px; but a fixed width is cleaner here. */
+  width: 130px; /* NEW: Set a consistent width for all three buttons */
   height: 46px;
   display: inline-flex;
   justify-content: center;
@@ -332,6 +334,9 @@ button:disabled {
 /* --- Layout --- */
 .result-buttons {
   display: flex;
+  /* CHANGED: Use space-between to evenly distribute the buttons 
+     within the container width (if desired), or keep 'center'. 
+     We'll stick to 'center' for now to keep them grouped under the text area. */
   justify-content: center;
   gap: 14px;
   margin-top: 1rem;
@@ -344,10 +349,10 @@ button:disabled {
     align-items: center;
   }
   .result-buttons button {
+    /* CHANGED: Match the new standard button width */
     width: 80%;
   }
 }
-
 
 
 /* --------------------------
