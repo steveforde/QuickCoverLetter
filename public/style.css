@@ -662,3 +662,41 @@ body.dark::after {
   .template-btn { width: 100%; }
   #coverLetter { height: 260px; }
 }
+
+/* === Fix result actions row: equal sizes, aligned === */
+#resultBox .actions {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+/* Normalize all three buttons inside the actions row */
+#resultBox .actions button,
+#resultBox .actions .btn-primary,
+#resultBox .actions .btn-secondary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 0 !important;              /* kill the .btn-primary auto center */
+  flex: 1 1 0;                        /* equal widths */
+  min-width: 160px;                   /* prevents tiny buttons on wide screens */
+  height: 44px;                       /* identical height */
+  padding: 0 18px;                    /* horizontal breathing room */
+  border-radius: 10px;
+  font-weight: 700;
+  line-height: 1;                     /* keeps text vertically centered */
+}
+
+/* Optional: tighter layout on small screens (stack) */
+@media (max-width: 560px) {
+  #resultBox .actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  #resultBox .actions button {
+    width: 100%;
+    min-width: 0;
+  }
+}
