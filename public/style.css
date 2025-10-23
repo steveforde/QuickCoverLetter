@@ -283,6 +283,12 @@ button:disabled {
 }
 .btn-secondary:hover { background: var(--green-700); }
 
+/* =====================================================
+   🎯 Unified Action Buttons (Copy / Clear / Download) - FIXED SIZING
+   ===================================================== */
+/* =====================================================
+   🎯 Unified Action Buttons (Copy / Clear / Download) - FIXED ALIGNMENT
+   ===================================================== */
 .result-buttons button {
   font-family: inherit;
   font-weight: 600;
@@ -292,26 +298,19 @@ button:disabled {
   cursor: pointer;
   padding: 12px 22px;
   width: 130px; 
-  /* INCREASE HEIGHT: Give enough space for two lines of text to breathe */
-  height: 50px; 
-  
-  /* Use FLEX for perfect vertical/horizontal centering of content */
-  display: flex;
-  flex-direction: column; /* NEW: Stack lines vertically */
-  justify-content: center; /* NEW: Center stacked lines vertically */
-  align-items: center; /* NEW: Center stacked lines horizontally */
-  
-  /* Text styling for multi-line content */
-  text-align: center;
-  line-height: 1.1; /* Slightly tighter line height for a compact look */
-  
+  height: 46px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center; 
   color: #fff;
   transition: background var(--transition-fast),
               box-shadow var(--transition-fast),
               transform var(--transition-fast);
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
   
-  /* Remove white-space: nowrap; if you still had it */
+  /* NEW FIX: Use white-space and line-height to ensure single-line text rendering */
+  white-space: nowrap; /* Prevents text from wrapping */
+  line-height: 1;      /* Forces consistent line height for text alignment */
 }
 
 /* --- Colors --- */
@@ -337,13 +336,13 @@ button:disabled {
 #clearBtn:hover { background: #b52b3a; }
 #downloadBtn:hover { background: var(--blue-700); }
 
-/* --- Layout --- */
+/*/* --- Layout --- */
 .result-buttons {
   display: flex;
   justify-content: center;
   gap: 14px;
   margin-top: 1rem;
-  /* Key alignment: ensures the buttons themselves align to the center point */
+  /* Ensure the buttons are aligned relative to each other's center */
   align-items: center; 
 }
 
