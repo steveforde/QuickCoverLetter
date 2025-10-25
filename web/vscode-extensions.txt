@@ -1,0 +1,6 @@
+esbenp.prettier-vscode
+ritwickdey.liveserver
+dbaeumer.vscode-eslint
+github.copilot
+pkief.material-icon-theme
+eamodio.gitlens
