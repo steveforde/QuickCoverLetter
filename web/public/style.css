@@ -12,7 +12,7 @@
 :root {
   --blue: #0070f3;
   --blue-700: #0059c9;
-  --blue-500: #3898ff;
+  --blue-500: #3898ff; /* Lighter, more vibrant blue */
 
   --dark-hero-1: #0a37d5; /* deeper royal in dark mode */
   --dark-hero-2: #1e6aff; /* electric blue */
@@ -311,7 +311,7 @@ button:disabled {
 
 .btn-primary,
 .pay-btn {
-  background: var(--blue);
+  background: var(--blue-500) !important;
   color: #fff;
   padding: 12px 20px;
   margin: 10px auto 0 auto;
@@ -320,7 +320,7 @@ button:disabled {
 }
 .btn-primary:hover,
 .pay-btn:hover {
-  background: var(--blue-700);
+  background: var(--blue) !important;
 }
 
 .btn-secondary {
@@ -386,7 +386,7 @@ button:disabled {
   box-shadow: 0 4px 10px rgba(220, 53, 69, 0.25);
 }
 #downloadBtn {
-  background: var(--blue);
+  background: var(--blue-500); /* Adjusted to the Lighter Blue */
   box-shadow: 0 4px 10px rgba(0, 112, 243, 0.25);
 }
 
@@ -402,7 +402,7 @@ button:disabled {
   background: #b52b3a;
 }
 #downloadBtn:hover {
-  background: var(--blue-700);
+  background: var(--blue); /* Hovering makes it slightly darker */
 }
 
 /* --- Layout --- */
@@ -453,7 +453,7 @@ button:disabled {
 }
 
 /* --------------------------
-   8) Template buttons grid
+   8) Template buttons grid - FIXED COLOR FOR PROMINENCE
 --------------------------- */
 .template-wrap {
   width: 100%;
@@ -482,7 +482,7 @@ button:disabled {
 .template-btn {
   width: 180px;
   min-width: 150px;
-  background: var(--blue);
+  background: var(--blue-500); /* CHANGED to Lighter Blue for pop */
   color: white;
   border: none;
   padding: 12px 18px;
@@ -493,7 +493,7 @@ button:disabled {
   box-shadow: 0 4px 10px rgba(0, 112, 243, 0.2);
 }
 .template-btn:hover:not(:disabled) {
-  background: var(--blue-700);
+  background: var(--blue); /* CHANGED: Hover state is now the medium blue */
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(0, 112, 243, 0.25);
 }
