@@ -1,10 +1,11 @@
 console.log('✅ script.js loaded and executing');
 document.addEventListener('DOMContentLoaded', async () => {
   // === BASE CONFIG ===
-  // If frontend and backend are on the same Render app:
-  const BASE_URL = window.location.origin;
-  // If they're separate, replace above with backend URL:
-  // const BASE_URL = 'https://quickcoverletter-backend.onrender.com';
+  // ⛔️ OLD
+  // const BASE_URL = window.location.origin;
+
+  // ✅ NEW
+  const BASE_URL = 'https://quickcoverletter-backend.onrender.com';
 
   const form = document.getElementById('form');
   const spinner = document.getElementById('spinner');
@@ -15,9 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const copyBtn = document.getElementById('copyBtn');
   const toast = document.getElementById('toast');
   const payButton = document.getElementById('payButton');
-  // ⚡ TEMP: Force result box to show on page load
-  resultBox.classList.remove('hidden');
-
   let isProUser = localStorage.getItem('hasPaid') === 'true';
 
   console.log('🧭 Element check:', {
@@ -173,7 +171,7 @@ ${name}`;
       const data = await res.json();
       spinner.classList.add('hidden');
       coverLetter.value = data.error || data.letter || 'No letter generated.';
-      resultBox.classList.remove('hidden');
+      resultBox.classList.remove('hidden'); // <- keep this here
     } catch (err) {
       spinner.classList.add('hidden');
       console.error('⚠️ Generate error:', err);
@@ -198,6 +196,7 @@ ${name}`;
         console.log('📡 Stripe response:', data);
 
         if (data.url) {
+          resultBox.classList.remove('hidden'); // <- add this line
           window.location.href = data.url;
         } else {
           console.error('❌ No URL in Stripe response', data);
