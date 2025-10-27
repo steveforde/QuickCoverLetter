@@ -7,43 +7,52 @@ dotenv.config();
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-app.use(express.json());
-
-// ✅ Allow both your frontend and localhost to talk to backend
 app.use(
   cors({
     origin: ['https://quickcoverletter.onrender.com', 'http://localhost:3000'],
     methods: ['GET', 'POST'],
   })
 );
+app.use(express.json());
 
-// --- HEALTH CHECK ROUTE ---
+// 👇 Serve your frontend from the "public" folder
+app.use(express.static('public'));
+
+// Optional: root route to index.html explicitly
 app.get('/', (req, res) => {
-  res.send('✅ QuickCoverLetter backend running');
+  res.sendFile('index.html', { root: 'public' });
 });
 
-// --- STRIPE CHECKOUT SESSION ROUTE ---
+// === Stripe Checkout ===
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: [
         {
-          price: 'price_1SIkTMQRh7jNBCuPMjkvpyFh', // your Stripe price ID
+          price: process.env.PRICE_ID,
           quantity: 1,
         },
       ],
-      success_url: 'https://quickcoverletter.onrender.com/success.html',
-      cancel_url: 'https://quickcoverletter.onrender.com/',
+      success_url: `${process.env.DOMAIN}/success.html`,
+      cancel_url: `${process.env.DOMAIN}/cancel.html`,
     });
 
     res.json({ url: session.url });
-  } catch (error) {
-    console.error('❌ Stripe error:', error);
-    res.status(500).json({ error: error.message });
+  } catch (err) {
+    console.error('❌ Stripe error:', err);
+    res.status(500).json({ error: 'Payment failed' });
   }
 });
 
-// --- START SERVER ---
+// === API route example (if needed)
+app.post('/api/generate', (req, res) => {
+  // ... your AI or letter generation logic here ...
+  res.json({ letter: 'Generated cover letter goes here' });
+});
+
+// === Start server ===
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
