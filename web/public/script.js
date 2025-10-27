@@ -108,7 +108,7 @@ ${name}`;
 
     try {
       const res = await fetch(
-        'https://quickcoverletter.onrender.com/api/generate',
+        'https://quickcoverletter-backend.onrender.com/api/generate', // ✅ THIS IS CORRECT
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
