@@ -9,10 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const toast = document.getElementById('toast');
   let isProUser = localStorage.getItem('hasPaid') === 'true'; // 🔧 NEW
 
- // === FOUR FULL LETTER TEMPLATES ===
-const templates = {
-  professional(name, jobTitle, company, date) {
-    return `${name}
+  // === FOUR FULL LETTER TEMPLATES ===
+  const templates = {
+    professional(name, jobTitle, company, date) {
+      return `${name}
 [Your Address]
 [City, County]
 ${date}
@@ -29,10 +29,10 @@ Thank you for taking the time to consider my application. I would be delighted t
 
 Sincerely,
 ${name}`;
-  },
+    },
 
-  formal(name, jobTitle, company, date) {
-    return `${name}
+    formal(name, jobTitle, company, date) {
+      return `${name}
 [Your Address]
 [City, County]
 ${date}
@@ -49,10 +49,10 @@ Thank you for taking the time to consider my application. I would welcome the op
 
 Yours faithfully,
 ${name}`;
-  },
+    },
 
-  friendly(name, jobTitle, company, date) {
-    return `${name}
+    friendly(name, jobTitle, company, date) {
+      return `${name}
 [Your Address]
 [City, County]
 ${date}
@@ -69,10 +69,10 @@ Thank you for taking the time to consider my application. I look forward to the 
 
 Kind regards,
 ${name}`;
-  },
+    },
 
-  artistic(name, jobTitle, company, date) {
-    return `${name}
+    artistic(name, jobTitle, company, date) {
+      return `${name}
 [Your Address]
 [City, County]
 ${date}
@@ -89,16 +89,58 @@ Thank you for considering my application. I would welcome the opportunity to dis
 
 Warm regards,
 ${name}`;
-  }
-};
+    },
+  };
 
+  document.getElementById('form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const jobTitle = document.getElementById('jobTitle').value;
+    const companyName = document.getElementById('companyName').value;
+    const tone = document.getElementById('tone').value;
+    const name = document.getElementById('name').value;
+
+    const spinner = document.getElementById('spinner');
+    const resultBox = document.getElementById('resultBox');
+    const coverLetter = document.getElementById('coverLetter');
+
+    spinner.classList.remove('hidden');
+
+    try {
+      const res = await fetch(
+        'https://quickcoverletter.onrender.com/api/generate',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobTitle, companyName, tone, name }),
+        }
+      );
+
+      const data = await res.json();
+      spinner.classList.add('hidden');
+
+      if (data.error) {
+        coverLetter.value = data.error;
+        resultBox.classList.remove('hidden');
+      } else {
+        coverLetter.value = data.letter;
+        resultBox.classList.remove('hidden');
+      }
+    } catch (err) {
+      spinner.classList.add('hidden');
+      alert('⚠️ Failed to connect to server.');
+      console.error(err);
+    }
+  });
+
+  if (!res.ok) throw new Error('Server returned an error');
 
   // --- DISABLE TEMPLATE BUTTONS UNTIL PAYMENT IS CONFIRMED ---
   const templateButtons = document.querySelectorAll('.template-btn');
 
   // 🔧 NEW — Helper: add or remove lock icons visually
   function updateLockIcons() {
-    templateButtons.forEach(btn => {
+    templateButtons.forEach((btn) => {
       const lockIcon = btn.querySelector('.lock-icon');
       if (!isProUser) {
         btn.disabled = true;
@@ -126,7 +168,7 @@ ${name}`;
     localStorage.removeItem('hasPaid');
   }
 
-  document.querySelectorAll('.template-btn').forEach(btn => {
+  document.querySelectorAll('.template-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const type = btn.dataset.type;
 
@@ -136,7 +178,11 @@ ${name}`;
 
       // Validation
       if (!nameInput.value.trim()) {
-        showToast('⚠️ Please enter your name before generating your letter.', 'error', 4000);
+        showToast(
+          '⚠️ Please enter your name before generating your letter.',
+          'error',
+          4000
+        );
         nameInput.focus();
         return;
       }
@@ -155,12 +201,18 @@ ${name}`;
       const job = jobInput.value.trim();
       const company = companyInput.value.trim();
       const date = new Date().toLocaleDateString('en-IE', {
-        day: 'numeric', month: 'long', year: 'numeric'
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
       });
 
       coverLetter.value = templates[type](name, job, company, date);
       resultBox.classList.remove('hidden');
-      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} letter loaded ✅`, 'info', 4000);
+      showToast(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} letter loaded ✅`,
+        'info',
+        4000
+      );
       setTimeout(() => {
         resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 300);
@@ -184,7 +236,12 @@ ${name}`;
   if (payButton) {
     payButton.addEventListener('click', async () => {
       try {
-        const res = await fetch('/create-checkout-session', { method: 'POST' });
+        const res = await fetch(
+          'https://quickcoverletter-backend.onrender.com/create-checkout-session',
+          {
+            method: 'POST',
+          }
+        );
         const data = await res.json();
         if (data.url) {
           window.location.href = data.url;
@@ -206,7 +263,9 @@ ${name}`;
     const margin = x;
     const lines = text.replace(/\r\n/g, '\n').split('\n');
     for (const rawLine of lines) {
-      const chunks = rawLine.length ? pdf.splitTextToSize(rawLine, maxWidth) : [''];
+      const chunks = rawLine.length
+        ? pdf.splitTextToSize(rawLine, maxWidth)
+        : [''];
       for (const chunk of chunks) {
         if (y > pageH - margin) {
           pdf.addPage();
@@ -225,8 +284,12 @@ ${name}`;
   downloadBtn.addEventListener('click', () => {
     const letterText = coverLetter.value || '';
     if (!letterText.trim()) return;
-    const jobTitle = (document.getElementById('jobTitle').value || 'CoverLetter').trim();
-    const company = (document.getElementById('companyName').value || 'Company').trim();
+    const jobTitle = (
+      document.getElementById('jobTitle').value || 'CoverLetter'
+    ).trim();
+    const company = (
+      document.getElementById('companyName').value || 'Company'
+    ).trim();
 
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     pdf.setFont('times', 'normal');
@@ -245,7 +308,8 @@ ${name}`;
 
   copyBtn.addEventListener('click', () => {
     if (!coverLetter.value.trim()) return;
-    navigator.clipboard.writeText(coverLetter.value)
+    navigator.clipboard
+      .writeText(coverLetter.value)
       .then(() => showToast('Copied to clipboard ✅', 'success'))
       .catch((err) => {
         console.error('Failed to copy: ', err);
@@ -253,33 +317,36 @@ ${name}`;
       });
   });
 
- // === DARK MODE TOGGLE ===
-const themeToggle = document.getElementById('themeToggle');
-if (themeToggle) {
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const savedTheme = localStorage.getItem('theme');
+  // === DARK MODE TOGGLE ===
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    const prefersDark = window.matchMedia(
+      '(prefers-color-scheme: dark)'
+    ).matches;
+    const savedTheme = localStorage.getItem('theme');
 
-  if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-    document.body.classList.add('dark');
-    themeToggle.textContent = '☀️';
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      document.body.classList.add('dark');
+      themeToggle.textContent = '☀️';
+    }
+
+    themeToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
+      const isDark = document.body.classList.contains('dark');
+      themeToggle.textContent = isDark ? '☀️' : '🌙';
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    });
   }
 
-  themeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark');
-    const isDark = document.body.classList.contains('dark');
-    themeToggle.textContent = isDark ? '☀️' : '🌙';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-  });
-}
-
-// === LIVE SYSTEM THEME SYNC ===
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  const newTheme = e.matches ? 'dark' : 'light';
-  document.body.classList.toggle('dark', newTheme === 'dark');
-  localStorage.setItem('theme', newTheme);
-  themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-});
-
+  // === LIVE SYSTEM THEME SYNC ===
+  window
+    .matchMedia('(prefers-color-scheme: dark)')
+    .addEventListener('change', (e) => {
+      const newTheme = e.matches ? 'dark' : 'light';
+      document.body.classList.toggle('dark', newTheme === 'dark');
+      localStorage.setItem('theme', newTheme);
+      themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    });
 
   // --- CLEAR BUTTON ---
   clearBtn.addEventListener('click', () => {
@@ -293,6 +360,10 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
     updateLockIcons(); // 🔧 NEW — visually restore lock icons if needed
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast('🧹 Cleared successfully — ready to start fresh.', 'success', 4000);
+    showToast(
+      '🧹 Cleared successfully — ready to start fresh.',
+      'success',
+      4000
+    );
   });
 });

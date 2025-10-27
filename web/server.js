@@ -13,8 +13,30 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// === COVER LETTER GENERATOR ROUTE ===
+app.post('/api/generate', (req, res) => {
+  const { jobTitle, companyName, tone, name } = req.body;
 
+  if (!jobTitle || !companyName || !name) {
+    return res
+      .status(400)
+      .json({ error: 'Missing job title, company name, or name' });
+  }
+
+  const sampleLetter = `
+Dear Hiring Manager,
+
+I am excited to apply for the ${jobTitle} position at ${companyName}. 
+With strong communication skills and a ${tone || 'professional'} attitude, 
+I’m confident I can contribute positively to your team.
+
+Kind regards,  
+${name}
+`;
+
+  res.json({ letter: sampleLetter.trim() });
+});
+
+// === COVER LETTER GENERATOR ROUTE ===
 
 app.post('/create-checkout-session', async (req, res) => {
   try {
@@ -36,8 +58,6 @@ app.post('/create-checkout-session', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
 
 // === SERVER START ===
 const PORT = process.env.PORT || 3000;

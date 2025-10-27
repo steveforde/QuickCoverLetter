@@ -7,7 +7,7 @@
   "editor.cursorBlinking": "smooth",
 
   // 🌙 Theme
-  "workbench.colorTheme": "Default Dark+",
+  "workbench.colorTheme": "Deepdark Material Theme | Default Version",
   "workbench.iconTheme": "material-icon-theme",
   "window.zoomLevel": 0,
 
@@ -46,5 +46,6 @@
     "plaintext": true,
     "markdown": true,
     "javascript": true
-  }
+  },
+  "cSpell.words": ["Mjkvpy"]
 }
