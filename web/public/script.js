@@ -32,12 +32,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ✅ Button event listeners
   if (payButton) {
-    payButton.addEventListener('click', () => {
+    payButton.addEventListener('click', async () => {
       console.log('✅ Pay button clicked');
-      showToast('Stripe payment flow triggered...');
+      showToast('⏳ Connecting to Stripe — this may take a few seconds...');
+
+      try {
+        const res = await fetch(`${BASE_URL}/create-checkout-session`, {
+          method: 'POST',
+        });
+        const data = await res.json();
+        console.log('📡 Stripe response:', data);
+
+        if (data.url) {
+          // ✅ Redirect to Stripe
+          window.location.href = data.url;
+        } else {
+          console.error('❌ No URL returned from backend', data);
+          showToast('❌ Payment URL not received.', 'error');
+        }
+      } catch (err) {
+        console.error('❌ Stripe payment error:', err);
+        showToast('⚠️ Payment setup failed. Check console.', 'error');
+      }
     });
-  } else {
-    console.warn('⚠️ payButton not found');
   }
 
   if (copyBtn) {
