@@ -1,3 +1,4 @@
+console.log('✅ script.js loaded and executing');
 document.addEventListener('DOMContentLoaded', async () => {
   // === BASE CONFIG ===
   // If frontend and backend are on the same Render app:
