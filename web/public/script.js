@@ -1,4 +1,5 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {const res = await fetch('https://quickcoverletter-backend.onrender.com/create-checkout-session', { method: 'POST' });
+
   const form = document.getElementById('form');
   const spinner = document.getElementById('spinner');
   const resultBox = document.getElementById('resultBox');
@@ -106,11 +107,8 @@ ${name}`;
 
     spinner.classList.remove('hidden');
 
-    try {
-      const res = await fetch(
-        'https://quickcoverletter-backend.onrender.com/api/generate', // ✅ THIS IS CORRECT
-        {
-          method: 'POST',
+    const res = await fetch('https://quickcoverletter-backend.onrender.com/create-checkout-session', { method: 'POST' });
+
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ jobTitle, companyName, tone, name }),
         }
