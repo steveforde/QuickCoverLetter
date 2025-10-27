@@ -1,5 +1,4 @@
-document.addEventListener('DOMContentLoaded', () => {const res = await fetch('https://quickcoverletter-backend.onrender.com/create-checkout-session', { method: 'POST' });
-
+document.addEventListener('DOMContentLoaded', async () => {
   const form = document.getElementById('form');
   const spinner = document.getElementById('spinner');
   const resultBox = document.getElementById('resultBox');
@@ -8,9 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {const res = await fetch('ht
   const downloadBtn = document.getElementById('downloadBtn');
   const copyBtn = document.getElementById('copyBtn');
   const toast = document.getElementById('toast');
-  let isProUser = localStorage.getItem('hasPaid') === 'true'; // 🔧 NEW
+  const payButton = document.getElementById('payButton');
+  let isProUser = localStorage.getItem('hasPaid') === 'true';
 
-  // === FOUR FULL LETTER TEMPLATES ===
+  // === LETTER TEMPLATES ===
   const templates = {
     professional(name, jobTitle, company, date) {
       return `${name}
@@ -93,37 +93,28 @@ ${name}`;
     },
   };
 
-  document.getElementById('form').addEventListener('submit', async (e) => {
+  // === GENERATE LETTER ===
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const jobTitle = document.getElementById('jobTitle').value;
     const companyName = document.getElementById('companyName').value;
-    const tone = document.getElementById('tone').value;
-    const name = document.getElementById('name').value;
-
-    const spinner = document.getElementById('spinner');
-    const resultBox = document.getElementById('resultBox');
-    const coverLetter = document.getElementById('coverLetter');
+    const tone = document.getElementById('tone')?.value || 'professional';
+    const name = document.getElementById('userName').value;
 
     spinner.classList.remove('hidden');
-
-    const res = await fetch('https://quickcoverletter-backend.onrender.com/create-checkout-session', { method: 'POST' });
-
+    try {
+      const res = await fetch(
+        'https://quickcoverletter-backend.onrender.com/api/generate',
+        {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ jobTitle, companyName, tone, name }),
         }
       );
-
       const data = await res.json();
       spinner.classList.add('hidden');
-
-      if (data.error) {
-        coverLetter.value = data.error;
-        resultBox.classList.remove('hidden');
-      } else {
-        coverLetter.value = data.letter;
-        resultBox.classList.remove('hidden');
-      }
+      coverLetter.value = data.error || data.letter || 'No letter generated.';
+      resultBox.classList.remove('hidden');
     } catch (err) {
       spinner.classList.add('hidden');
       alert('⚠️ Failed to connect to server.');
@@ -131,106 +122,7 @@ ${name}`;
     }
   });
 
-  if (!res.ok) throw new Error('Server returned an error');
-
-  // --- DISABLE TEMPLATE BUTTONS UNTIL PAYMENT IS CONFIRMED ---
-  const templateButtons = document.querySelectorAll('.template-btn');
-
-  // 🔧 NEW — Helper: add or remove lock icons visually
-  function updateLockIcons() {
-    templateButtons.forEach((btn) => {
-      const lockIcon = btn.querySelector('.lock-icon');
-      if (!isProUser) {
-        btn.disabled = true;
-        btn.classList.add('locked');
-        if (!lockIcon) {
-          const icon = document.createElement('span');
-          icon.classList.add('lock-icon');
-          icon.textContent = ' 🔒';
-          btn.appendChild(icon);
-        }
-      } else {
-        btn.disabled = false;
-        btn.classList.remove('locked');
-        if (lockIcon) lockIcon.remove();
-      }
-    });
-  }
-
-  // Initial setup
-  updateLockIcons();
-
-  // Enable after payment
-  if (isProUser) {
-    showToast('✅ Payment confirmed — templates unlocked.', 'success', 4000);
-    localStorage.removeItem('hasPaid');
-  }
-
-  document.querySelectorAll('.template-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const type = btn.dataset.type;
-
-      const nameInput = document.getElementById('userName');
-      const jobInput = document.getElementById('jobTitle');
-      const companyInput = document.getElementById('companyName');
-
-      // Validation
-      if (!nameInput.value.trim()) {
-        showToast(
-          '⚠️ Please enter your name before generating your letter.',
-          'error',
-          4000
-        );
-        nameInput.focus();
-        return;
-      }
-      if (!jobInput.value.trim()) {
-        showToast('⚠️ Please enter the job title.', 'error', 4000);
-        jobInput.focus();
-        return;
-      }
-      if (!companyInput.value.trim()) {
-        showToast('⚠️ Please enter the company name.', 'error', 4000);
-        companyInput.focus();
-        return;
-      }
-
-      const name = nameInput.value.trim();
-      const job = jobInput.value.trim();
-      const company = companyInput.value.trim();
-      const date = new Date().toLocaleDateString('en-IE', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-      });
-
-      coverLetter.value = templates[type](name, job, company, date);
-      resultBox.classList.remove('hidden');
-      showToast(
-        `${type.charAt(0).toUpperCase() + type.slice(1)} letter loaded ✅`,
-        'info',
-        4000
-      );
-      setTimeout(() => {
-        resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
-    });
-  });
-
-  // --- TOAST ---
-  function showToast(message, type = 'success', duration = 4000) {
-    if (!toast) return;
-    toast.className = 'toast';
-    toast.classList.add(type, 'show');
-    toast.textContent = message;
-    setTimeout(() => {
-      toast.classList.remove('show');
-      setTimeout(() => toast.classList.add('hidden'), 600);
-    }, duration);
-  }
-
-  // --- STRIPE PAY BUTTON ---
-  const payButton = document.getElementById('payButton');
+  // === STRIPE PAY BUTTON ===
   if (payButton) {
     payButton.addEventListener('click', async () => {
       try {
@@ -253,9 +145,43 @@ ${name}`;
     });
   }
 
-  // --- PDF + COPY (unchanged) ---
-  const { jsPDF } = window.jspdf;
+  // === TEMPLATE BUTTONS (LOCKED UNTIL PAYMENT) ===
+  const templateButtons = document.querySelectorAll('.template-btn');
+  function updateLockIcons() {
+    templateButtons.forEach((btn) => {
+      const lockIcon = btn.querySelector('.lock-icon');
+      if (!isProUser) {
+        btn.disabled = true;
+        btn.classList.add('locked');
+        if (!lockIcon) {
+          const icon = document.createElement('span');
+          icon.classList.add('lock-icon');
+          icon.textContent = ' 🔒';
+          btn.appendChild(icon);
+        }
+      } else {
+        btn.disabled = false;
+        btn.classList.remove('locked');
+        if (lockIcon) lockIcon.remove();
+      }
+    });
+  }
+  updateLockIcons();
 
+  // === TOAST ===
+  function showToast(message, type = 'success', duration = 4000) {
+    if (!toast) return;
+    toast.className = 'toast';
+    toast.classList.add(type, 'show');
+    toast.textContent = message;
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.classList.add('hidden'), 600);
+    }, duration);
+  }
+
+  // === PDF DOWNLOAD ===
+  const { jsPDF } = window.jspdf;
   function renderExact(pdf, text, x, y, maxWidth, lineHeight = 7) {
     const pageH = pdf.internal.pageSize.getHeight();
     const margin = x;
@@ -315,19 +241,17 @@ ${name}`;
       });
   });
 
-  // === DARK MODE TOGGLE ===
+  // === THEME TOGGLE ===
   const themeToggle = document.getElementById('themeToggle');
   if (themeToggle) {
     const prefersDark = window.matchMedia(
       '(prefers-color-scheme: dark)'
     ).matches;
     const savedTheme = localStorage.getItem('theme');
-
     if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
       document.body.classList.add('dark');
       themeToggle.textContent = '☀️';
     }
-
     themeToggle.addEventListener('click', () => {
       document.body.classList.toggle('dark');
       const isDark = document.body.classList.contains('dark');
@@ -336,7 +260,6 @@ ${name}`;
     });
   }
 
-  // === LIVE SYSTEM THEME SYNC ===
   window
     .matchMedia('(prefers-color-scheme: dark)')
     .addEventListener('change', (e) => {
@@ -346,17 +269,15 @@ ${name}`;
       themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
     });
 
-  // --- CLEAR BUTTON ---
+  // === CLEAR ===
   clearBtn.addEventListener('click', () => {
     coverLetter.value = '';
     resultBox.classList.add('hidden');
     document.getElementById('jobTitle').value = '';
     document.getElementById('companyName').value = '';
     document.getElementById('userName').value = '';
-
     isProUser = localStorage.getItem('hasPaid') === 'true';
-    updateLockIcons(); // 🔧 NEW — visually restore lock icons if needed
-
+    updateLockIcons();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast(
       '🧹 Cleared successfully — ready to start fresh.',
