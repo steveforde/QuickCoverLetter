@@ -27,33 +27,6 @@ app.get('/', (req, res) => {
   res.sendFile('index.html', { root: 'public' });
 });
 
-app.post('/create-checkout-session', async (req, res) => {
-  try {
-    console.log('🚀 Creating Stripe session with:', {
-      price: process.env.PRICE_ID,
-      domain: process.env.DOMAIN,
-    });
-
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      line_items: [
-        {
-          price: process.env.PRICE_ID,
-          quantity: 1,
-        },
-      ],
-      success_url: `${process.env.DOMAIN}/success.html`,
-      cancel_url: `${process.env.DOMAIN}/cancel.html`,
-    });
-
-    console.log('✅ Stripe session created:', session.url);
-    res.json({ url: session.url });
-  } catch (err) {
-    console.error('❌ Stripe error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // === Stripe Checkout ===
 app.post('/create-checkout-session', async (req, res) => {
   try {
