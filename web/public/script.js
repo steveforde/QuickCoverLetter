@@ -15,7 +15,62 @@ document.addEventListener('DOMContentLoaded', async () => {
   const copyBtn = document.getElementById('copyBtn');
   const toast = document.getElementById('toast');
   const payButton = document.getElementById('payButton');
+  // ⚡ TEMP: Force result box to show on page load
+  resultBox.classList.remove('hidden');
+
   let isProUser = localStorage.getItem('hasPaid') === 'true';
+
+  console.log('🧭 Element check:', {
+    form,
+    spinner,
+    resultBox,
+    coverLetter,
+    clearBtn,
+    downloadBtn,
+    copyBtn,
+    toast,
+    payButton,
+  });
+
+  // ✅ Button event listeners
+  if (payButton) {
+    payButton.addEventListener('click', () => {
+      console.log('✅ Pay button clicked');
+      showToast('Stripe payment flow triggered...');
+    });
+  } else {
+    console.warn('⚠️ payButton not found');
+  }
+
+  if (copyBtn) {
+    copyBtn.addEventListener('click', () => {
+      console.log('📋 Copy button clicked');
+      navigator.clipboard.writeText(coverLetter.value);
+      showToast('Copied to clipboard');
+    });
+  } else {
+    console.warn('⚠️ copyBtn not found');
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      console.log('🧹 Clear button clicked');
+      coverLetter.value = '';
+      showToast('Cleared');
+    });
+  } else {
+    console.warn('⚠️ clearBtn not found');
+  }
+
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => {
+      console.log('📄 Download button clicked');
+      showToast('Download triggered...');
+      // PDF logic can go here later
+    });
+  } else {
+    console.warn('⚠️ downloadBtn not found');
+  }
 
   // === LETTER TEMPLATES ===
   const templates = {
