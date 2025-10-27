@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // === BASE CONFIG ===
+  // If frontend and backend are on the same Render app:
+  const BASE_URL = window.location.origin;
+  // If they're separate, replace above with backend URL:
+  // const BASE_URL = 'https://quickcoverletter-backend.onrender.com';
+
   const form = document.getElementById('form');
   const spinner = document.getElementById('spinner');
   const resultBox = document.getElementById('resultBox');
@@ -103,44 +109,47 @@ ${name}`;
 
     spinner.classList.remove('hidden');
     try {
-      const res = await fetch(
-        'https://quickcoverletter-backend.onrender.com/api/generate',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ jobTitle, companyName, tone, name }),
-        }
-      );
+      const res = await fetch(`${BASE_URL}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobTitle, companyName, tone, name }),
+      });
       const data = await res.json();
       spinner.classList.add('hidden');
       coverLetter.value = data.error || data.letter || 'No letter generated.';
       resultBox.classList.remove('hidden');
     } catch (err) {
       spinner.classList.add('hidden');
-      alert('⚠️ Failed to connect to server.');
-      console.error(err);
+      console.error('⚠️ Generate error:', err);
+      showToast('⚠️ Failed to connect to server.', 'error');
     }
   });
 
   // === STRIPE PAY BUTTON ===
   if (payButton) {
     payButton.addEventListener('click', async () => {
+      console.log('✅ Pay button clicked');
       try {
-        const res = await fetch(
-          'https://quickcoverletter-backend.onrender.com/create-checkout-session',
-          {
-            method: 'POST',
-          }
-        );
+        const res = await fetch(`${BASE_URL}/create-checkout-session`, {
+          method: 'POST',
+        });
+
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
+
         const data = await res.json();
+        console.log('📡 Stripe response:', data);
+
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert('❌ Unable to start payment. Please try again.');
+          console.error('❌ No URL in Stripe response', data);
+          showToast('❌ Unable to start payment. Please try again.', 'error');
         }
       } catch (err) {
         console.error('Stripe payment error:', err);
-        alert('⚠️ Payment setup failed.');
+        showToast('⚠️ Payment setup failed. Check console.', 'error');
       }
     });
   }
