@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: quickcoverletter
+    env: node
+    rootDir: .
+    buildCommand: npm install
+    startCommand: node server.js
+    plan: free
+    autoDeploy: true
