@@ -117,14 +117,20 @@ ${name}`;
     });
   }
 
-  // Initial setup
-  updateLockIcons();
+// Get payment status
+const hasPaid = localStorage.getItem('hasPaid') === 'true';
 
-  // Enable after payment
-  if (isProUser) {
-    showToast('✅ Payment confirmed — templates unlocked.', 'success', 4000);
-    localStorage.removeItem('hasPaid');
-  }
+// Initial setup
+updateLockIcons();
+
+// Only show unlock message AFTER real payment
+if (hasPaid) {
+  showToast('✅ Payment confirmed — templates unlocked.', 'success', 4000);
+  updateLockIcons();  // Make sure icons/buttons update to unlocked state
+} else {
+  showToast('🔒 Templates are locked. Purchase to unlock.', 'error', 3000);
+}
+
 
   document.querySelectorAll('.template-btn').forEach(btn => {
     btn.addEventListener('click', () => {
