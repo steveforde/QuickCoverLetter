@@ -72,13 +72,16 @@ app.post(
 
 
 app.get('/api/test-email', async (req, res) => {
-  await sendEmail(
-    'sforde08@gmail.com',
-    'QuickProCV Test Email',
-    '<h2>✅ Your QuickProCV email setup works!</h2>'
-  );
-  res.send('✅ Test email sent successfully');
+  try {
+    const result = await sendEmail('sforde08@gmail.com', 'Test Email', '<p>This is a test</p>');
+    console.log('EMAIL.JS RESULT:', result);
+    res.send('✅ Test email sent successfully');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('❌ Email send failed');
+  }
 });
+
 
 
 // 🧰 Middleware for the rest of the app
