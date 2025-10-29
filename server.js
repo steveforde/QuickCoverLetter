@@ -5,6 +5,7 @@ import Stripe from 'stripe';
 import bodyParser from 'body-parser';
 import { createClient } from '@supabase/supabase-js';
 import { sendEmail } from './email.js';
+import axios from "axios";
 
 dotenv.config();
 
@@ -15,8 +16,31 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE
 );
 
+// === Brevo confirmation helper ===
+const sendBrevoConfirmation = async (email, name) => {
+  try {
+    const response = await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        to: [{ email }],
+        templateId: 1, // ✅ Brevo Template ID
+        params: { name },
+        sender: { name: "QuickProCV Support", email: "support@quickprocv.com" },
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("✅ Brevo confirmation sent to:", email);
+  } catch (error) {
+    console.error("❌ Failed to send Brevo confirmation:", error.response?.data || error.message);
+  }
+};
+
 // 🪝 Webhook route - must come BEFORE express.json()
-// 🪝 Webhook route
 app.post(
   '/webhook',
   bodyParser.raw({ type: 'application/json' }),
@@ -36,14 +60,15 @@ app.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // ✅ Only process the events you need
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
       console.log('🧾 Session details:', session);
 
-      const customerEmail = session.customer_details?.email || session.customer_email || null;
-      const customerName = session.customer_details?.name || null;
+      const customerEmail =
+        session.customer_details?.email || session.customer_email || null;
+      const customerName = session.customer_details?.name || "Customer";
 
+      // Save transaction to Supabase
       const { error } = await supabase.from('transactions').insert([
         {
           payment_intent: session.id,
@@ -59,10 +84,11 @@ app.post(
       if (error) {
         console.error('❌ DB insert error:', error);
       } else {
-        console.log(`✅ Transaction saved to Supabase for ${customerEmail || 'unknown'}`);
+        console.log(`✅ Transaction saved for ${customerEmail}`);
+        // ✅ Send Brevo confirmation email
+        await sendBrevoConfirmation(customerEmail, customerName);
       }
     } else {
-      // 👇 Optional: ignore everything else silently
       console.log(`ℹ️ Ignored event: ${event.type}`);
     }
 
@@ -70,7 +96,7 @@ app.post(
   }
 );
 
-
+// === Test email endpoint ===
 app.get("/api/test-email", async (req, res) => {
   try {
     await sendEmail("sforde08@gmail.com", "Test Email", "<p>This is a test</p>");
@@ -81,15 +107,12 @@ app.get("/api/test-email", async (req, res) => {
   }
 });
 
-
-
-
-// 🧰 Middleware for the rest of the app
+// === Middleware for regular app routes ===
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// 🛒 Checkout route
+// === Checkout route ===
 app.post('/create-checkout-session', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
@@ -102,7 +125,7 @@ app.post('/create-checkout-session', async (req, res) => {
       ],
       success_url: `${process.env.DOMAIN}/success.html`,
       cancel_url: `${process.env.DOMAIN}/cancel.html`,
-      customer_email: req.body.email || undefined, // optional if you're collecting email on frontend
+      customer_email: req.body.email || undefined,
     });
 
     res.json({ url: session.url });
@@ -112,12 +135,12 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-// 🏡 Root route
+// === Root route ===
 app.get('/', (req, res) => {
   res.sendFile('index.html', { root: 'public' });
 });
 
-// 🚀 Start server
+// === Start server ===
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
