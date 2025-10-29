@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import Stripe from 'stripe';
 import bodyParser from 'body-parser';
 import { createClient } from '@supabase/supabase-js';
+import { sendEmail } from './email.js';
 
 dotenv.config();
 
@@ -68,6 +69,16 @@ app.post(
     res.json({ received: true });
   }
 );
+
+
+app.get('/api/test-email', async (req, res) => {
+  await sendEmail(
+    'sforde08@gmail.com',
+    'QuickProCV Test Email',
+    '<h2>✅ Your QuickProCV email setup works!</h2>'
+  );
+  res.send('✅ Test email sent successfully');
+});
 
 
 // 🧰 Middleware for the rest of the app
