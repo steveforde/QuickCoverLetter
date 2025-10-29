@@ -71,16 +71,16 @@ app.post(
 );
 
 
-app.get('/api/test-email', async (req, res) => {
+app.get("/api/test-email", async (req, res) => {
   try {
-    const result = await sendEmail('sforde08@gmail.com', 'Test Email', '<p>This is a test</p>');
-    console.log('EMAIL.JS RESULT:', result);
-    res.send('✅ Test email sent successfully');
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('❌ Email send failed');
+    await sendEmail("sforde08@gmail.com", "Test Email", "<p>This is a test</p>");
+    res.send("✅ Test email sent successfully");
+  } catch (err) {
+    console.error("❌ Failed to send email:", err);
+    res.status(500).send("❌ Email send failed");
   }
 });
+
 
 
 
