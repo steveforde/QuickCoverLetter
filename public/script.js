@@ -1,3 +1,28 @@
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+// =========================================================================
+// 🔑 SUPABASE CONFIGURATION (MANDATORY)
+// We are now STRICTLY using environment variables. These must be defined 
+// in your hosting platform's environment settings for the app to function.
+// =========================================================================
+
+// Check if the environment variables are available, otherwise throw an error
+if (typeof __SUPABASE_URL_PUBLIC === 'undefined' || typeof __SUPABASE_ANON_KEY_PUBLIC === 'undefined') {
+    console.error("CONFIGURATION ERROR: Supabase environment variables (__SUPABASE_URL_PUBLIC or __SUPABASE_ANON_KEY_PUBLIC) are not defined.");
+    // We will set them to a non-functional string to prevent accidental connection
+    var SUPABASE_URL = "ENV_VAR_MISSING"; 
+    var SUPABASE_ANON_KEY = "ENV_VAR_MISSING";
+    var supabase = null; // Set supabase to null if configuration fails
+} else {
+    // Use the public environment variables provided by the hosting platform
+    var SUPABASE_URL = __SUPABASE_URL_PUBLIC;
+    var SUPABASE_ANON_KEY = __SUPABASE_ANON_KEY_PUBLIC;
+    
+    // Initialize Supabase Client
+    var supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('form');
   const spinner = document.getElementById('spinner');
@@ -7,7 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const downloadBtn = document.getElementById('downloadBtn');
   const copyBtn = document.getElementById('copyBtn');
   const toast = document.getElementById('toast');
-  let isProUser = localStorage.getItem('hasPaid') === 'true'; // 🔧 NEW
+  const payButton = document.getElementById('payButton');
+  
+  // Set initial state to FREE (locked)
+  let isProUser = false; 
+
 
  // === FOUR FULL LETTER TEMPLATES ===
 const templates = {
@@ -65,9 +94,7 @@ In my previous positions, I’ve developed a reputation for being approachable, 
 
 What stands out to me about ${company} is its commitment to quality, collaboration, and care — qualities I deeply value. I would love the opportunity to bring my enthusiasm and reliability to your team and play a part in ${company}’s continued success.
 
-Thank you for taking the time to consider my application. I look forward to the opportunity to discuss how my approach and energy can contribute to your organisation.
-
-Kind regards,
+Thank regards,
 ${name}`;
   },
 
@@ -93,15 +120,52 @@ ${name}`;
 };
 
 
+  // --- SUPABASE PAYMENT CHECKER ---
+  // Checks if the user's email exists in the 'transactions' table with status 'paid'
+  async function checkSupabasePayment(email) {
+    if (!supabase) {
+        // If supabase is null due to missing env vars, immediately fail
+        console.error("Cannot check payment: Supabase client is not initialized due to missing environment variables.");
+        return false;
+    }
+
+    if (!email || !email.includes('@')) {
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('id') // Only select the ID for minimal data transfer
+        .eq('email', email)
+        .eq('status', 'paid')
+        .limit(1);
+
+      if (error) {
+        console.error('Supabase check error:', error.message);
+        return false;
+      }
+      
+      // Returns true if a paid record is found
+      return data && data.length > 0;
+
+    } catch (e) {
+      console.error('General Supabase fetch error:', e);
+      return false;
+    }
+  }
+
+
   // --- DISABLE TEMPLATE BUTTONS UNTIL PAYMENT IS CONFIRMED ---
   const templateButtons = document.querySelectorAll('.template-btn');
 
-  // 🔧 NEW — Helper: add or remove lock icons visually
+  // Helper: add or remove lock icons visually
   function updateLockIcons() {
     templateButtons.forEach(btn => {
       const lockIcon = btn.querySelector('.lock-icon');
       if (!isProUser) {
         btn.disabled = true;
+        payButton.classList.remove('hidden'); // Show pay button when locked
         btn.classList.add('locked');
         if (!lockIcon) {
           const icon = document.createElement('span');
@@ -111,39 +175,68 @@ ${name}`;
         }
       } else {
         btn.disabled = false;
+        payButton.classList.add('hidden'); // Hide pay button when unlocked
         btn.classList.remove('locked');
         if (lockIcon) lockIcon.remove();
       }
     });
+    
+    if (isProUser) {
+        showToast('✅ Templates unlocked!', 'success', 3000);
+    } else {
+        showToast('🔒 Templates are locked. Purchase to unlock.', 'error', 3000);
+    }
   }
+  
+  // New: Check status based on email input when the user changes focus
+  async function handleEmailInputBlur() {
+    // This assumes the email input field has the ID 'userEmail'
+    const emailInput = document.getElementById('userEmail'); 
+    const email = emailInput ? emailInput.value.trim() : '';
 
-// Get payment status
-const hasPaid = localStorage.getItem('hasPaid') === 'true';
+    if (email && email.includes('@')) {
+        isProUser = await checkSupabasePayment(email);
+    } else {
+        // If the field is empty or invalid, assume they are locked
+        isProUser = false;
+    }
+    updateLockIcons();
+  }
+  
+  // Add listener to the email input field (assuming you have one with ID 'userEmail')
+  const emailField = document.getElementById('userEmail'); 
+  if (emailField) {
+      emailField.addEventListener('blur', handleEmailInputBlur);
+  }
+  
+  // Fallback: Check status on successful payment redirect (or page load if email is pre-filled)
+  // This is a simple initial check, the 'blur' event handles live updates.
+  handleEmailInputBlur(); 
 
-// Initial setup
-updateLockIcons();
-
-// Only show unlock message AFTER real payment
-if (hasPaid) {
-  showToast('✅ Payment confirmed — templates unlocked.', 'success', 4000);
-  updateLockIcons();  // Make sure icons/buttons update to unlocked state
-} else {
-  showToast('🔒 Templates are locked. Purchase to unlock.', 'error', 3000);
-}
+  // Initial setup: Lock buttons by default
+  updateLockIcons();
 
 
   document.querySelectorAll('.template-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      // 🚨 CRITICAL CHECK: Prevent generation if locked
+      if (!isProUser) {
+        showToast('❌ Purchase required to use templates.', 'error', 4000);
+        return;
+      }
+      
       const type = btn.dataset.type;
 
-      const nameInput = document.getElementById('userName');
+      // NOTE: Assuming the input fields for name, job, and company are present
+      const nameInput = document.getElementById('userName'); 
       const jobInput = document.getElementById('jobTitle');
       const companyInput = document.getElementById('companyName');
 
       // Validation
-      if (!nameInput.value.trim()) {
+      if (!nameInput || !nameInput.value.trim()) { // Check if element exists and value is present
         showToast('⚠️ Please enter your name before generating your letter.', 'error', 4000);
-        nameInput.focus();
+        // Fallback focus since 'userName' might not exist
+        if (nameInput) nameInput.focus();
         return;
       }
       if (!jobInput.value.trim()) {
@@ -186,20 +279,34 @@ if (hasPaid) {
   }
 
   // --- STRIPE PAY BUTTON ---
-  const payButton = document.getElementById('payButton');
   if (payButton) {
     payButton.addEventListener('click', async () => {
+      // Must grab the email from the form to send to the backend
+      const emailInput = document.getElementById('userEmail'); 
+      const email = emailInput ? emailInput.value.trim() : '';
+
+      if (!email || !email.includes('@')) {
+          showToast('⚠️ Please enter your email in the dedicated field before paying.', 'error', 5000);
+          if (emailInput) emailInput.focus();
+          return;
+      }
+      
       try {
-        const res = await fetch('/create-checkout-session', { method: 'POST' });
+        const res = await fetch('/create-checkout-session', { 
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email }) // Send the email to the server
+        });
+        
         const data = await res.json();
         if (data.url) {
           window.location.href = data.url;
         } else {
-          alert('❌ Unable to start payment. Please try again.');
+          showToast('❌ Unable to start payment. Please try again.', 'error');
         }
       } catch (err) {
         console.error('Stripe payment error:', err);
-        alert('⚠️ Payment setup failed.');
+        showToast('⚠️ Payment setup failed.', 'error');
       }
     });
   }
@@ -259,7 +366,7 @@ if (hasPaid) {
       });
   });
 
- // === DARK MODE TOGGLE ===
+ // === DARK MODE TOGGLE (unchanged) ===
 const themeToggle = document.getElementById('themeToggle');
 if (themeToggle) {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -278,7 +385,7 @@ if (themeToggle) {
   });
 }
 
-// === LIVE SYSTEM THEME SYNC ===
+// === LIVE SYSTEM THEME SYNC (unchanged) ===
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
   const newTheme = e.matches ? 'dark' : 'light';
   document.body.classList.toggle('dark', newTheme === 'dark');
@@ -287,16 +394,28 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
 });
 
 
-  // --- CLEAR BUTTON ---
+  // --- CLEAR BUTTON (FIXED) ---
   clearBtn.addEventListener('click', () => {
     coverLetter.value = '';
     resultBox.classList.add('hidden');
     document.getElementById('jobTitle').value = '';
     document.getElementById('companyName').value = '';
-    document.getElementById('userName').value = '';
-
-    isProUser = localStorage.getItem('hasPaid') === 'true';
-    updateLockIcons(); // 🔧 NEW — visually restore lock icons if needed
+    
+    // Clear the email field
+    const emailField = document.getElementById('userEmail');
+    if (emailField) {
+        emailField.value = '';
+    }
+    
+    // Clear the user name field
+    const userNameField = document.getElementById('userName'); 
+    if (userNameField) {
+        userNameField.value = '';
+    }
+    
+    // ✅ FIX: Reset the global state and visually re-lock the buttons
+    isProUser = false; 
+    updateLockIcons(); 
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast('🧹 Cleared successfully — ready to start fresh.', 'success', 4000);
