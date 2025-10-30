@@ -5,10 +5,10 @@ import Stripe from "stripe";
 import bodyParser from "body-parser";
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "./email.js"; // Assume email.js is also updated and exists
-import path from "path"; // 1. IMPORT PATH MODULE
-import { fileURLToPath } from "url"; // 2. IMPORT fileURLToPath
+import path from "path"; 
+import { fileURLToPath } from "url"; 
 
-// 3. DEFINE __dirname for ES Modules
+// DEFINE __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -114,8 +114,8 @@ app.post(
 // ========================================================
 app.use(cors());
 app.use(express.json());
-// 🛠️ FIX: Use path.join to correctly serve static files from the 'public' folder
-app.use(express.static(path.join(__dirname, "public"))); 
+// 🛠️ FIX: Serve static files directly from the root (__dirname)
+app.use(express.static(__dirname)); 
 
 // ========================================================
 // 💳 STRIPE CHECKOUT SESSION
@@ -130,7 +130,7 @@ app.post("/create-checkout-session", async (req, res) => {
           quantity: 1,
         },
       ],
-      // 🛠️ CRITICAL FIX: Add session_id parameter for client-side unlocking
+      // CRITICAL FIX: Add session_id parameter for client-side unlocking
       success_url: `${process.env.DOMAIN}/success.html?session_id={CHECKOUT_SESSION_ID}`, 
       cancel_url: `${process.env.DOMAIN}/cancel.html`,
       customer_email: req.body.email || undefined,
@@ -163,8 +163,8 @@ app.get("/api/test-email", async (req, res) => {
 // 🏠 ROOT
 // ========================================================
 app.get("/", (req, res) => {
-  // 🛠️ FIX: Use path.join to correctly serve the root index.html file
-  res.sendFile("index.html", { root: path.join(__dirname, "public") });
+  // 🛠️ FIX: Serve index.html directly from the root (__dirname)
+  res.sendFile("index.html", { root: __dirname });
 });
 
 // ========================================================
