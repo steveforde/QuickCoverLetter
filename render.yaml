@@ -1,46 +1,17 @@
-# render.yaml — QuickCoverLetter backend (Node)
 services:
   - type: web
     name: quickcoverletter-backend
     env: node
-    # install step + start command (same as you already use)
     buildCommand: npm install
     startCommand: node server.js
-
-    # IMPORTANT: do NOT commit secret values into repo. Use Render dashboard for secrets.
-    # Use `sync: false` for secrets that must be added manually in the Render dashboard.
     envVars:
-      # Public / client-injectable vars (safe to sync into the service)
-      - key: DOMAIN
-        value: https://quickcoverletter.onrender.com
-        sync: true
-
-      - key: __SUPABASE_URL     # optional — only if you want client-side injection
+      - key: SUPABASE_URL
         value: https://ztrsuveqeftmgoeiwjgz.supabase.co
-        sync: true
-
-      - key: __SUPABASE_ANON_KEY
-        sync: true   # set this in the Render dashboard to inject into client JS
-
-      # Backend secrets — DO NOT put actual values here in the repo
       - key: SUPABASE_SERVICE_ROLE
         sync: false
-
       - key: STRIPE_SECRET_KEY
         sync: false
-
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
-
-      - key: PRICE_ID
-        sync: false
-
       - key: BREVO_API_KEY
         sync: false
-
       - key: EMAIL_FROM
-        sync: false
-
-      - key: PORT
-        value: "10000"
-        sync: true
+        value: support@quickcoverletter.com

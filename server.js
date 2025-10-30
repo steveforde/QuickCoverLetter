@@ -6,12 +6,20 @@ import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "./email.js";
 
 dotenv.config();
+
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// --- Supabase Setup ---
 const SUPABASE_URL = process.env.SUPABASE_URL || "https://ztrsuveqeftmgoeiwjgz.supabase.co";
 const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
+
+// --- Middleware ---
+app.use(cors());
+app.use(express.json());
+app.use(express.static(".")); // serve your frontend (index.html etc.)
+
 
 // Middleware
 app.use(cors());
@@ -93,5 +101,5 @@ app.post(
 
 app.get("/api/health", (req, res) => res.send("Server OK ✅"));
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
