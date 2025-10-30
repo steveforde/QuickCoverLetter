@@ -1,30 +1,28 @@
-// Load environment variables from .env file (for local development)
-require('dotenv').config(); 
+// --- ESM Syntax: Loading Dependencies ---
+import 'dotenv/config'; // Loads .env file immediately using the ESM syntax
+import express from 'express';
+import cors from 'cors';
+import { createClient } from '@supabase/supabase-js';
 
-const express = require('express');
-const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // =========================================================
 // 🛑 CORS FIX: Allow cross-origin requests
-// Allowing all origins (*) for troubleshooting. 
-// You can restrict this to your specific frontend URL later for production security.
 // =========================================================
 app.use(cors()); 
 app.use(express.json()); // Middleware to parse JSON bodies
 
 // --- Supabase Configuration ---
-// These MUST be set in your Render environment variables (or .env locally)
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY; 
 
-// Initialize Supabase client using the Service Role Key
-// This key allows the server to bypass Row Level Security (RLS).
+// Initialize Supabase client
 if (!supabaseUrl || !supabaseServiceRoleKey) {
     console.error("FATAL: Supabase environment variables not configured.");
-    // In a real server, you might want to exit or fail health checks here.
+    // Exit the process if critical variables are missing to prevent runtime errors
+    // or connecting to a default/wrong database.
+    process.exit(1); 
 }
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
@@ -44,7 +42,7 @@ app.post('/api/check-payment', async (req, res) => {
             .select('status')
             .eq('user_email', email.toLowerCase())
             .eq('status', 'paid')
-            .maybeSingle(); // Use maybeSingle to get one row or null
+            .maybeSingle();
 
         if (error) {
             console.error('Supabase query error:', error);
@@ -54,7 +52,6 @@ app.post('/api/check-payment', async (req, res) => {
             });
         }
 
-        // If data exists, and status is 'paid' (checked by the .eq filters), then isPaid is true
         const isPaid = !!data; 
 
         if (isPaid) {
