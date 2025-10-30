@@ -53,7 +53,7 @@ if (urlParams.has('session_id')) {
   // Set initial state to FREE (locked)
   let isProUser = false; 
   // Always start locked by default (safety check)
-  updateLockIcons();
+  
 
  // === FOUR FULL LETTER TEMPLATES ===
 const templates = {
@@ -170,7 +170,9 @@ async function checkSupabasePayment(email) {
 
 
   // --- DISABLE TEMPLATE BUTTONS UNTIL PAYMENT IS CONFIRMED ---
-  const templateButtons = document.querySelectorAll('.template-btn');
+const templateButtons = document.querySelectorAll('.template-btn');
+updateLockIcons(); // ✅ moved here, after buttons exist
+
 
   // Helper: add or remove lock icons visually
   function updateLockIcons() {
