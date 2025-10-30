@@ -5,6 +5,12 @@ import Stripe from "stripe";
 import bodyParser from "body-parser";
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "./email.js"; // Assume email.js is also updated and exists
+import path from "path"; // 1. IMPORT PATH MODULE
+import { fileURLToPath } from "url"; // 2. IMPORT fileURLToPath
+
+// 3. DEFINE __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -108,7 +114,8 @@ app.post(
 // ========================================================
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+// 🛠️ FIX: Use path.join to correctly serve static files from the 'public' folder
+app.use(express.static(path.join(__dirname, "public"))); 
 
 // ========================================================
 // 💳 STRIPE CHECKOUT SESSION
@@ -156,7 +163,8 @@ app.get("/api/test-email", async (req, res) => {
 // 🏠 ROOT
 // ========================================================
 app.get("/", (req, res) => {
-  res.sendFile("index.html", { root: "public" });
+  // 🛠️ FIX: Use path.join to correctly serve the root index.html file
+  res.sendFile("index.html", { root: path.join(__dirname, "public") });
 });
 
 // ========================================================
