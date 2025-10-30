@@ -1,5 +1,8 @@
+// This file uses modern ECMAScript Module (ESM) syntax to ensure compatibility with Node.js environments configured for type="module".
+
 // --- ESM Syntax: Loading Dependencies ---
-import 'dotenv/config'; // Loads .env file immediately using the ESM syntax
+// This imports the 'dotenv/config' utility to load environment variables from a .env file (if running locally).
+import 'dotenv/config'; 
 import express from 'express';
 import cors from 'cors';
 import { createClient } from '@supabase/supabase-js';
@@ -8,18 +11,22 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // =========================================================
-// 🛑 CORS FIX: Allow cross-origin requests
+// Middleware
 // =========================================================
+// Enable Cross-Origin Resource Sharing (CORS) for the frontend to access the API
 app.use(cors()); 
-app.use(express.json()); // Middleware to parse JSON bodies
+// Middleware to parse incoming JSON request bodies
+app.use(express.json()); 
 
 // --- Supabase Configuration ---
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY; 
+// 🛑 CRITICAL FIX: The variable name is set to SUPABASE_SERVICE_ROLE to match 
+// the existing environment variable name configured in Render.
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE; 
 
 // Initialize Supabase client
 if (!supabaseUrl || !supabaseServiceRoleKey) {
-    console.error("FATAL: Supabase environment variables not configured.");
+    console.error("FATAL: Supabase environment variables not configured. Check SUPABASE_URL and SUPABASE_SERVICE_ROLE.");
     // Exit the process if critical variables are missing to prevent runtime errors
     // or connecting to a default/wrong database.
     process.exit(1); 
@@ -35,8 +42,8 @@ app.post('/api/check-payment', async (req, res) => {
     }
 
     try {
-        // Look up the transaction table for the provided email 
-        // and check if the status is 'paid'.
+        // Look up the 'transactions' table for a record matching the email 
+        // and having a 'paid' status.
         const { data, error } = await supabase
             .from('transactions')
             .select('status')
@@ -46,19 +53,17 @@ app.post('/api/check-payment', async (req, res) => {
 
         if (error) {
             console.error('Supabase query error:', error);
+            // Provide a generic 500 status to the client, but log the detail internally
             return res.status(500).json({ 
                 error: 'Database error occurred during payment check.', 
                 isPaid: false 
             });
         }
 
+        // isPaid is true if data (the single record) is found, otherwise false
         const isPaid = !!data; 
 
-        if (isPaid) {
-            console.log(`Access granted for email: ${email}`);
-        } else {
-            console.log(`Access denied for email: ${email}. No 'paid' transaction found.`);
-        }
+        console.log(`Payment check performed for ${email}. Status: ${isPaid ? 'PAID' : 'NOT PAID'}`);
 
         return res.json({ 
             message: isPaid ? 'Payment confirmed.' : 'No active payment found.',
@@ -75,11 +80,12 @@ app.post('/api/check-payment', async (req, res) => {
 });
 
 // --- Simple Health Check Endpoint ---
+// This route is essential for Render to confirm the service is running.
 app.get('/', (req, res) => {
-    res.send('Cover Letter Backend API is running.');
+    res.send('Cover Letter Backend API is running successfully.');
 });
 
 // --- Start the Server ---
 app.listen(port, () => {
-    console.log(`Server listening at http://localhost:${port}`);
+    console.log(`Server listening on port ${port}`);
 });
