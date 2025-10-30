@@ -28,6 +28,18 @@ if (typeof __SUPABASE_URL === 'undefined' || typeof __SUPABASE_ANON_KEY === 'und
 
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 🧭 Check for Stripe redirect with session_id in URL
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('session_id')) {
+  const emailInput = document.getElementById('userEmail');
+  if (emailInput && emailInput.value.includes('@')) {
+    checkSupabasePayment(emailInput.value).then((paid) => {
+      isProUser = paid;
+      updateLockIcons();
+    });
+  }
+}
+
   const form = document.getElementById('form');
   const spinner = document.getElementById('spinner');
   const resultBox = document.getElementById('resultBox');
@@ -40,7 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Set initial state to FREE (locked)
   let isProUser = false; 
-
+  // Always start locked by default (safety check)
+  updateLockIcons();
 
  // === FOUR FULL LETTER TEMPLATES ===
 const templates = {
@@ -125,39 +138,35 @@ ${name}`;
 
 
   // --- SUPABASE PAYMENT CHECKER ---
-  // Checks if the user's email exists in the 'transactions' table with status 'paid'
-  async function checkSupabasePayment(email) {
-    if (!supabase) {
-        // If supabase is null due to missing env vars, immediately fail
-        console.error("Cannot check payment: Supabase client is not initialized due to missing environment variables.");
-        return false;
-    }
-
-    if (!email || !email.includes('@')) {
-      return false;
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('id') // Only select the ID for minimal data transfer
-        .eq('email', email)
-        .eq('status', 'paid')
-        .limit(1);
-
-      if (error) {
-        console.error('Supabase check error:', error.message);
-        return false;
-      }
-      
-      // Returns true if a paid record is found
-      return data && data.length > 0;
-
-    } catch (e) {
-      console.error('General Supabase fetch error:', e);
-      return false;
-    }
+async function checkSupabasePayment(email) {
+  if (!supabase) {
+    console.error("Cannot check payment: Supabase client not initialized.");
+    return false;
   }
+
+  if (!email || !email.includes('@')) return false;
+
+  try {
+    // IMPORTANT: The backend inserts payment_status, not status
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('id')
+      .eq('email', email)
+      .eq('payment_status', 'paid')
+      .limit(1)
+      .maybeSingle(); // ensures one object, not array
+
+    if (error) {
+      console.error('Supabase check error:', error.message);
+      return false;
+    }
+
+    return !!data; // true if record exists
+  } catch (err) {
+    console.error('General Supabase fetch error:', err.message);
+    return false;
+  }
+}
 
 
   // --- DISABLE TEMPLATE BUTTONS UNTIL PAYMENT IS CONFIRMED ---
@@ -398,30 +407,22 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
 });
 
 
-  // --- CLEAR BUTTON (FIXED) ---
-  clearBtn.addEventListener('click', () => {
-    coverLetter.value = '';
-    resultBox.classList.add('hidden');
-    document.getElementById('jobTitle').value = '';
-    document.getElementById('companyName').value = '';
-    
-    // Clear the email field
-    const emailField = document.getElementById('userEmail');
-    if (emailField) {
-        emailField.value = '';
-    }
-    
-    // Clear the user name field
-    const userNameField = document.getElementById('userName'); 
-    if (userNameField) {
-        userNameField.value = '';
-    }
-    
-    // ✅ FIX: Reset the global state and visually re-lock the buttons
-    isProUser = false; 
-    updateLockIcons(); 
+  // --- CLEAR BUTTON (FINAL FIX) ---
+clearBtn.addEventListener('click', () => {
+  // Reset all visible form fields
+  if (form) form.reset();
+  coverLetter.value = '';
+  resultBox.classList.add('hidden');
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast('🧹 Cleared successfully — ready to start fresh.', 'success', 4000);
-  });
+  // ✅ Lock everything again
+  isProUser = false;
+  updateLockIcons();
+
+  // UX feedback
+  showToast('🧹 Form cleared — access locked again.', 'info', 4000);
+
+  // Smooth scroll back to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 });

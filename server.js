@@ -1,38 +1,33 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import Stripe from 'stripe'; // CHANGED: Capitalized import to avoid conflict
+import Stripe from 'stripe';
 import bodyParser from 'body-parser';
 import axios from 'axios';
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
 dotenv.config();
 
 const app = express();
-// FIX: Using capitalized 'Stripe' from the import to instantiate the client
+
+// ✅ Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// TEMPORARY FIX: Hardcoding SUPABASE_URL because Render environment variables failed to load it.
-// The SUPABASE_SERVICE_ROLE (secret key) remains loaded via process.env.
+// ✅ Supabase (Render-safe hardcode)
 const SUPABASE_URL_HARDCODED = 'https://ztrsuveqeftmgoeiwjgz.supabase.co';
-
-// Note: The service role key is still loaded securely via environment variables.
 const supabase = createClient(
-    SUPABASE_URL_HARDCODED,
-    process.env.SUPABASE_SERVICE_ROLE
+  SUPABASE_URL_HARDCODED,
+  process.env.SUPABASE_SERVICE_ROLE
 );
 
-// ========================================================
-// 🪝 STRIPE WEBHOOK  (must be before express.json())
-// ========================================================
+// 🪝 Stripe Webhook (must come BEFORE express.json)
 app.post(
-  "/webhook",
-  bodyParser.raw({ type: "application/json" }),
+  '/webhook',
+  bodyParser.raw({ type: 'application/json' }),
   async (req, res) => {
-    console.log("⚡ Stripe webhook hit");
-    const sig = req.headers["stripe-signature"];
-
+    const sig = req.headers['stripe-signature'];
     let event;
+
     try {
       event = stripe.webhooks.constructEvent(
         req.body,
@@ -40,134 +35,123 @@ app.post(
         process.env.STRIPE_WEBHOOK_SECRET
       );
     } catch (err) {
-      console.error("❌ Signature verification failed:", err.message);
+      console.error('❌ Webhook signature error:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // ✅ Handle checkout success
-    if (event.type === "checkout.session.completed") {
+    if (event.type === 'checkout.session.completed') {
       const session = event.data.object;
-      const email =
-        session.customer_details?.email || session.customer_email || null;
-      const name = session.customer_details?.name || "Customer";
-      
-      // Get amount directly in cents/units (e.g., 199)
-      const amountInCents = session.amount_total;
+      const customerEmail =
+        session.customer_details?.email ||
+        session.customer_email ||
+        null;
+      const customerName = session.customer_details?.name || 'there';
 
-      console.log(`🧾 Checkout complete for ${email}`);
+      console.log('✅ Stripe checkout completed for', customerEmail);
 
-      // Optional: save transaction to Supabase
-      const { error } = await supabase.from("transactions").insert([
+      // 🧾 Save transaction to Supabase
+      const { error } = await supabase.from('transactions').insert([
         {
-          payment_intent: session.id,
-          email,
-          name,
-          // 🛠️ FIX: Use amount in CENTS (integer) to avoid DB decimal error
-          amount: amountInCents,
+          email: customerEmail,
+          name: customerName,
+          amount: session.amount_total / 100,
           currency: session.currency,
-          status: session.payment_status,
+          payment_status: session.payment_status,
           created_at: new Date(),
         },
       ]);
-      if (error) console.error("❌ DB insert error:", error.message);
 
-      // ✅ Send Brevo confirmation email
-      await sendBrevoConfirmation(email, name);
+      if (error) {
+        console.error('❌ Supabase insert error:', error.message);
+      } else {
+        console.log(`✅ Transaction saved for ${customerEmail}`);
+      }
+
+      // ✅ Send confirmation email
+      if (customerEmail) {
+        try {
+          await sendBrevoConfirmation(customerEmail, customerName);
+          console.log('✅ Brevo email sent to', customerEmail);
+        } catch (err) {
+          console.error('❌ Failed to send Brevo confirmation:', err.message);
+        }
+      }
+    } else {
+      console.log('ℹ️ Webhook event ignored:', event.type);
     }
 
     res.json({ received: true });
   }
 );
 
-// ========================================================
-// 🧰 MIDDLEWARE & STATIC
-// ========================================================
+// 🧰 Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static('public'));
 
-// ========================================================
-// 💳 STRIPE CHECKOUT SESSION
-// ========================================================
-app.post("/create-checkout-session", async (req, res) => {
+// 🧪 Test Email Route
+app.get('/api/test-email', async (req, res) => {
   try {
+    await sendBrevoConfirmation('sforde08@gmail.com', 'Stephen');
+    res.send('✅ Test email sent successfully');
+  } catch (err) {
+    console.error('❌ Test email failed:', err.response?.data || err.message);
+    res.status(500).send('❌ Email send failed');
+  }
+});
+
+// 💳 Stripe Checkout Session
+app.post('/create-checkout-session', async (req, res) => {
+  try {
+    const { email } = req.body;
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+      mode: 'payment',
       line_items: [
         {
-          price: process.env.PRICE_ID, // e.g. price_1Txxxxxx from your Stripe Dashboard
+          price: process.env.PRICE_ID, // Must exist in your Stripe dashboard
           quantity: 1,
         },
       ],
       success_url: `${process.env.DOMAIN}/success.html`,
-      cancel_url: `${process.env.DOMAIN}/cancel.html`,
-      customer_email: req.body.email || undefined,
+      cancel_url: `${process.env.DOMAIN}/`,
+      customer_email: email || undefined,
     });
 
     res.json({ url: session.url });
   } catch (err) {
-    console.error("❌ Stripe error:", err.message);
+    console.error('❌ Stripe error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// ========================================================
-// ✉️ BREVO EMAIL FUNCTION
-// ========================================================
-const sendBrevoConfirmation = async (email, name) => {
-  if (!email) return console.warn("⚠️ No email to send Brevo confirmation.");
-  try {
-    const response = await axios.post(
-      "https://api.brevo.com/v3/smtp/email",
-      {
-        to: [{ email }],
-        templateId: 1, // your active Brevo template ID
-        params: { name },
-        sender: {
-          name: "QuickProCV Support",
-          email: process.env.EMAIL_FROM,
-        },
-      },
-      {
-        headers: {
-          "api-key": process.env.BREVO_API_KEY,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    console.log("✅ Brevo email sent to:", email);
-  } catch (err) {
-    console.error(
-      "❌ Brevo email failed:",
-      err.response?.data || err.message
-    );
-  }
-};
-
-// ========================================================
-// 🔍 TEST EMAIL ENDPOINT
-// ========================================================
-app.get("/api/test-email", async (req, res) => {
-  try {
-    await sendBrevoConfirmation("sforde08@gmail.com", "Test User");
-    res.send("✅ Test email sent successfully");
-  } catch (err) {
-    console.error("❌ Failed to send test email:", err.message);
-    res.status(500).send("❌ Email send failed");
-  }
+// 🏡 Root Route
+app.get('/', (req, res) => {
+  res.sendFile('index.html', { root: 'public' });
 });
 
-// ========================================================
-// 🏠 ROOT
-// ========================================================
-app.get("/", (req, res) => {
-  res.sendFile("index.html", { root: "public" });
-});
+// ✉️ Brevo Send Function
+async function sendBrevoConfirmation(email, name) {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) throw new Error('BREVO_API_KEY missing');
 
-// ========================================================
-// 🚀 START SERVER
-// ========================================================
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}. Database fixed.`); // Updated log message
-});
+  const payload = {
+    to: [{ email }],
+    templateId: 1,
+    params: { name: name || 'there' },
+    sender: {
+      name: 'QuickProCV Support',
+      email: 'support@quickprocv.com',
+    },
+  };
+
+  const headers = {
+    'api-key': apiKey,
+    'Content-Type': 'application/json',
+  };
+
+  await axios.post('https://api.brevo.com/v3/smtp/email', payload, { headers });
+}
+
+// 🚀 Start Server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
