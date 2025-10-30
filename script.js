@@ -56,8 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (savedData.name) nameField.value = savedData.name;
   if (savedData.email) emailField.value = savedData.email;
 
-  // local quick unlock (in case Supabase is a bit late)
-  const hasPaidLocal = localStorage.getItem("hasPaid") === "true";
+ 
 
   /* =========================================================
      4) DARK MODE (you said it broke)
@@ -199,41 +198,69 @@ ${name}`,
     }
   }
 
-  /* =========================================================
-     8) HANDLE STRIPE RETURN (?session_id=...)
-  ========================================================= */
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.has("session_id")) {
-    // we just came back from Stripe
-    const emailToCheck = (savedData && savedData.email) || (emailField && emailField.value);
-    if (emailToCheck) {
-      // optimistic unlock
-      localStorage.setItem("hasPaid", "true");
-      isProUser = true;
-      updateLockState();
+ /* =========================================================
+   8) HANDLE STRIPE RETURN (?session_id=...)
+========================================================= */
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has("session_id")) {
+  const saved = JSON.parse(localStorage.getItem("userData") || "{}");
+  const email = saved.email;
 
-      // double check against Supabase
-      checkPaymentInSupabase(emailToCheck).then((paid) => {
+  if (email) {
+    showToast("Verifying payment...", "info");
+    localStorage.setItem("hasPaid", "true"); // optimistic
+    updateLockState();
+
+    // Re-check Supabase after 2 seconds
+    setTimeout(() => {
+      checkPaymentInSupabase(email).then((paid) => {
         if (paid) {
-          isProUser = true;
-          localStorage.setItem("hasPaid", "true");
-          updateLockState();
-          showToast("✅ Payment verified. Templates unlocked.", "success");
+          showToast("Payment confirmed! Unlocked.", "success");
         } else {
-          // keep local unlock but warn
-          showToast("⚠️ Payment row not found yet. Try again in 10s.", "error");
+          showToast("Payment not found yet. Refresh in 10s.", "error");
+          localStorage.removeItem("hasPaid");
+          isProUser = false;
+          updateLockState();
         }
       });
+    }, 2000);
+  }
+}
+
+  /* =========================================================
+   9) ON EVERY LOAD: Check Supabase first, then fallback
+========================================================= */
+async function validateUserAccess() {
+  const saved = JSON.parse(localStorage.getItem("userData") || "{}");
+  const email = saved.email || emailField?.value.trim();
+
+  if (!email || !email.includes("@")) {
+    isProUser = false;
+    updateLockState();
+    return;
+  }
+
+  // Always try Supabase first
+  const paid = await checkPaymentInSupabase(email);
+  isProUser = paid;
+
+  if (paid) {
+    localStorage.setItem("hasPaid", "true");
+  } else {
+    // Only trust localStorage if Supabase says no
+    const localPaid = localStorage.getItem("hasPaid") === "true";
+    if (localPaid) {
+      showToast("⚠️ Verifying payment... please wait.", "info");
+      // Optional: retry in 5s
+      setTimeout(() => validateUserAccess(), 5000);
     }
   }
 
-  /* =========================================================
-     9) ON NORMAL LOAD: if we saved hasPaid = true, unlock straight away
-  ========================================================= */
-  if (hasPaidLocal) {
-    isProUser = true;
-  }
   updateLockState();
+}
+
+// Run on load
+validateUserAccess();
 
   /* =========================================================
      10) TEMPLATE BUTTONS
