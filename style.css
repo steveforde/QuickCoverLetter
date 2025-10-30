@@ -700,3 +700,12 @@ body.dark::after {
     min-width: 0;
   }
 }
+
+input[type="email"] {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 1rem;
+}
