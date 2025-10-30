@@ -2,95 +2,167 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import Stripe from "stripe";
+import bodyParser from "body-parser";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail } from "./email.js";
+import { sendEmail } from "./email.js"; // Assume email.js is also updated and exists
 
 dotenv.config();
 
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// === SUPABASE SETUP ===
-const SUPABASE_URL =
-  process.env.SUPABASE_URL || "https://ztrsuveqeftmgoeiwjgz.supabase.co";
-const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
+// Define a safe fallback URL for Supabase initialization
+const SUPABASE_FALLBACK_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co"; 
 
-// === MIDDLEWARE ===
+let supabase;
+
+// 🛠️ FIX: Wrap Supabase initialization in try/catch to prevent server crash 
+// if environment variables are missing, which causes the 500 error.
+try {
+  // Use environment variable if available, otherwise use the fallback URL.
+  const supabaseUrl = process.env.SUPABASE_URL || SUPABASE_FALLBACK_URL;
+  
+  // The service role MUST be present in the environment for the backend 
+  // to log webhooks, but we won't crash if it's not.
+  const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE;
+
+  if (!supabaseServiceRole) {
+    console.warn("⚠️ SUPABASE_SERVICE_ROLE is MISSING. Webhook database logging will fail.");
+  }
+  
+  supabase = createClient(
+    supabaseUrl,
+    supabaseServiceRole || "fallback_key_that_will_fail_but_not_crash" 
+  );
+  
+} catch (e) {
+  console.error("❌ Fatal error during Supabase initialization:", e.message);
+}
+
+
+// ========================================================
+// 🪝 STRIPE WEBHOOK  (must be before express.json())
+// ========================================================
+app.post(
+  "/webhook",
+  bodyParser.raw({ type: "application/json" }),
+  async (req, res) => {
+    console.log("⚡ Stripe webhook hit");
+    const sig = req.headers["stripe-signature"];
+
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
+    } catch (err) {
+      console.error("❌ Signature verification failed:", err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // ✅ Handle checkout success
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const email =
+        session.customer_details?.email || session.customer_email || null;
+      const name = session.customer_details?.name || "Customer";
+      
+      // 💡 Get amount directly in cents/units
+      const amountInCents = session.amount_total; 
+
+      console.log(`🧾 Checkout complete for ${email}`);
+
+      // Optional: save transaction to Supabase
+      if (supabase) {
+        const { error } = await supabase.from("transactions").insert([
+          {
+            payment_intent: session.id,
+            email,
+            name,
+            amount: amountInCents, 
+            currency: session.currency,
+            status: session.payment_status,
+            created_at: new Date(),
+          },
+        ]);
+        if (error) console.error("❌ DB insert error:", error.message);
+      } else {
+        console.warn("⚠️ Supabase client not initialized. Cannot log transaction.");
+      }
+
+      // ✅ Send Brevo confirmation email using the imported function
+      const subject = "QuickProCV Purchase Confirmation";
+      const html = `<p>Hi ${name}, thank you for your purchase of ${session.currency.toUpperCase()} ${amountInCents / 100}!</p>`;
+      
+      await sendEmail(email, subject, html); 
+    }
+
+    res.json({ received: true });
+  }
+);
+
+// ========================================================
+// 🧰 MIDDLEWARE & STATIC
+// ========================================================
 app.use(cors());
 app.use(express.json());
+app.use(express.static("public"));
 
-// ✅ Serve frontend files from root (index.html, style.css, script.js)
-app.use(express.static("."));
-
-// === STRIPE CHECKOUT ===
+// ========================================================
+// 💳 STRIPE CHECKOUT SESSION
+// ========================================================
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [
         {
-          price: "price_1SIkTMQRh7jNBCuPMjkvpyFh", // your €1.99 price ID
+          price: process.env.PRICE_ID, // Ensure PRICE_ID is correct in Render environment variables
           quantity: 1,
         },
       ],
-      success_url: "https://quickcoverletter.onrender.com/success.html",
-      cancel_url: "https://quickcoverletter.onrender.com/cancel.html",
+      // 🛠️ CRITICAL FIX: Add session_id parameter for client-side unlocking
+      success_url: `${process.env.DOMAIN}/success.html?session_id={CHECKOUT_SESSION_ID}`, 
+      cancel_url: `${process.env.DOMAIN}/cancel.html`,
+      customer_email: req.body.email || undefined,
     });
+
     res.json({ url: session.url });
   } catch (err) {
     console.error("❌ Stripe error:", err.message);
-    res.status(500).json({ error: "Stripe session failed" });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// === STRIPE WEBHOOK (sends email after payment) ===
-app.post(
-  "/webhook",
-  express.raw({ type: "application/json" }),
-  async (req, res) => {
-    const event = req.body;
 
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object;
-      const email = session.customer_details.email;
-
-      // store payment in Supabase
-      await supabase.from("transactions").insert({
-        email,
-        payment_status: "paid",
-        amount: 1.99,
-        created_at: new Date().toISOString(),
-      });
-
-      // send success email
-      await sendEmail(
-        email,
-        "✅ Your QuickCoverLetter is ready to generate",
-        `
-        <div style="font-family:sans-serif;text-align:center;padding:40px;background:#f6f8fb">
-          <h2 style="color:#0070f3;margin-bottom:8px;">QuickCoverLetter</h2>
-          <p>🎉 Payment Successful!</p>
-          <p>You now have full access to create and download your professional letter.</p>
-          <a href="https://quickcoverletter.onrender.com"
-             style="background:#0070f3;color:white;padding:10px 18px;border-radius:6px;text-decoration:none;display:inline-block;margin-top:15px;">
-             Go to QuickCoverLetter
-          </a>
-        </div>`
-      );
-    }
-
-    res.status(200).send("ok");
+// ========================================================
+// 🔍 TEST EMAIL ENDPOINT (Unified to use sendEmail)
+// ========================================================
+app.get("/api/test-email", async (req, res) => {
+  try {
+    // Send a simple test email using the imported function
+    await sendEmail("sforde08@gmail.com", "API Test Email", "<p>This is a test email sent via the unified Brevo API function.</p>");
+    res.send("✅ Test email sent successfully");
+  } catch (err) {
+    // This logs the full axios error received from the Brevo API
+    console.error("❌ Failed to send test email (API Error):", err.message);
+    res.status(500).send("❌ Email send failed");
   }
-);
-
-// === CATCH-ALL (refreshing routes always loads index.html) ===
-app.get("*", (req, res) => {
-  res.sendFile("index.html", { root: "." });
 });
 
-// === START SERVER ===
+// ========================================================
+// 🏠 ROOT
+// ========================================================
+app.get("/", (req, res) => {
+  res.sendFile("index.html", { root: "public" });
+});
+
+// ========================================================
+// 🚀 START SERVER
+// ========================================================
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () =>
-  console.log(`🚀 QuickCoverLetter backend running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
