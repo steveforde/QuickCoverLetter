@@ -4,8 +4,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
    🔑 SUPABASE INITIALIZATION (PUBLIC KEYS)
 ========================================================= */
 const SUPABASE_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* =========================================================
@@ -25,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const copyBtn = document.getElementById("copyBtn");
   const toast = document.getElementById("toast");
   const templateButtons = document.querySelectorAll(".template-btn");
-  const themeToggle = document.getElementById("themeToggle");
 
   let isProUser = false;
 
@@ -39,17 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (savedData.company) companyField.value = savedData.company;
 
   /* =========================================================
-     ✅ AUTO UNLOCK AFTER STRIPE SUCCESS PAGE
-  ========================================================= */
-  if (localStorage.getItem("hasPaid") === "true") {
-    isProUser = true;
-    updateLockState();
-    showToast("✅ Payment confirmed — templates unlocked!", "success");
-    localStorage.removeItem("hasPaid"); // prevent re-trigger
-  }
-
-  /* =========================================================
-     💳 STRIPE RETURN HANDLER (CHECK SUPABASE)
+     💳 STRIPE RETURN HANDLER
   ========================================================= */
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has("session_id")) {
@@ -151,7 +139,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================================================
-     ✉️ LETTER TEMPLATES
+     ✉️ FULL LETTER TEMPLATES
   ========================================================= */
   const templates = {
     professional: (n, j, c, d) => `${n}
@@ -161,7 +149,13 @@ ${d}
 
 Dear Hiring Manager,
 
-I am writing to apply for the ${j} position at ${c}. With a proven record of reliability and dedication, I am confident I can make a valuable contribution to your team.
+I am writing to apply for the ${j} position at ${c}. With a proven track record of delivering high-quality results and a strong commitment to professional excellence, I am confident in my ability to make a valuable contribution to your team.
+
+Throughout my career, I have developed a reputation for reliability, attention to detail, and the ability to perform under pressure. I take pride in working collaboratively while maintaining accountability for my own responsibilities. My focus has always been on providing consistent, accurate, and professional outcomes that reflect well on both myself and the company I represent.
+
+I am confident that my work ethic, adaptability, and communication skills will make me a valuable addition to your team. I am eager to bring my skills to ${c} and continue developing within a professional environment that values dedication and quality.
+
+Thank you for taking the time to consider my application. I would be delighted to discuss how my background and work ethic align with the needs of ${c}.
 
 Sincerely,
 ${n}`,
@@ -173,7 +167,13 @@ ${d}
 
 Dear Hiring Manager,
 
-I am writing to formally express my interest in the ${j} position at ${c}. My professionalism, organisation, and consistency align closely with your company’s values.
+I am writing to formally express my interest in the ${j} position at ${c}. With a consistent record of professionalism, reliability, and attention to detail, I take pride in maintaining the highest standards of performance in every role I undertake.
+
+Throughout my career, I have developed strong organisational and communication skills, alongside the ability to manage multiple priorities with precision and care. I am known for my commitment to accuracy, dependability, and a methodical approach to achieving results.
+
+I am particularly drawn to ${c} because of its reputation for excellence and its dedication to fostering a professional and supportive working environment. I believe my background, work ethic, and respect for process align closely with your company’s values.
+
+Thank you for taking the time to consider my application. I would welcome the opportunity to discuss how my experience and dedication could contribute to the continued success of ${c}.
 
 Yours faithfully,
 ${n}`,
@@ -185,7 +185,11 @@ ${d}
 
 Dear Hiring Manager,
 
-I’m excited to apply for the ${j} role at ${c}. I value teamwork, clear communication, and a positive attitude — qualities I’d bring to your team.
+I’m excited to apply for the ${j} position at ${c}. I’ve always believed that great results come from teamwork, clear communication, and a genuine passion for helping others — values I bring to every role I take on.
+
+In my previous positions, I’ve developed a reputation for being approachable, dependable, and proactive. I take pride in supporting colleagues and customers alike, solving challenges with patience, positivity, and a can-do attitude. Whether assisting a busy team or managing day-to-day responsibilities, I strive to create a positive and productive working environment.
+
+What stands out to me about ${c} is its commitment to quality, collaboration, and care — qualities I deeply value. I would love the opportunity to bring my enthusiasm and reliability to your team and play a part in ${c}’s continued success.
 
 Kind regards,
 ${n}`,
@@ -197,7 +201,11 @@ ${d}
 
 Dear Hiring Manager,
 
-I’m thrilled to express my interest in the ${j} position at ${c}. My creative yet structured approach helps deliver thoughtful, professional work.
+I’m excited to express my interest in the ${j} position at ${c}. My approach to work is guided by creativity, precision, and purpose — qualities that allow me to bring fresh ideas to life while maintaining a high standard of professionalism.
+
+Throughout my career, I’ve honed the ability to balance imagination with structure. Whether developing concepts, solving visual challenges, or collaborating on campaigns, I take pride in producing work that is both innovative and thoughtfully executed. Every project I undertake is an opportunity to craft something meaningful and memorable.
+
+What draws me to ${c} is its forward-thinking vision and commitment to creative excellence. I’m inspired by organisations that value originality and collaboration, and I’m eager to contribute my ideas, design sense, and dedication to ${c}’s continued growth and success.
 
 Warm regards,
 ${n}`,
@@ -278,22 +286,6 @@ ${n}`,
     localStorage.removeItem("userData");
     showToast("🧹 Form cleared — templates locked again.", "info");
   });
-
-  /* =========================================================
-     🌓 DARK MODE TOGGLE
-  ========================================================= */
-  if (themeToggle) {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") document.body.classList.add("dark");
-    themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
-
-    themeToggle.addEventListener("click", () => {
-      document.body.classList.toggle("dark");
-      const isDark = document.body.classList.contains("dark");
-      localStorage.setItem("theme", isDark ? "dark" : "light");
-      themeToggle.textContent = isDark ? "☀️" : "🌙";
-    });
-  }
 
   /* =========================================================
      🔔 TOAST FUNCTION
