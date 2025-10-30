@@ -305,7 +305,8 @@ async function checkSupabasePayment(email) {
       }
       
       try {
-        const res = await fetch('/create-checkout-session', { 
+        const res = await fetch('https://quickcoverletter-backend.onrender.com/create-checkout-session', 
+      { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email }) // Send the email to the server
