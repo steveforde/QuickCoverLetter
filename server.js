@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import Stripe from "stripe";
 import bodyParser from "body-parser";
 import { createClient } from "@supabase/supabase-js";
-import { sendEmail } from "./email.js"; // Assume email.js is also updated and exists
+import { sendEmail } from "./email.js";
 import path from "path"; 
 import { fileURLToPath } from "url"; 
 
@@ -23,13 +23,13 @@ const SUPABASE_FALLBACK_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co";
 let supabase;
 
 // 🛠️ FIX: Wrap Supabase initialization in try/catch to prevent server crash 
-// if environment variables are missing, which causes the 500 error.
+// if environment variables are missing.
 try {
   // Use environment variable if available, otherwise use the fallback URL.
   const supabaseUrl = process.env.SUPABASE_URL || SUPABASE_FALLBACK_URL;
   
   // The service role MUST be present in the environment for the backend 
-  // to log webhooks, but we won't crash if it's not.
+  // to log webhooks.
   const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE;
 
   if (!supabaseServiceRole) {
@@ -74,14 +74,12 @@ app.post(
       const email =
         session.customer_details?.email || session.customer_email || null;
       const name = session.customer_details?.name || "Customer";
-      
-      // 💡 Get amount directly in cents/units
       const amountInCents = session.amount_total; 
 
       console.log(`🧾 Checkout complete for ${email}`);
 
       // Optional: save transaction to Supabase
-      if (supabase) {
+      if (supabase && supabase.from) {
         const { error } = await supabase.from("transactions").insert([
           {
             payment_intent: session.id,
@@ -95,10 +93,10 @@ app.post(
         ]);
         if (error) console.error("❌ DB insert error:", error.message);
       } else {
-        console.warn("⚠️ Supabase client not initialized. Cannot log transaction.");
+        console.warn("⚠️ Supabase client not fully initialized. Cannot log transaction.");
       }
 
-      // ✅ Send Brevo confirmation email using the imported function
+      // ✅ Send Brevo confirmation email
       const subject = "QuickProCV Purchase Confirmation";
       const html = `<p>Hi ${name}, thank you for your purchase of ${session.currency.toUpperCase()} ${amountInCents / 100}!</p>`;
       
@@ -114,8 +112,11 @@ app.post(
 // ========================================================
 app.use(cors());
 app.use(express.json());
-// 🛠️ FIX: Serve static files directly from the root (__dirname)
+
+// 🛠️ FIX: Serve static files directly from the root (__dirname). 
+// This line handles serving index.html for the root path ('/') automatically.
 app.use(express.static(__dirname)); 
+
 
 // ========================================================
 // 💳 STRIPE CHECKOUT SESSION
@@ -126,7 +127,7 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       line_items: [
         {
-          price: process.env.PRICE_ID, // Ensure PRICE_ID is correct in Render environment variables
+          price: process.env.PRICE_ID, 
           quantity: 1,
         },
       ],
@@ -145,31 +146,20 @@ app.post("/create-checkout-session", async (req, res) => {
 
 
 // ========================================================
-// 🔍 TEST EMAIL ENDPOINT (Unified to use sendEmail)
+// 🔍 TEST EMAIL ENDPOINT
 // ========================================================
 app.get("/api/test-email", async (req, res) => {
   try {
-    // Send a simple test email using the imported function
     await sendEmail("sforde08@gmail.com", "API Test Email", "<p>This is a test email sent via the unified Brevo API function.</p>");
     res.send("✅ Test email sent successfully");
   } catch (err) {
-    // This logs the full axios error received from the Brevo API
     console.error("❌ Failed to send test email (API Error):", err.message);
     res.status(500).send("❌ Email send failed");
   }
 });
 
-// ========================================================
-// 🏠 ROOT
-// ========================================================
-app.get("/", (req, res) => {
-  // 🛠️ FIX: Serve index.html directly from the root (__dirname)
-  res.sendFile("index.html", { root: __dirname });
-});
 
-// ========================================================
 // 🚀 START SERVER
-// ========================================================
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
