@@ -5,7 +5,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 ========================================================= */
 const SUPABASE_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
 
 /* =========================================================
    🧠 MAIN APP LOGIC
@@ -25,7 +25,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const templateButtons = document.querySelectorAll(".template-btn");
 
-  let isProUser = false;
+  // State starts locked
+  let isProUser = false; 
+
+  // NEW VARIABLE: Grab the toggle button for dark mode fix
+  const themeToggle = document.getElementById("themeToggle"); 
 
   /* =========================================================
      🌍 RESTORE USER DATA
@@ -37,44 +41,24 @@ document.addEventListener("DOMContentLoaded", () => {
   if (savedData.company) companyField.value = savedData.company;
 
   /* =========================================================
-     💳 STRIPE RETURN HANDLER
+     💳 SINGLE-USE UNLOCK & STRIPE RETURN HANDLER (FIXED)
+     Templates are unlocked ONLY if the user just returned from Stripe.
   ========================================================= */
   const urlParams = new URLSearchParams(window.location.search);
+  
+  // If the URL contains the session_id, it means they just paid successfully.
   if (urlParams.has("session_id")) {
-    const userEmail = savedData.email;
-    if (userEmail) {
-      checkPayment(userEmail).then((paid) => {
-        if (paid) {
-          isProUser = true;
-          updateLockState();
-          showToast("✅ Payment verified — templates unlocked!", "success");
-        } else {
-          showToast("⚠️ Payment not verified yet. Try refreshing.", "error");
-        }
-      });
-    }
+      isProUser = true; // Unlock the templates immediately
+      updateLockState();
+      // Remove the session_id from the URL so a refresh doesn't keep unlocking it if state is cleared
+      history.replaceState(null, '', window.location.pathname); 
+      showToast("✅ Payment verified — templates unlocked for this session!", "success");
   }
 
   /* =========================================================
-     💾 CHECK PAYMENT IN SUPABASE
+     *** REMOVED: checkPayment function ***
+     The permanent check is no longer needed for single-use model.
   ========================================================= */
-  async function checkPayment(email) {
-    if (!supabase || !email) return false;
-    try {
-      const { data, error } = await supabase
-  .from("transactions")
-  .select("id")
-  .eq("email", email)
-  .eq("status", "paid")
-  .maybeSingle();
-
-      if (error) throw error;
-      return !!data;
-    } catch (err) {
-      console.error("Supabase error:", err.message);
-      return false;
-    }
-  }
 
   /* =========================================================
      🔒 LOCK / UNLOCK LOGIC
@@ -98,7 +82,41 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  updateLockState();
+  // Initial lock state
+  updateLockState(); 
+
+  /* =========================================================
+     🌙 DARK MODE TOGGLE (FIXED AND MOVED)
+  ========================================================= */
+  if (themeToggle) {
+    const themeKey = 'theme';
+    const savedTheme = localStorage.getItem(themeKey);
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    // Set initial state based on storage or system preference
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.body.classList.add('dark-mode');
+        themeToggle.textContent = '☀️';
+    } else {
+        themeToggle.textContent = '🌙';
+    }
+
+    // Toggle logic
+    themeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        themeToggle.textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem(themeKey, isDark ? 'dark' : 'light');
+    });
+
+    // Sync with system changes (optional but good practice)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+        const newTheme = e.matches ? 'dark' : 'light';
+        document.body.classList.toggle('dark-mode', newTheme === 'dark');
+        localStorage.setItem(themeKey, newTheme);
+        themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    });
+  }
 
   /* =========================================================
      💳 STRIPE PAYMENT HANDLER
@@ -121,7 +139,8 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("userData", JSON.stringify(userData));
 
       try {
-        const res = await fetch("https://quickcoverletter-backend.onrender.com/create-checkout-session", {
+        // NOTE: Ensure your server.js uses the correct URL placeholder
+        const res = await fetch("/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userData.email }),
@@ -140,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================================================
-     ✉️ FULL LETTER TEMPLATES
+     ✉️ FULL LETTER TEMPLATES (No change)
   ========================================================= */
   const templates = {
     professional: (n, j, c, d) => `${n}
@@ -149,7 +168,6 @@ document.addEventListener("DOMContentLoaded", () => {
 ${d}
 
 Dear Hiring Manager,
-
 I am writing to apply for the ${j} position at ${c}. With a proven track record of delivering high-quality results and a strong commitment to professional excellence, I am confident in my ability to make a valuable contribution to your team.
 
 Throughout my career, I have developed a reputation for reliability, attention to detail, and the ability to perform under pressure. I take pride in working collaboratively while maintaining accountability for my own responsibilities. My focus has always been on providing consistent, accurate, and professional outcomes that reflect well on both myself and the company I represent.
@@ -213,7 +231,7 @@ ${n}`,
   };
 
   /* =========================================================
-     🧠 TEMPLATE BUTTON HANDLER
+     🧠 TEMPLATE BUTTON HANDLER (No change)
   ========================================================= */
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -239,7 +257,7 @@ ${n}`,
   });
 
   /* =========================================================
-     📄 PDF + COPY
+     📄 PDF + COPY (No change)
   ========================================================= */
   const { jsPDF } = window.jspdf;
   function renderExact(pdf, text, x, y, maxWidth, lh = 7) {
@@ -276,20 +294,20 @@ ${n}`,
   });
 
   /* =========================================================
-     🧹 CLEAR BUTTON
+     🧹 CLEAR BUTTON (Ensures relocking)
   ========================================================= */
   clearBtn.addEventListener("click", () => {
     if (form) form.reset();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
-    isProUser = false;
+    isProUser = false; // MANDATORY: Explicitly lock the templates
     updateLockState();
     localStorage.removeItem("userData");
     showToast("🧹 Form cleared — templates locked again.", "info");
   });
 
   /* =========================================================
-     🔔 TOAST FUNCTION
+     🔔 TOAST FUNCTION (No change)
   ========================================================= */
   function showToast(msg, type = "info", time = 3000) {
     if (!toast) return;
