@@ -62,11 +62,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!supabase || !email) return false;
     try {
       const { data, error } = await supabase
-        .from("transactions")
-        .select("id")
-        .eq("email", email)
-        .eq("payment_status", "paid")
-        .maybeSingle();
+  .from("transactions")
+  .select("id")
+  .eq("email", email)
+  .eq("status", "paid")
+  .maybeSingle();
+
       if (error) throw error;
       return !!data;
     } catch (err) {
