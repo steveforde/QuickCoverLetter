@@ -1,18 +1,24 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import Stripe from "stripe";
-import bodyParser from "body-parser";
-import axios from "axios";
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import stripe from 'stripe';
+import bodyParser from 'body-parser';
+import axios from 'axios';
 import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
 
 const app = express();
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new stripe(process.env.STRIPE_SECRET_KEY);
+
+// TEMPORARY FIX: Hardcoding SUPABASE_URL because Render environment variables failed to load it.
+// The SUPABASE_SERVICE_ROLE (secret key) remains loaded via process.env.
+const SUPABASE_URL_HARDCODED = 'https://ztrsuveqeftmgoeiwjgz.supabase.co';
+
+// Note: The service role key is still loaded securely via environment variables.
 const supabase = createClient(
-  process.env.SUPABASE_URL_PUBLIC,
-  process.env.SUPABASE_SERVICE_ROLE
+    SUPABASE_URL_HARDCODED,
+    process.env.SUPABASE_SERVICE_ROLE
 );
 
 // ========================================================
