@@ -102,15 +102,22 @@
   </footer>
 
   <!-- ✅ Script goes here -->
-  <script>
-    // ✅ Set unlock flag
-    localStorage.setItem('hasPaid', 'true');
+ <script>
+  // Preserve existing user data
+  const data = localStorage.getItem('userData');
+  if (data) {
+    console.log('✅ Preserved user data for post-payment return');
+  }
 
-    // ✅ Delay before redirect
-    setTimeout(() => {
-      window.location.href = '/index.html';
-    }, 3000);
-  </script>
+  // Mark payment complete
+  localStorage.setItem('hasPaid', 'true');
+
+  // Redirect back after short delay
+  setTimeout(() => {
+    window.location.href = '/index.html';
+  }, 3000);
+</script>
+
 </body>
 </html>
 
