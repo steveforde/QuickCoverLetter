@@ -4,19 +4,23 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // 🔑 SUPABASE CONFIGURATION (MANDATORY)
 // We are now STRICTLY using environment variables. These must be defined 
 // in your hosting platform's environment settings for the app to function.
+// 
+// NOTE: We are reverting to simpler names (__SUPABASE_URL, __SUPABASE_ANON_KEY)
+// to make the environment variable configuration consistent across your 
+// hosting and local setup.
 // =========================================================================
 
 // Check if the environment variables are available, otherwise throw an error
-if (typeof __SUPABASE_URL_PUBLIC === 'undefined' || typeof __SUPABASE_ANON_KEY_PUBLIC === 'undefined') {
-    console.error("CONFIGURATION ERROR: Supabase environment variables (__SUPABASE_URL_PUBLIC or __SUPABASE_ANON_KEY_PUBLIC) are not defined.");
+if (typeof __SUPABASE_URL === 'undefined' || typeof __SUPABASE_ANON_KEY === 'undefined') {
+    console.error("CONFIGURATION ERROR: Supabase environment variables (__SUPABASE_URL or __SUPABASE_ANON_KEY) are not defined.");
     // We will set them to a non-functional string to prevent accidental connection
     var SUPABASE_URL = "ENV_VAR_MISSING"; 
     var SUPABASE_ANON_KEY = "ENV_VAR_MISSING";
     var supabase = null; // Set supabase to null if configuration fails
 } else {
     // Use the public environment variables provided by the hosting platform
-    var SUPABASE_URL = __SUPABASE_URL_PUBLIC;
-    var SUPABASE_ANON_KEY = __SUPABASE_ANON_KEY_PUBLIC;
+    var SUPABASE_URL = __SUPABASE_URL;
+    var SUPABASE_ANON_KEY = __SUPABASE_ANON_KEY;
     
     // Initialize Supabase Client
     var supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
