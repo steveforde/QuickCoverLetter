@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import stripe from 'stripe';
+import Stripe from 'stripe'; // CHANGED: Capitalized import to avoid conflict
 import bodyParser from 'body-parser';
 import axios from 'axios';
 import { createClient } from "@supabase/supabase-js";
@@ -9,7 +9,8 @@ import { createClient } from "@supabase/supabase-js";
 dotenv.config();
 
 const app = express();
-const stripe = new stripe(process.env.STRIPE_SECRET_KEY);
+// FIX: Using capitalized 'Stripe' from the import to instantiate the client
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 // TEMPORARY FIX: Hardcoding SUPABASE_URL because Render environment variables failed to load it.
 // The SUPABASE_SERVICE_ROLE (secret key) remains loaded via process.env.
