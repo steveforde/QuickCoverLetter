@@ -2,30 +2,21 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 // =========================================================================
 // 🔑 SUPABASE CONFIGURATION (MANDATORY)
-// We are now STRICTLY using environment variables. These must be defined 
-// in your hosting platform's environment settings for the app to function.
-// 
-// NOTE: We are reverting to simpler names (__SUPABASE_URL, __SUPABASE_ANON_KEY)
-// to make the environment variable configuration consistent across your 
-// hosting and local setup.
+// These global variables (__SUPABASE_URL and __SUPABASE_ANON_KEY) are
+// automatically provided by the Canvas environment for client-side use.
 // =========================================================================
 
-// Check if the environment variables are available, otherwise throw an error
-if (typeof __SUPABASE_URL === 'undefined' || typeof __SUPABASE_ANON_KEY === 'undefined') {
-    console.error("CONFIGURATION ERROR: Supabase environment variables (__SUPABASE_URL or __SUPABASE_ANON_KEY) are not defined.");
-    // We will set them to a non-functional string to prevent accidental connection
-    var SUPABASE_URL = "ENV_VAR_MISSING"; 
-    var SUPABASE_ANON_KEY = "ENV_VAR_MISSING";
-    var supabase = null; // Set supabase to null if configuration fails
-} else {
-    // Use the public environment variables provided by the hosting platform
-    var SUPABASE_URL = __SUPABASE_URL;
-    var SUPABASE_ANON_KEY = __SUPABASE_ANON_KEY;
-    
-    // Initialize Supabase Client
-    var supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-}
+let supabase = null;
 
+if (typeof __SUPABASE_URL === 'undefined' || typeof __SUPABASE_ANON_KEY === 'undefined') {
+    console.error("CONFIGURATION ERROR: Supabase environment variables (__SUPABASE_URL or __SUPABASE_ANON_KEY) are not defined. App features relying on Supabase will be non-functional.");
+    // Supabase will remain null, leading to payment check failure, which is safer than using dummy credentials.
+} else {
+    // Initialize Supabase Client using provided global variables
+    const SUPABASE_URL = __SUPABASE_URL;
+    const SUPABASE_ANON_KEY = __SUPABASE_ANON_KEY;
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('form');
@@ -98,7 +89,7 @@ In my previous positions, I’ve developed a reputation for being approachable, 
 
 What stands out to me about ${company} is its commitment to quality, collaboration, and care — qualities I deeply value. I would love the opportunity to bring my enthusiasm and reliability to your team and play a part in ${company}’s continued success.
 
-Thank regards,
+Warm regards,
 ${name}`;
   },
 
@@ -129,7 +120,7 @@ ${name}`;
   async function checkSupabasePayment(email) {
     if (!supabase) {
         // If supabase is null due to missing env vars, immediately fail
-        console.error("Cannot check payment: Supabase client is not initialized due to missing environment variables.");
+        console.error("Cannot check payment: Supabase client is not initialized.");
         return false;
     }
 
@@ -188,7 +179,10 @@ ${name}`;
     if (isProUser) {
         showToast('✅ Templates unlocked!', 'success', 3000);
     } else {
-        showToast('🔒 Templates are locked. Purchase to unlock.', 'error', 3000);
+        // Only show a warning if Supabase is actually initialized
+        if (supabase) {
+            showToast('🔒 Templates are locked. Purchase to unlock.', 'error', 3000);
+        }
     }
   }
   
@@ -229,6 +223,10 @@ ${name}`;
         return;
       }
       
+      // Remove 'active' class from all, then add to the clicked one
+      document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
       const type = btn.dataset.type;
 
       // NOTE: Assuming the input fields for name, job, and company are present
@@ -274,12 +272,19 @@ ${name}`;
   function showToast(message, type = 'success', duration = 4000) {
     if (!toast) return;
     toast.className = 'toast';
-    toast.classList.add(type, 'show');
+    // Use a simpler class for coloring based on type
+    const baseClass = type === 'error' ? 'error' : (type === 'success' ? 'success' : 'info'); 
+    toast.classList.add(baseClass, 'show');
     toast.textContent = message;
+    
+    // Auto-hide the toast
     setTimeout(() => {
       toast.classList.remove('show');
       setTimeout(() => toast.classList.add('hidden'), 600);
     }, duration);
+    
+    // Ensure toast is visible by removing 'hidden' if it was present
+    toast.classList.remove('hidden');
   }
 
   // --- STRIPE PAY BUTTON ---
@@ -306,7 +311,9 @@ ${name}`;
         if (data.url) {
           window.location.href = data.url;
         } else {
-          showToast('❌ Unable to start payment. Please try again.', 'error');
+          // Check for specific error message from the server
+          const errorMessage = data.error || 'Unable to start payment. Please try again.';
+          showToast(`❌ ${errorMessage}`, 'error');
         }
       } catch (err) {
         console.error('Stripe payment error:', err);
@@ -362,11 +369,24 @@ ${name}`;
 
   copyBtn.addEventListener('click', () => {
     if (!coverLetter.value.trim()) return;
+    // Using modern clipboard API which is generally preferred
     navigator.clipboard.writeText(coverLetter.value)
       .then(() => showToast('Copied to clipboard ✅', 'success'))
       .catch((err) => {
         console.error('Failed to copy: ', err);
-        showToast('❌ Failed to copy', 'error');
+        // Fallback for environments where clipboard.writeText might fail
+        try {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = coverLetter.value;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('Copied to clipboard (fallback) ✅', 'success');
+        } catch (execErr) {
+            console.error('Fallback copy failed: ', execErr);
+            showToast('❌ Failed to copy', 'error');
+        }
       });
   });
 
@@ -376,25 +396,30 @@ if (themeToggle) {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   const savedTheme = localStorage.getItem('theme');
 
+  // Check saved theme first, then system preference
   if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-    document.body.classList.add('dark');
+    document.body.classList.add('dark-mode'); // Use 'dark-mode' class to match CSS
     themeToggle.textContent = '☀️';
+  } else {
+    // Ensure the text is set for light mode if it starts that way
+    themeToggle.textContent = '🌙';
   }
 
   themeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark');
-    const isDark = document.body.classList.contains('dark');
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
     themeToggle.textContent = isDark ? '☀️' : '🌙';
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
   });
 }
 
-// === LIVE SYSTEM THEME SYNC (unchanged) ===
+// === LIVE SYSTEM THEME SYNC (FIXED: now uses 'dark-mode' class) ===
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  const newTheme = e.matches ? 'dark' : 'light';
-  document.body.classList.toggle('dark', newTheme === 'dark');
-  localStorage.setItem('theme', newTheme);
-  themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+  if (!localStorage.getItem('theme')) { // Only sync if user hasn't manually set a preference
+    const newTheme = e.matches ? 'dark' : 'light';
+    document.body.classList.toggle('dark-mode', newTheme === 'dark');
+    themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+  }
 });
 
 
@@ -417,6 +442,9 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e =
         userNameField.value = '';
     }
     
+    // Deselect active template button
+    document.querySelectorAll('.template-btn').forEach(b => b.classList.remove('active'));
+
     // ✅ FIX: Reset the global state and visually re-lock the buttons
     isProUser = false; 
     updateLockIcons(); 
