@@ -272,7 +272,7 @@ ${name}`,
       localStorage.setItem("userData", JSON.stringify(userData));
 
       try {
-        const res = await fetch("https://quickcoverletter-backend.onrender.com/create-checkout-session", {
+         const res = await fetch("/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userData.email }),
