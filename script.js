@@ -1,146 +1,278 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* =========================================================
-   🔑 SUPABASE INITIALIZATION (PUBLIC KEYS)
+   1) PUBLIC SUPABASE (browser)
+   - matches your screenshot
+   - we read from public.transactions
 ========================================================= */
 const SUPABASE_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY); 
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* =========================================================
-   🧠 MAIN APP LOGIC
-========================================================= */
 document.addEventListener("DOMContentLoaded", () => {
+  /* =========================================================
+     2) GRAB ELEMENTS
+  ========================================================= */
   const form = document.getElementById("form");
-  const emailField = document.getElementById("userEmail");
-  const nameField = document.getElementById("userName");
   const jobField = document.getElementById("jobTitle");
   const companyField = document.getElementById("companyName");
-  const coverLetter = document.getElementById("coverLetter");
+  const nameField = document.getElementById("userName");
+  const emailField = document.getElementById("userEmail");
   const payButton = document.getElementById("payButton");
+  const templateButtons = document.querySelectorAll(".template-btn");
+  const coverLetter = document.getElementById("coverLetter");
   const resultBox = document.getElementById("resultBox");
   const clearBtn = document.getElementById("clearBtn");
   const downloadBtn = document.getElementById("downloadBtn");
   const copyBtn = document.getElementById("copyBtn");
   const toast = document.getElementById("toast");
-  const templateButtons = document.querySelectorAll(".template-btn");
+  const themeToggle = document.getElementById("themeToggle");
 
-  // State starts locked
-  let isProUser = false; 
-
-  // NEW VARIABLE: Grab the toggle button for dark mode fix
-  const themeToggle = document.getElementById("themeToggle"); 
+  // app state
+  let isProUser = false;
 
   /* =========================================================
-     🌍 RESTORE USER DATA
+     3) RESTORE FORM + PAID FLAG
   ========================================================= */
   const savedData = JSON.parse(localStorage.getItem("userData") || "{}");
-  if (savedData.email) emailField.value = savedData.email;
-  if (savedData.name) nameField.value = savedData.name;
   if (savedData.job) jobField.value = savedData.job;
   if (savedData.company) companyField.value = savedData.company;
+  if (savedData.name) nameField.value = savedData.name;
+  if (savedData.email) emailField.value = savedData.email;
+
+  // local quick unlock (in case Supabase is a bit late)
+  const hasPaidLocal = localStorage.getItem("hasPaid") === "true";
 
   /* =========================================================
-     💳 SINGLE-USE UNLOCK & STRIPE RETURN HANDLER (FIXED)
-     Templates are unlocked ONLY if the user just returned from Stripe.
+     4) DARK MODE (you said it broke)
   ========================================================= */
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  // If the URL contains the session_id, it means they just paid successfully.
-  if (urlParams.has("session_id")) {
-      isProUser = true; // Unlock the templates immediately
-      updateLockState();
-      // Remove the session_id from the URL so a refresh doesn't keep unlocking it if state is cleared
-      history.replaceState(null, '', window.location.pathname); 
-      showToast("✅ Payment verified — templates unlocked for this session!", "success");
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark") {
+    document.body.classList.add("dark");
+    if (themeToggle) themeToggle.textContent = "☀️";
+  } else {
+    if (themeToggle) themeToggle.textContent = "🌙";
+  }
+
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      themeToggle.textContent = isDark ? "☀️" : "🌙";
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+    });
   }
 
   /* =========================================================
-     *** REMOVED: checkPayment function ***
-     The permanent check is no longer needed for single-use model.
+     5) LETTER TEMPLATES (full versions back in)
   ========================================================= */
+  const templates = {
+    professional: (name, job, company, date) => `${name}
+[Your Address]
+[City, County]
+${date}
+
+Dear Hiring Manager,
+
+I am writing to apply for the ${job} position at ${company}. With a proven track record of delivering high-quality work, strong attention to detail, and a professional approach to customers and colleagues, I am confident I can make a positive contribution to your team.
+
+Throughout my career I have been recognised for reliability, consistency, and the ability to follow process while still delivering excellent results. I work well both independently and as part of a team, and I am comfortable representing the company in a professional manner.
+
+I would welcome the opportunity to bring this experience to ${company} and support your goals.
+
+Thank you for your time and consideration.
+
+Sincerely,
+${name}`,
+
+    formal: (name, job, company, date) => `${name}
+[Your Address]
+[City, County]
+${date}
+
+Dear Hiring Manager,
+
+I wish to formally express my interest in the ${job} role at ${company}. I have always maintained high professional standards in every position I have held, ensuring accuracy, clear communication, and respect for established procedures.
+
+In previous roles I have been trusted to manage tasks carefully, meet deadlines, and support both customers and internal teams. I believe these skills would transfer well to ${company}, particularly in a role that values professionalism and reliability.
+
+I would appreciate the opportunity to discuss how my background aligns with your current requirements.
+
+Yours faithfully,
+${name}`,
+
+    friendly: (name, job, company, date) => `${name}
+[Your Address]
+[City, County]
+${date}
+
+Dear Hiring Manager,
+
+I am excited to apply for the ${job} position at ${company}. I enjoy working with people, solving problems in a calm and practical way, and creating a positive experience for customers and colleagues.
+
+I am known for being approachable, dependable, and easy to work with. I bring good communication skills, patience, and a genuine interest in helping others — which I believe would be a good fit for ${company}.
+
+Thank you for considering my application. I would be happy to speak further about how I can contribute to your team.
+
+Kind regards,
+${name}`,
+
+    artistic: (name, job, company, date) => `${name}
+[Your Address]
+[City, County]
+${date}
+
+Dear Hiring Manager,
+
+I am writing to express my interest in the ${job} role at ${company}. I take pride in producing work that is thoughtful, well-presented, and aligned with the organisation’s values. I balance creativity with structure, and I always aim to deliver work that looks professional and represents the company well.
+
+What interests me in ${company} is its focus on quality and forward thinking. I would welcome the chance to bring my ideas, attention to detail, and strong work ethic to your team.
+
+Thank you for your time and consideration.
+
+Warm regards,
+${name}`,
+  };
 
   /* =========================================================
-     🔒 LOCK / UNLOCK LOGIC
+     6) LOCK / UNLOCK UI
   ========================================================= */
   function updateLockState() {
     templateButtons.forEach((btn) => {
-      const lock = btn.querySelector(".lock-icon");
+      let lockIcon = btn.querySelector(".lock-icon");
       if (!isProUser) {
         btn.disabled = true;
-        payButton.classList.remove("hidden");
-        if (!lock) {
-          const icon = document.createElement("span");
-          icon.classList.add("lock-icon");
-          icon.textContent = " 🔒";
-          btn.appendChild(icon);
+        payButton?.classList.remove("hidden");
+        if (!lockIcon) {
+          lockIcon = document.createElement("span");
+          lockIcon.classList.add("lock-icon");
+          lockIcon.textContent = " 🔒";
+          btn.appendChild(lockIcon);
         }
       } else {
         btn.disabled = false;
-        payButton.classList.add("hidden");
-        if (lock) lock.remove();
+        payButton?.classList.add("hidden");
+        if (lockIcon) lockIcon.remove();
       }
     });
   }
-  // Initial lock state
-  updateLockState(); 
 
   /* =========================================================
-     🌙 DARK MODE TOGGLE (FIXED AND MOVED)
+     7) CHECK SUPABASE FOR PAID ROW
+     - your table: transactions
+     - paid column: status = 'paid'
   ========================================================= */
-  if (themeToggle) {
-    const themeKey = 'theme';
-    const savedTheme = localStorage.getItem(themeKey);
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // Set initial state based on storage or system preference
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-        document.body.classList.add('dark-mode');
-        themeToggle.textContent = '☀️';
-    } else {
-        themeToggle.textContent = '🌙';
+  async function checkPaymentInSupabase(email) {
+    if (!email) return false;
+    try {
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("id")
+        .eq("email", email)
+        .eq("status", "paid")
+        .maybeSingle();
+
+      if (error) {
+        console.error("Supabase payment check error:", error.message);
+        return false;
+      }
+      return !!data;
+    } catch (err) {
+      console.error("Supabase fetch failed:", err.message);
+      return false;
     }
-
-    // Toggle logic
-    themeToggle.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        const isDark = document.body.classList.contains('dark-mode');
-        themeToggle.textContent = isDark ? '☀️' : '🌙';
-        localStorage.setItem(themeKey, isDark ? 'dark' : 'light');
-    });
-
-    // Sync with system changes (optional but good practice)
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-        const newTheme = e.matches ? 'dark' : 'light';
-        document.body.classList.toggle('dark-mode', newTheme === 'dark');
-        localStorage.setItem(themeKey, newTheme);
-        themeToggle.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-    });
   }
 
   /* =========================================================
-     💳 STRIPE PAYMENT HANDLER
+     8) HANDLE STRIPE RETURN (?session_id=...)
+  ========================================================= */
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has("session_id")) {
+    // we just came back from Stripe
+    const emailToCheck = (savedData && savedData.email) || (emailField && emailField.value);
+    if (emailToCheck) {
+      // optimistic unlock
+      localStorage.setItem("hasPaid", "true");
+      isProUser = true;
+      updateLockState();
+
+      // double check against Supabase
+      checkPaymentInSupabase(emailToCheck).then((paid) => {
+        if (paid) {
+          isProUser = true;
+          localStorage.setItem("hasPaid", "true");
+          updateLockState();
+          showToast("✅ Payment verified. Templates unlocked.", "success");
+        } else {
+          // keep local unlock but warn
+          showToast("⚠️ Payment row not found yet. Try again in 10s.", "error");
+        }
+      });
+    }
+  }
+
+  /* =========================================================
+     9) ON NORMAL LOAD: if we saved hasPaid = true, unlock straight away
+  ========================================================= */
+  if (hasPaidLocal) {
+    isProUser = true;
+  }
+  updateLockState();
+
+  /* =========================================================
+     10) TEMPLATE BUTTONS
+  ========================================================= */
+  templateButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (!isProUser) {
+        showToast("🔒 Locked. Please pay €1.99 first.", "error");
+        return;
+      }
+
+      const name = nameField.value.trim();
+      const job = jobField.value.trim();
+      const company = companyField.value.trim();
+      if (!name || !job || !company) {
+        showToast("⚠️ Fill in job, company, and name first.", "error");
+        return;
+      }
+
+      const date = new Date().toLocaleDateString("en-IE", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+
+      const type = btn.dataset.type;
+      const letter = templates[type](name, job, company, date);
+      coverLetter.value = letter;
+      resultBox.classList.remove("hidden");
+      showToast(`✅ ${type} letter generated.`, "success");
+    });
+  });
+
+  /* =========================================================
+     11) PAY BUTTON → STRIPE
   ========================================================= */
   if (payButton) {
     payButton.addEventListener("click", async () => {
       const userData = {
-        name: nameField.value.trim(),
         job: jobField.value.trim(),
         company: companyField.value.trim(),
+        name: nameField.value.trim(),
         email: emailField.value.trim(),
       };
 
       if (!userData.email || !userData.email.includes("@")) {
-        showToast("⚠️ Please enter your email before paying.", "error");
+        showToast("⚠️ Enter your email first.", "error");
         return;
       }
 
-      // Save user data before redirect
+      // save form so we still have it after Stripe
       localStorage.setItem("userData", JSON.stringify(userData));
 
       try {
-        // NOTE: Ensure your server.js uses the correct URL placeholder
-        const res = await fetch("/create-checkout-session", {
+        const res = await fetch("https://quickcoverletter-backend.onrender.com/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userData.email }),
@@ -153,114 +285,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (err) {
         console.error("Stripe error:", err);
-        showToast("⚠️ Payment setup failed.", "error");
+        showToast("❌ Payment setup failed.", "error");
       }
     });
   }
 
   /* =========================================================
-     ✉️ FULL LETTER TEMPLATES (No change)
-  ========================================================= */
-  const templates = {
-    professional: (n, j, c, d) => `${n}
-[Your Address]
-[City, County]
-${d}
-
-Dear Hiring Manager,
-I am writing to apply for the ${j} position at ${c}. With a proven track record of delivering high-quality results and a strong commitment to professional excellence, I am confident in my ability to make a valuable contribution to your team.
-
-Throughout my career, I have developed a reputation for reliability, attention to detail, and the ability to perform under pressure. I take pride in working collaboratively while maintaining accountability for my own responsibilities. My focus has always been on providing consistent, accurate, and professional outcomes that reflect well on both myself and the company I represent.
-
-I am confident that my work ethic, adaptability, and communication skills will make me a valuable addition to your team. I am eager to bring my skills to ${c} and continue developing within a professional environment that values dedication and quality.
-
-Thank you for taking the time to consider my application. I would be delighted to discuss how my background and work ethic align with the needs of ${c}.
-
-Sincerely,
-${n}`,
-
-    formal: (n, j, c, d) => `${n}
-[Your Address]
-[City, County]
-${d}
-
-Dear Hiring Manager,
-
-I am writing to formally express my interest in the ${j} position at ${c}. With a consistent record of professionalism, reliability, and attention to detail, I take pride in maintaining the highest standards of performance in every role I undertake.
-
-Throughout my career, I have developed strong organisational and communication skills, alongside the ability to manage multiple priorities with precision and care. I am known for my commitment to accuracy, dependability, and a methodical approach to achieving results.
-
-I am particularly drawn to ${c} because of its reputation for excellence and its dedication to fostering a professional and supportive working environment. I believe my background, work ethic, and respect for process align closely with your company’s values.
-
-Thank you for taking the time to consider my application. I would welcome the opportunity to discuss how my experience and dedication could contribute to the continued success of ${c}.
-
-Yours faithfully,
-${n}`,
-
-    friendly: (n, j, c, d) => `${n}
-[Your Address]
-[City, County]
-${d}
-
-Dear Hiring Manager,
-
-I’m excited to apply for the ${j} position at ${c}. I’ve always believed that great results come from teamwork, clear communication, and a genuine passion for helping others — values I bring to every role I take on.
-
-In my previous positions, I’ve developed a reputation for being approachable, dependable, and proactive. I take pride in supporting colleagues and customers alike, solving challenges with patience, positivity, and a can-do attitude. Whether assisting a busy team or managing day-to-day responsibilities, I strive to create a positive and productive working environment.
-
-What stands out to me about ${c} is its commitment to quality, collaboration, and care — qualities I deeply value. I would love the opportunity to bring my enthusiasm and reliability to your team and play a part in ${c}’s continued success.
-
-Kind regards,
-${n}`,
-
-    artistic: (n, j, c, d) => `${n}
-[Your Address]
-[City, County]
-${d}
-
-Dear Hiring Manager,
-
-I’m excited to express my interest in the ${j} position at ${c}. My approach to work is guided by creativity, precision, and purpose — qualities that allow me to bring fresh ideas to life while maintaining a high standard of professionalism.
-
-Throughout my career, I’ve honed the ability to balance imagination with structure. Whether developing concepts, solving visual challenges, or collaborating on campaigns, I take pride in producing work that is both innovative and thoughtfully executed. Every project I undertake is an opportunity to craft something meaningful and memorable.
-
-What draws me to ${c} is its forward-thinking vision and commitment to creative excellence. I’m inspired by organisations that value originality and collaboration, and I’m eager to contribute my ideas, design sense, and dedication to ${c}’s continued growth and success.
-
-Warm regards,
-${n}`,
-  };
-
-  /* =========================================================
-     🧠 TEMPLATE BUTTON HANDLER (No change)
-  ========================================================= */
-  templateButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      if (!isProUser) return showToast("🔒 Templates are locked. Please pay first.", "error");
-
-      const name = nameField.value.trim();
-      const job = jobField.value.trim();
-      const company = companyField.value.trim();
-      if (!name || !job || !company)
-        return showToast("⚠️ Please fill all form fields first.", "error");
-
-      const date = new Date().toLocaleDateString("en-IE", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      });
-
-      const type = btn.dataset.type;
-      coverLetter.value = templates[type](name, job, company, date);
-      resultBox.classList.remove("hidden");
-      showToast(`✅ ${type.charAt(0).toUpperCase() + type.slice(1)} letter generated.`, "success");
-    });
-  });
-
-  /* =========================================================
-     📄 PDF + COPY (No change)
+     12) PDF + COPY
   ========================================================= */
   const { jsPDF } = window.jspdf;
-  function renderExact(pdf, text, x, y, maxWidth, lh = 7) {
+
+  function renderExact(pdf, text, x, y, maxWidth, lineHeight = 7) {
     const pageH = pdf.internal.pageSize.getHeight();
     const lines = text.split("\n");
     for (const line of lines) {
@@ -271,7 +306,7 @@ ${n}`,
           y = 20;
         }
         pdf.text(chunk, x, y);
-        y += lh;
+        y += lineHeight;
       }
     }
   }
@@ -294,20 +329,20 @@ ${n}`,
   });
 
   /* =========================================================
-     🧹 CLEAR BUTTON (Ensures relocking)
+     13) CLEAR
   ========================================================= */
   clearBtn.addEventListener("click", () => {
     if (form) form.reset();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
-    isProUser = false; // MANDATORY: Explicitly lock the templates
+    isProUser = false;
+    localStorage.removeItem("hasPaid");
     updateLockState();
-    localStorage.removeItem("userData");
-    showToast("🧹 Form cleared — templates locked again.", "info");
+    showToast("🧹 Form cleared — locked again.", "info");
   });
 
   /* =========================================================
-     🔔 TOAST FUNCTION (No change)
+     14) TOAST
   ========================================================= */
   function showToast(msg, type = "info", time = 3000) {
     if (!toast) return;
