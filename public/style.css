@@ -1,428 +1,702 @@
-/* --- Root Variables and Theme Setup --- */
+/* =========================================================
+   QuickCoverLetter — Final Production CSS (FIXED)
+   - Unified gradients (no banding / no cutoffs)
+   - Distinct rounded hero with soft fade into page
+   - Full feature parity (form, buttons, templates, toast, spinner)
+   - Dark mode tuned (deeper blue hero, charcoal background)
+   ========================================================= */
+
+/* --------------------------
+   1) Root variables
+--------------------------- */
 :root {
-    --primary-color: #0070f3; /* Blue */
-    --primary-dark: #005bb5;
-    --background-light: #f7f9fc;
-    --background-dark: #121212;
-    --card-light: #ffffff;
-    --card-dark: #1e1e1e;
-    --text-color-light: #333333;
-    --text-color-dark: #f0f0f0;
-    --border-color-light: #e0e0e0;
-    --border-color-dark: #333333;
-    --shadow-color-light: rgba(0, 0, 0, 0.05);
-    --shadow-color-dark: rgba(0, 0, 0, 0.4);
+  --blue: #0070f3;
+  --blue-700: #0059c9;
+  --blue-500: #3898ff;
+
+  --dark-hero-1: #0a37d5; /* deeper royal in dark mode */
+  --dark-hero-2: #1e6aff; /* electric blue */
+
+  --green: #00c853;
+  --green-700: #009e42;
+
+  --text-dark: #111;
+  --text-muted: #555; /* Original light-mode muted text color */
+  --border: #d9d9d9;
+  --card-bg: #ffffff;
+
+  --shadow-1: 0 6px 20px rgba(0,0,0,.08);
+  --shadow-2: 0 8px 25px rgba(0,0,0,.10);
+
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+
+  --transition-fast: .2s ease;
+  --transition-med: .3s ease;
+  --transition-slow: .4s ease;
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; padding: 0; }
+
+/* --------------------------
+   2) Page background (Light & Dark) - FIXED GRADIENTS
+--------------------------- */
+html, body {
+  min-height: 100vh;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  transition: background var(--transition-slow), color var(--transition-slow);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--background-light);
-    color: var(--text-color-light);
-    transition: background-color 0.3s, color 0.3s;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+/* 🌞 Light background (soft blue sky - using radial for smoothness) */
+body:not(.dark) {
+  background: radial-gradient(circle at top center,
+    #f9fbff 0%,
+    #e7edff 40%,
+    #d6e0ff 100%) fixed;
+  color: var(--text-dark);
 }
 
-/* --- Dark Mode --- */
-body.dark-mode {
-    background-color: var(--background-dark);
-    color: var(--text-color-dark);
+/* 🌙 Dark background (matte charcoal - using radial for smoothness) */
+body.dark {
+  background: radial-gradient(circle at 20% 10%,
+    #0b1120 0%,
+    #111625 40%,
+    #181b26 100%) fixed;
+  color: #f5f5f5;
+  /* NEW VARIABLE for dark mode muted text (for descriptions) */
+  --text-muted-dark: #b3b3b3; 
 }
 
-body.dark-mode .hero {
-    border-bottom: 1px solid var(--border-color-dark);
+/* Ensure inner wrappers don’t override the gradient */
+main, section, footer, .container, .template-buttons {
+  background: transparent !important;
 }
 
-body.dark-mode .form-box,
-body.dark-mode .result-box {
-    background-color: var(--card-dark);
-    box-shadow: 0 10px 30px var(--shadow-color-dark);
+/* Constrain wide screens */
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
-body.dark-mode input,
-body.dark-mode textarea {
-    background-color: var(--background-dark);
-    color: var(--text-color-dark);
-    border-color: var(--border-color-dark);
-}
-
-body.dark-mode footer {
-    border-top-color: var(--border-color-dark);
-}
-
-body.dark-mode .template-btn {
-    background-color: #333;
-    color: var(--text-color-dark);
-    border-color: #555;
-}
-
-body.dark-mode .template-btn:hover:not(.active) {
-    background-color: #444;
-}
-
-body.dark-mode .template-btn.active {
-    background-color: var(--primary-dark);
-    border-color: var(--primary-color);
-    color: var(--text-color-dark);
-}
-
-/* --- Layout and Header --- */
+/* --------------------------
+   3) Hero (distinct, rounded, soft fade to page) - FIXED FADE
+--------------------------- */
 .hero {
-    width: 100%;
-    padding: 20px 5%;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color-light);
-    background-color: var(--card-light);
-    box-shadow: 0 2px 4px var(--shadow-color-light);
+  width: 100%;
+  position: relative;
+  overflow: visible;
+  border-bottom-left-radius: 32px;
+  border-bottom-right-radius: 32px;
+  color: #fff;
+  text-align: center;
+  padding: 56px 20px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-500));
+  box-shadow: 0 10px 30px rgba(0,0,0,.10), 0 4px 20px rgba(0,112,243,.15);
+  margin-bottom: 30px;
 }
-
-.hero-content h1 {
-    font-size: 1.8rem;
-    color: var(--primary-color);
-    margin-bottom: 5px;
-}
-
-.hero-content p {
-    font-size: 0.9rem;
-    opacity: 0.7;
-}
-
-.theme-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1.5rem;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background-color 0.2s;
-    color: var(--text-color-light);
-}
-
-.theme-btn:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-}
-
-body.dark-mode .theme-btn {
-    color: var(--text-color-dark);
-}
-body.dark-mode .theme-btn:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
+.hero .hero-content { text-align: center; }
+.hero h1 { font-size: 2rem; margin: 0 0 .5rem 0; }
+.hero p  { font-size: 1rem; margin: 0; opacity: .95; }
 
 
-/* --- Main Content and Forms --- */
+
+.hero::before {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 28px;
+  background: radial-gradient(circle at center, rgba(0,112,243,0.45), transparent 70%);
+  border-radius: 50%;
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.hero {
+  position: relative;
+  z-index: 0; /* ensures ::before at -1 sits “behind” the hero but above page bg */
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  bottom: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 28px;
+  background: radial-gradient(circle at center, rgba(0,112,243,0.45), transparent 70%);
+  border-radius: 50%;
+  filter: blur(14px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Soft transparent fade under hero to blend into page bg */
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0;
+  bottom: -28px;
+  height: 56px;
+  pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgba(56,152,255,0.35),
+    rgba(56,152,255,0.15),
+    rgba(56,152,255,0.05),
+    rgba(56,152,255,0)
+  );
+}
+
+/* Dark-mode hero: deeper blue + stronger glow */
+body.dark .hero {
+  background: linear-gradient(135deg, var(--dark-hero-1), var(--dark-hero-2));
+  box-shadow: 0 10px 40px rgba(0,0,0,.45), 0 6px 25px rgba(30,106,255,.25);
+}
+
+body.dark .hero::after {
+  background: linear-gradient(to bottom,
+    rgba(30,106,255,0.28),
+    rgba(30,106,255,0.12),
+    rgba(30,106,255,0.05),
+    rgba(30,106,255,0)
+  );
+}
+
+
+/* --------------------------
+   4) Main spacing
+--------------------------- */
 main {
-    max-width: 900px;
-    width: 90%;
-    margin: 40px auto;
-    padding-bottom: 60px;
-    flex-grow: 1;
+  width: 100%;
+  margin-top: 12px;
+  margin-bottom: 40px;
 }
+.section { margin: 26px auto; }
 
-.form-box, .result-box {
-    background-color: var(--card-light);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px var(--shadow-color-light);
-    margin-bottom: 30px;
+/* --------------------------
+   5) Form box (frosted card)
+--------------------------- */
+.form-box {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-1);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: .85rem;
+  margin: 0 auto;
+  transition: box-shadow var(--transition-med), transform var(--transition-fast), background var(--transition-slow), color var(--transition-slow), border-color var(--transition-fast);
 }
+.form-box:hover { box-shadow: var(--shadow-2); }
 
-label {
-    display: block;
-    font-weight: 600;
-    margin-top: 20px;
-    margin-bottom: 8px;
-    font-size: 0.95rem;
+.form-box label {
+  font-weight: 600;
+  font-size: .92rem;
 }
-
-input[type="text"],
-input[type="email"],
+.form-box input,
+.form-box select,
 textarea {
-    width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border-color-light);
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
-    resize: vertical;
+  padding: .55rem .6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: .98rem;
+  outline: none;
+  transition: border var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-slow), color var(--transition-slow);
+}
+.form-box input:focus,
+.form-box select:focus,
+textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(0,112,243,.12);
 }
 
-input:focus, textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.2);
+/* Dark mode form card */
+body.dark .form-box {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 28px rgba(0,0,0,.45);
+}
+body.dark .form-box input,
+body.dark .form-box select,
+body.dark textarea {
+  background: #0f1012;
+  color: #eaeaea;
+  border: 1px solid rgba(255,255,255,.12);
 }
 
-/* --- Buttons --- */
+/* --------------------------
+   6) Buttons (global + variants)
+--------------------------- */
+button {
+  font-family: inherit;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-med), color var(--transition-med);
+}
+button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,112,243,.2);
+}
+button:disabled {
+  background: #f2f4f7;
+  color: #aaa;
+  border: 1px solid #e0e0e0;
+  cursor: not-allowed;
+  opacity: .85;
+  box-shadow: none;
+}
+
+.btn-primary,
 .pay-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  background: var(--blue);
+  color: #fff;
+  padding: 12px 20px;
+  margin: 10px auto 0 auto;
+  display: block;
+  font-size: 1rem;
+}
+.btn-primary:hover,
+.pay-btn:hover { background: var(--blue-700); }
+
+.btn-secondary {
+  background: var(--green);
+  color: #fff;
+  padding: 10px 18px;
+}
+.btn-secondary:hover { background: var(--green-700); }
+
+/* =====================================================
+   🎯 Unified Action Buttons (Copy / Clear / Download) - FINAL FIX
+   ===================================================== */
+.result-buttons button {
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 15px 22px; /* Remove vertical padding since we use fixed height/line-height */
+  width: 130px; 
+  height: 50px; /* NEW: Fixed height tall enough for two lines */
+  
+  /* Reset button display to be safe, but align text content center */
+  display: flex; /* Changed to flex to internally center text */
+  justify-content: center;
+  align-items: center;
+
+  text-align: center;
+  line-height: 1.1; /* Tighter line height for two lines */
+  
+  color: #fff;
+  transition: background var(--transition-fast),
+              box-shadow var(--transition-fast),
+              transform var(--transition-fast);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* NEW: Styles for the single-line buttons (Copy/Clear) to match alignment */
+#copyBtn, #clearBtn {
+    /* Ensures single-line buttons align their text vertically inside the 50px height */
+    padding: 0 22px; 
+    line-height: 1; 
+}
+
+/* NEW: Styles for the text wrapper inside the Download PDF button */
+.result-buttons button .btn-text {
+    /* Use Flexbox internally to force multi-line text alignment */
+    display: block;
     width: 100%;
-    padding: 15px;
-    margin-top: 30px;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--primary-color);
-    color: white;
-    font-size: 1rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s, opacity 0.2s;
-    box-shadow: 0 4px 15px rgba(0, 112, 243, 0.4);
+    /* No change to text-align, which is inherited */
 }
 
-.pay-btn:hover:not(:disabled) {
-    background-color: var(--primary-dark);
-    transform: translateY(-1px);
+/* --- Colors --- */
+#copyBtn {
+  background: var(--green);
+  box-shadow: 0 4px 10px rgba(0,200,83,.25);
+}
+#clearBtn {
+  background: #dc3545;
+  box-shadow: 0 4px 10px rgba(220,53,69,.25);
+}
+#downloadBtn {
+  background: var(--blue);
+  box-shadow: 0 4px 10px rgba(0,112,243,.25);
 }
 
-.pay-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    box-shadow: none;
+/* --- Hover & Lift Effects --- */
+.result-buttons button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
+}
+#copyBtn:hover { background: var(--green-700); }
+#clearBtn:hover { background: #b52b3a; }
+#downloadBtn:hover { background: var(--blue-700); }
+
+/* --- Layout --- */
+.result-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 1rem;
+  /* KEY ALIGNMENT FIX: Forces all buttons to align on their bottom edge (baseline) */
+  align-items: flex-end; 
 }
 
-.pay-icon {
-    margin-right: 8px;
-}
-
-
-/* --- Template Buttons --- */
-.template-buttons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    margin-bottom: 40px;
-}
-
-.template-option {
-    display: flex;
+/* --- Mobile --- */
+@media (max-width: 480px) {
+  .result-buttons {
     flex-direction: column;
+    align-items: center;
+  }
+  .result-buttons button {
+    width: 80%;
+  }
+}
+
+
+/* --------------------------
+   7) Spinner
+--------------------------- */
+#spinner { text-align: center; margin-top: 1.5rem; }
+.spin {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 3px solid #cde; border-top-color: #0077ff;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.hidden { display: none; }
+
+/* --------------------------
+   8) Template buttons grid
+--------------------------- */
+.template-wrap {
+  width: 100%;
+  margin: 22px auto 0 auto;
+}
+.template-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 18px 22px;
+  justify-items: center;
+  align-items: start;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-top: 8px;
+}
+.template-option {
+  display: grid;
+  grid-auto-rows: min-content;
+  justify-items: center;
+  text-align: center;
+  width: 100%;
+  max-width: 220px;
 }
 
 .template-btn {
-    padding: 15px;
-    border: 2px solid var(--border-color-light);
-    border-radius: 8px;
-    background-color: var(--card-light);
-    color: var(--text-color-light);
-    font-weight: 600;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.2s;
-    margin-bottom: 5px;
+  width: 180px;
+  min-width: 150px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-med);
+  box-shadow: 0 4px 10px rgba(0,112,243,.2);
 }
+.template-btn:hover:not(:disabled) {
+  background: var(--blue-700);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,112,243,.25);
+}
+.template-btn:disabled {
+  background: #cfdfff;
+  color: #3576e0;
+  opacity: 1;
+  cursor: not-allowed;
+  box-shadow: none;
+  position: relative;
+}
+.template-btn:disabled:hover { animation: shake .4s ease; }
+@keyframes shake {
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-3px)}
+  75%{transform:translateX(3px)}
+}
+.template-btn .lock-icon { margin-left: 4px; }
 
-.template-btn:hover:not(.active) {
-    border-color: var(--primary-color);
-    background-color: rgba(0, 112, 243, 0.05);
+/* Tooltip for locked buttons */
+.template-btn:disabled:hover::after {
+  content: "Unlock this template for €1.99";
+  position: absolute;
+  top: -38px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,.85);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: .82rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  animation: fadeIn .25s ease forwards;
 }
-
-.template-btn.active {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 112, 243, 0.3);
-}
+@keyframes fadeIn { to { opacity: 1; } }
 
 .template-option small {
-    font-size: 0.8rem;
-    opacity: 0.6;
-    line-height: 1.3;
+  margin-top: 10px;
+  max-width: 180px;
+  line-height: 1.35;
+  min-height: 3.0em;
+  display: block;
+  font-size: .86rem;
+  color: var(--text-muted); /* Uses the dark muted text color for light mode */
 }
 
-/* --- Result Box --- */
-.result-box h2 {
-    margin-bottom: 20px;
-    font-size: 1.5rem;
+/* Dark mode override for the button descriptions - FIXED VISIBILITY */
+body.dark .template-option small {
+  color: var(--text-muted-dark); /* Uses the new lighter color for dark mode */
 }
 
+/* --------------------------
+   9) Result box
+--------------------------- */
+#resultBox {
+  background: var(--card-bg);
+  padding: 1.5rem 1.6rem;
+  margin: 30px auto 0 auto;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-1);
+  max-width: 720px;
+  width: 92%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  transition: transform var(--transition-med), box-shadow var(--transition-med), background var(--transition-slow), color var(--transition-slow);
+}
+#resultBox.hidden { opacity: 0; transform: translateY(16px); }
+#resultBox:not(.hidden) { opacity: 1; transform: translateY(0); }
+
+#resultBox h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  color: var(--text-dark);
+}
 #coverLetter {
-    min-height: 400px;
-    font-family: 'Times New Roman', serif;
-    font-size: 1.1rem;
-    white-space: pre-wrap;
-    line-height: 1.6;
-    background-color: var(--background-light); /* Lighter bg for better readability */
-    color: var(--text-color-light);
-    border: 1px solid var(--border-color-light);
+  width: 100%;
+  height: 240px;
+  margin-top: .6rem;
+  padding: .6rem .7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-size: .98rem;
+  line-height: 1.5;
+  resize: vertical;
 }
 
-body.dark-mode #coverLetter {
-    background-color: #2a2a2a;
-    color: var(--text-color-dark);
-    border-color: var(--border-color-dark);
+/* Dark mode result card & textareas */
+body.dark #resultBox {
+  background: #151516;
+  color: #f5f5f5;
+  box-shadow: 0 10px 28px rgba(0,0,0,.45);
+  border: 1px solid rgba(255,255,255,.06);
+}
+body.dark #coverLetter {
+  background: #0f0f10;
+  color: #eaeaea;
+  border: 1px solid rgba(255,255,255,.12);
 }
 
-.result-buttons {
-    display: flex;
-    gap: 15px;
-    margin-top: 20px;
-    justify-content: flex-end;
-}
-
-.action-btn {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s, transform 0.1s;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-}
-
-#copyBtn {
-    background-color: #555;
-    order: 2;
-}
-
-#copyBtn:hover {
-    background-color: #333;
-}
-
-#clearBtn {
-    background-color: #e74c3c;
-    order: 1;
-}
-
-#clearBtn:hover {
-    background-color: #c0392b;
-}
-
-#downloadBtn {
-    order: 3;
-    background-color: var(--primary-color);
-}
-#downloadBtn:hover {
-    background-color: var(--primary-dark);
-}
-
-body.dark-mode #copyBtn {
-    background-color: #666;
-}
-body.dark-mode #copyBtn:hover {
-    background-color: #777;
-}
-
-
-/* --- Spinner --- */
-.spinner-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 50px 0;
-}
-
-.spin {
-    border: 5px solid rgba(0, 112, 243, 0.2);
-    border-top: 5px solid var(--primary-color);
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* --- Toast Notification --- */
+/* --------------------------
+   10) Toast
+--------------------------- */
 .toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: var(--primary-dark);
-    color: white;
-    padding: 15px 25px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    opacity: 1;
-    transition: opacity 0.3s, transform 0.3s;
-    display: flex;
-    align-items: center;
+  position: fixed;
+  top: -80px; left: 50%;
+  transform: translateX(-50%);
+  background-color: #28a745;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  box-shadow: 0 4px 8px rgba(0,0,0,.15);
+  opacity: 0;
+  pointer-events: none;
+  transition: top .6s ease, opacity .6s ease;
+  z-index: 1000;
 }
+.toast.show { top: 25px; opacity: 1; pointer-events: auto; }
+.toast.hidden { display: none; }
+.toast.success { background-color: #28a745 !important; }
+.toast.error   { background-color: #dc3545 !important; }
+.toast.info    { background-color: var(--blue) !important; }
 
-.toast.hidden {
-    opacity: 0;
-    transform: translateY(-20px);
-    pointer-events: none;
+/* --------------------------
+   11) Theme toggle button (fixed)
+--------------------------- */
+.theme-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(255,255,255,0.15);
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  cursor: pointer;
+  color: white;
+  transition: background var(--transition-med), transform var(--transition-fast), color var(--transition-med);
+  z-index: 9999;
 }
+.theme-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.06); }
+body.dark .theme-btn { background: rgba(255,255,255,.1); color: #0a84ff; }
 
-.error-text {
-    color: #e74c3c;
-    font-size: 0.9rem;
-    margin-top: 10px;
-    font-weight: 500;
-}
-
-/* --- Footer --- */
+/* --------------------------
+   12) Footer
+--------------------------- */
 footer {
-    width: 100%;
-    padding: 20px 5%;
-    margin-top: auto;
-    border-top: 1px solid var(--border-color-light);
-    text-align: center;
-    font-size: 0.85rem;
-    color: #888;
-}
-
-footer strong {
-    color: var(--primary-color);
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+  opacity: 0.9;
+  padding: 18px 10px 26px 10px;
+  color: #333;
+  background: rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(0,0,0,0.05);
+  border-radius: 0 0 18px 18px;
+  backdrop-filter: blur(6px);
 }
 
 footer a {
-    color: var(--primary-color);
-    text-decoration: none;
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 600;
 }
 
-/* --- Responsive Adjustments --- */
-@media (max-width: 600px) {
-    .hero {
-        padding: 15px 5%;
-    }
-    .hero-content h1 {
-        font-size: 1.5rem;
-    }
-    main {
-        width: 95%;
-        margin: 20px auto;
-    }
-    .form-box, .result-box {
-        padding: 20px;
-    }
-    .template-buttons {
-        grid-template-columns: 1fr;
-    }
-    .result-buttons {
-        flex-direction: column;
-        gap: 10px;
-        align-items: stretch;
-    }
-    #copyBtn { order: 1; }
-    #clearBtn { order: 2; }
-    #downloadBtn { order: 3; }
-    
-    .toast {
-        right: 10px;
-        left: 10px;
-        text-align: center;
-        justify-content: center;
-    }
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode */
+body.dark footer {
+  color: #ccc;
+  background: rgba(0,0,0,0.25);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* --------------------------
+   13) Global smooth transitions
+--------------------------- */
+body, button, .template-btn, .form-box, #resultBox,
+.form-box input, .form-box select, textarea {
+  transition: background var(--transition-slow), color var(--transition-slow),
+              border-color var(--transition-fast), transform var(--transition-fast),
+              box-shadow var(--transition-med);
+}
+
+/* Optional ultra-subtle overlay to hide any banding */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.015);
+  pointer-events: none;
+}
+body.dark::after {
+  background: rgba(0,0,0,0.03);
+}
+
+/* --------------------------
+   14) Responsive
+--------------------------- */
+@media (max-width: 1024px) {
+  .template-buttons {
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+    max-width: 760px;
+  }
+}
+@media (max-width: 768px) {
+  .hero { padding: 44px 20px; }
+  .hero h1 { font-size: 1.7rem; }
+  .container { padding: 0 16px; }
+
+  .form-box { max-width: 92%; padding: 24px 20px; }
+  .template-buttons {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+    gap: 14px 16px;
+    max-width: 540px;
+  }
+  .template-btn { width: 100%; max-width: 220px; }
+  #resultBox { width: 94%; }
+}
+@media (max-width: 420px) {
+  .hero h1 { font-size: 1.5rem; }
+  .form-box { padding: 20px 16px; }
+  .template-buttons { grid-template-columns: 1fr; max-width: 360px; }
+  .template-option { max-width: 100%; }
+  .template-btn { width: 100%; }
+  #coverLetter { height: 260px; }
+}
+
+/* === Fix result actions row: equal sizes, aligned === */
+#resultBox .actions {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+/* Normalize all three buttons inside the actions row */
+#resultBox .actions button,
+#resultBox .actions .btn-primary,
+#resultBox .actions .btn-secondary {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  margin: 0 !important;              /* kill the .btn-primary auto center */
+  flex: 1 1 0;                        /* equal widths */
+  min-width: 160px;                   /* prevents tiny buttons on wide screens */
+  height: 44px;                       /* identical height */
+  padding: 0 18px;                    /* horizontal breathing room */
+  border-radius: 10px;
+  font-weight: 700;
+  line-height: 1;                     /* keeps text vertically centered */
+}
+
+/* Optional: tighter layout on small screens (stack) */
+@media (max-width: 560px) {
+  #resultBox .actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  #resultBox .actions button {
+    width: 100%;
+    min-width: 0;
+  }
 }
