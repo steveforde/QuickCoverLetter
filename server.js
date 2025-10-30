@@ -47,7 +47,7 @@ try {
 
 
 // ========================================================
-// 🪝 STRIPE WEBHOOK  (must be before express.json())
+// 🪝 STRIPE WEBHOOK (must be before express.json())
 // ========================================================
 app.post(
   "/webhook",
@@ -68,44 +68,55 @@ app.post(
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // ✅ Handle checkout success
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      const email =
-        session.customer_details?.email || session.customer_email || null;
+      const email = session.customer_details?.email || session.customer_email || null;
       const name = session.customer_details?.name || "Customer";
-      const amountInCents = session.amount_total; 
+      const amountInCents = session.amount_total;
+      const currency = session.currency;
 
       console.log(`🧾 Checkout complete for ${email}`);
 
-      // Optional: save transaction to Supabase
+      // ✅ Insert into Supabase (if configured)
       if (supabase && supabase.from) {
         const { error } = await supabase.from("transactions").insert([
           {
             payment_intent: session.id,
             email,
             name,
-            amount: amountInCents, 
-            currency: session.currency,
+            amount: amountInCents,
+            currency,
             status: session.payment_status,
             created_at: new Date(),
           },
         ]);
         if (error) console.error("❌ DB insert error:", error.message);
-      } else {
-        console.warn("⚠️ Supabase client not fully initialized. Cannot log transaction.");
       }
 
-      // ✅ Send Brevo confirmation email
-      const subject = "QuickProCV Purchase Confirmation";
-      const html = `<p>Hi ${name}, thank you for your purchase of ${session.currency.toUpperCase()} ${amountInCents / 100}!</p>`;
-      
-      await sendEmail(email, subject, html); 
+      // ✅ Send branded QuickCoverLetter confirmation email
+      try {
+        const subject = "QuickCoverLetter Purchase Confirmation";
+        const html = `
+          <div style="font-family:Arial,sans-serif;padding:20px;background:#f4f8ff;border-radius:10px;">
+            <h2 style="color:#0070f3;">🚀 QuickCoverLetter</h2>
+            <p>Hi ${name},</p>
+            <p>Thank you for your purchase of <strong>€${(amountInCents / 100).toFixed(2)}</strong>.</p>
+            <p>Your cover letter templates are now <strong>unlocked</strong> and ready to use.</p>
+            <br>
+            <p>Warm regards,<br>The QuickCoverLetter Team 🇮🇪</p>
+          </div>
+        `;
+        await sendEmail(email, subject, html);
+        console.log(`✅ QuickCoverLetter email sent to ${email}`);
+      } catch (err) {
+        console.error("❌ Email send failed:", err.message);
+      }
     }
 
     res.json({ received: true });
   }
 );
+
 
 // ========================================================
 // 🧰 MIDDLEWARE & STATIC

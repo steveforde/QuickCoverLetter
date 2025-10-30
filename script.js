@@ -10,6 +10,12 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
+    // 🧹 Clear stored data if this is a brand-new session (no Stripe return)
+  if (!window.location.search.includes("session_id")) {
+    localStorage.removeItem("userData");
+    localStorage.removeItem("hasPaid");
+  }
+
   /* =========================================================
      2) GRAB ELEMENTS
   ========================================================= */
