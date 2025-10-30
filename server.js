@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(
-  process.env.SUPABASE_URL,
+  process.env.SUPABASE_URL_PUBLIC,
   process.env.SUPABASE_SERVICE_ROLE
 );
 
