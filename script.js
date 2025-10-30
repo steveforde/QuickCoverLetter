@@ -4,8 +4,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
    🔑 SUPABASE INITIALIZATION (PUBLIC KEYS)
 ========================================================= */
 const SUPABASE_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo"; // from your Supabase dashboard
-
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* =========================================================
@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const copyBtn = document.getElementById("copyBtn");
   const toast = document.getElementById("toast");
   const templateButtons = document.querySelectorAll(".template-btn");
+  const themeToggle = document.getElementById("themeToggle");
 
   let isProUser = false;
 
@@ -38,7 +39,17 @@ document.addEventListener("DOMContentLoaded", () => {
   if (savedData.company) companyField.value = savedData.company;
 
   /* =========================================================
-     💳 STRIPE RETURN HANDLER
+     ✅ AUTO UNLOCK AFTER STRIPE SUCCESS PAGE
+  ========================================================= */
+  if (localStorage.getItem("hasPaid") === "true") {
+    isProUser = true;
+    updateLockState();
+    showToast("✅ Payment confirmed — templates unlocked!", "success");
+    localStorage.removeItem("hasPaid"); // prevent re-trigger
+  }
+
+  /* =========================================================
+     💳 STRIPE RETURN HANDLER (CHECK SUPABASE)
   ========================================================= */
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.has("session_id")) {
@@ -267,6 +278,22 @@ ${n}`,
     localStorage.removeItem("userData");
     showToast("🧹 Form cleared — templates locked again.", "info");
   });
+
+  /* =========================================================
+     🌓 DARK MODE TOGGLE
+  ========================================================= */
+  if (themeToggle) {
+    const savedTheme = localStorage.getItem("theme");
+    if (savedTheme === "dark") document.body.classList.add("dark");
+    themeToggle.textContent = document.body.classList.contains("dark") ? "☀️" : "🌙";
+
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      localStorage.setItem("theme", isDark ? "dark" : "light");
+      themeToggle.textContent = isDark ? "☀️" : "🌙";
+    });
+  }
 
   /* =========================================================
      🔔 TOAST FUNCTION
