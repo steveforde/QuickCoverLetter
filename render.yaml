@@ -1,7 +1,31 @@
+# The top-level block is mandatory for Render to recognize the file
+# We are defining a single service (the backend web server)
 services:
   - type: web
-    name: quickcoverletter
+    name: quickcoverletter-backend
     env: node
-    buildCommand: "npm install"
-    startCommand: "node server.js"
-    plan: free
+    
+    # Render will run 'npm install' then 'node server.js'
+    buildCommand: npm install
+    startCommand: node server.js
+    
+    # Environment variables are defined here. 
+    # NOTE: The keys must match what your server.js is looking for.
+    envVars:
+      # --- BACKEND (SECRET) KEYS: Used by server.js ---
+      # This is the key that was causing the error. Now explicitly defined.
+      - key: SUPABASE_URL
+        value: https://ztrsuveqeftmgoeiwjgz.supabase.co
+      
+      # The Service Role Key must be SECRET, so we don't include the value here.
+      # Render will automatically look for the value in your dashboard or a secrets file.
+      - key: SUPABASE_SERVICE_ROLE
+        sync: false 
+        
+      - key: STRIPE_SECRET_KEY
+        sync: false 
+        
+      # --- FRONTEND (PUBLIC) KEY: Used by script.js via injection ---
+      # Your script.js is now looking for __SUPABASE_ANON_KEY
+      - key: SUPABASE_ANON_KEY
+        sync: true # Set to true to be injected into the client-side code
