@@ -10,10 +10,20 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 🧹 Clear stored data if this is a brand-new session (no Stripe return)
-  if (!window.location.search.includes("session_id")) {
+  const cameFromStripe = window.location.search.includes("session_id");
+
+  // 🧹 Only clear data if this is a brand new session (not coming from Stripe)
+  if (!cameFromStripe) {
     localStorage.removeItem("userData");
     localStorage.removeItem("hasPaid");
+  }
+
+  // ✅ If coming from Stripe, keep data and immediately set unlock flag
+  if (cameFromStripe) {
+    const savedData = JSON.parse(localStorage.getItem("userData") || "{}");
+    if (savedData.email) {
+      localStorage.setItem("hasPaid", "true");
+    }
   }
 
   /* =========================================================
