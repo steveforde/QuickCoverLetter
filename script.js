@@ -109,7 +109,7 @@ ${name}`
   };
 
   function updateLockState() {
-  console.log("Updating lock state. isProUser =", isProUser);  // DEBUG
+  console.log("Updating lock state. isProUser =", isProUser);
   templateButtons.forEach(btn => {
     let lock = btn.querySelector(".lock-icon");
     if (!isProUser) {
@@ -118,7 +118,7 @@ ${name}`
       if (!lock) {
         lock = document.createElement("span");
         lock.className = "lock-icon";
-        lock.textContent = " Lock";
+        lock.textContent = " 🔒"; // changed here
         lock.style.marginLeft = "6px";
         lock.style.color = "#ff6b6b";
         lock.style.fontWeight = "bold";
@@ -131,6 +131,7 @@ ${name}`
     }
   });
 }
+
 
 // === SUPABASE CHECK (HARD CODED FULL URL) ===
 async function checkPaid(email) {
@@ -294,20 +295,21 @@ localStorage.setItem("userData", JSON.stringify(userData));
     setTimeout(() => toast.classList.remove("show"), time);
   }
 
-  // === DARK MODE ===
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme === "dark") {
-    document.body.classList.add("dark");
-    themeToggle && (themeToggle.textContent = "Sun");
-  } else {
-    themeToggle && (themeToggle.textContent = "Moon");
-  }
-  themeToggle?.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-    const dark = document.body.classList.contains("dark");
-    themeToggle.textContent = dark ? "Sun" : "Moon";
-    localStorage.setItem("theme", dark ? "dark" : "light");
-  });
+// === DARK MODE ===
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme === "dark") {
+  document.body.classList.add("dark");
+  themeToggle && (themeToggle.textContent = "☀️"); // Sun emoji when dark
+} else {
+  themeToggle && (themeToggle.textContent = "🌙"); // Moon emoji when light
+}
+themeToggle?.addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+  const dark = document.body.classList.contains("dark");
+  themeToggle.textContent = dark ? "☀️" : "🌙"; // toggle between sun/moon
+  localStorage.setItem("theme", dark ? "dark" : "light");
+});
+
 
   // === INITIAL LOCK STATE ===
   updateLockState();
