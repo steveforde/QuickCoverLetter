@@ -108,48 +108,54 @@ Warm regards,
 ${name}`
   };
 
-  // === LOCK / UNLOCK UI ===
   function updateLockState() {
-    templateButtons.forEach(btn => {
-      let lock = btn.querySelector(".lock-icon");
-      if (!isProUser) {
-        btn.disabled = true;
-        payButton?.classList.remove("hidden");
-        if (!lock) {
-          lock = document.createElement("span");
-          lock.className = "lock-icon";
-          lock.textContent = " Lock";
-          lock.style.marginLeft = "6px";
-          lock.style.fontSize = "1.1em";
-          btn.appendChild(lock);
-        }
-      } else {
-        btn.disabled = false;
-        payButton?.classList.add("hidden");
-        lock?.remove();
+  console.log("Updating lock state. isProUser =", isProUser);  // DEBUG
+  templateButtons.forEach(btn => {
+    let lock = btn.querySelector(".lock-icon");
+    if (!isProUser) {
+      btn.disabled = true;
+      payButton?.classList.remove("hidden");
+      if (!lock) {
+        lock = document.createElement("span");
+        lock.className = "lock-icon";
+        lock.textContent = " Lock";
+        lock.style.marginLeft = "6px";
+        lock.style.color = "#ff6b6b";
+        lock.style.fontWeight = "bold";
+        btn.appendChild(lock);
       }
-    });
-  }
+    } else {
+      btn.disabled = false;
+      payButton?.classList.add("hidden");
+      if (lock) lock.remove();
+    }
+  });
+}
 
- // === SUPABASE CHECK (NOW USES EMAIL) ===
+ // === SUPABASE CHECK (HARD CODED FULL URL) ===
 async function checkPaid(email) {
   if (!email) return false;
   try {
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/transactions?email=eq.${encodeURIComponent(email)}&status=eq.paid&select=id`,
-      {
-        method: "GET",
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-        }
+    const url = `https://pjrqqrxlzbpjkpxligup.supabase.co/rest/v1/transactions?email=eq.${encodeURIComponent(email)}&status=eq.paid&select=id`;
+    console.log("Fetching:", url);  // DEBUG: SEE THE URL
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
       }
-    );
-    if (!res.ok) return false;
+    });
+
+    if (!res.ok) {
+      console.error("HTTP error:", res.status);
+      return false;
+    }
     const data = await res.json();
+    console.log("Supabase data:", data);  // DEBUG: SEE RESULT
     return Array.isArray(data) && data.length > 0;
   } catch (e) {
-    console.warn("Supabase check failed:", e.message);
+    console.error("Fetch failed:", e.message);
     return false;
   }
 }
