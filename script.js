@@ -1,13 +1,17 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* =========================================================
-   1) PUBLIC SUPABASE (browser)
-   - matches your screenshot
-   - we read from public.transactions
+   1) PUBLIC SUPABASE (browser) — FIXED URL
 ========================================================= */
 const SUPABASE_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let supabase;
+try {
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+} catch (e) {
+  console.error("Failed to init Supabase:", e);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================================================
