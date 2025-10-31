@@ -177,7 +177,10 @@ app.get("/api/test-email", async (req, res) => {
               <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
                 <tr>
                   <td align="center" style="background:linear-gradient(135deg,#0070f3,#3898ff);padding:25px;">
-                    <img src="https://quickprocv.com/icon.png" alt="QuickCoverLetter" width="64" height="64" style="display:block;margin:auto;border-radius:8px;">
+                    <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
+                    alt="QuickCoverLetter"
+                     width="64" height="64"
+                     style="display:block;margin:auto;border-radius:8px;">
                     <h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1>
                   </td>
                 </tr>
