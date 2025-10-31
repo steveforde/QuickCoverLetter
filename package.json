@@ -16,5 +16,8 @@
     "nodemailer": "^7.0.10",
     "openai": "^4.104.0",
     "stripe": "^19.1.0"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2"
   }
 }
