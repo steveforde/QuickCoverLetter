@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let isProUser = false;
 
   /* =========================================================
-     3) RESTORE FORM FROM localStorage (never auto-clear)
+     3) RESTORE FORM FROM localStorage (NEVER auto-clear)
   ========================================================= */
   const savedData = JSON.parse(localStorage.getItem("userData") || "{}");
   if (savedData.job) jobField.value = savedData.job;
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =========================================================
-     5) LETTER TEMPLATES (full versions back in)
+     5) LETTER TEMPLATES (full versions)
   ========================================================= */
   const templates = {
     professional: (name, job, company, date) => `${name}
@@ -132,24 +132,33 @@ ${name}`,
   };
 
   /* =========================================================
-     6) LOCK / UNLOCK UI
+     6) LOCK / UNLOCK UI — WITH Lock ICONS
   ========================================================= */
   function updateLockState() {
     templateButtons.forEach((btn) => {
       let lockIcon = btn.querySelector(".lock-icon");
+
       if (!isProUser) {
         btn.disabled = true;
         payButton?.classList.remove("hidden");
+
+        // Add lock icon if not exists
         if (!lockIcon) {
           lockIcon = document.createElement("span");
           lockIcon.classList.add("lock-icon");
           lockIcon.textContent = " Lock";
+          lockIcon.style.marginLeft = "6px";
+          lockIcon.style.fontSize = "1.1em";
           btn.appendChild(lockIcon);
         }
       } else {
         btn.disabled = false;
         payButton?.classList.add("hidden");
-        if (lockIcon) lockIcon.remove();
+
+        // Remove lock icon
+        if (lockIcon) {
+          lockIcon.remove();
+        }
       }
     });
   }
@@ -190,7 +199,7 @@ ${name}`,
       return;
     }
 
-    // Optimistic unlock while waiting
+    // Optimistic unlock while checking
     if (localStorage.getItem("hasPaid") === "true") {
       isProUser = true;
       updateLockState();
@@ -202,7 +211,7 @@ ${name}`,
       updateLockState();
 
       if (paid) {
-        showToast("Payment verified! Templates unlocked.", "success");
+        showToast("Payment confirmed! Templates unlocked.", "success");
       } else if (localStorage.getItem("hasPaid") === "true") {
         showToast("Payment not found yet. Refresh in 10s.", "error");
       }
@@ -227,7 +236,7 @@ ${name}`,
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       if (!isProUser) {
-        showToast("Locked. Please pay €1.99 first.", "error");
+        showToast("Locked. Please pay €1.99 to unlock.", "error");
         return;
       }
 
@@ -249,7 +258,7 @@ ${name}`,
       const letter = templates[type](name, job, company, date);
       coverLetter.value = letter;
       resultBox.classList.remove("hidden");
-      showToast(`${type} letter generated.`, "success");
+      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} letter generated.`, "success");
     });
   });
 
@@ -266,7 +275,7 @@ ${name}`,
       };
 
       if (!userData.email || !userData.email.includes("@")) {
-        showToast("Enter your email first.", "error");
+        showToast("Enter a valid email first.", "error");
         return;
       }
 
@@ -331,7 +340,7 @@ ${name}`,
   });
 
   /* =========================================================
-     13) CLEAR
+     13) CLEAR BUTTON — ONLY place that clears data
   ========================================================= */
   clearBtn.addEventListener("click", () => {
     if (form) form.reset();
@@ -353,4 +362,7 @@ ${name}`,
     toast.className = `toast show ${type}`;
     setTimeout(() => toast.classList.remove("show"), time);
   }
+
+  // Initial lock state
+  updateLockState();
 });
