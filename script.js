@@ -1,20 +1,26 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* =========================================================
-   QUICKCOVERLETTER — FINAL, FULLY WORKING VERSION
-   - ALL 4 LETTERS INCLUDED
-   - Raw Supabase REST API (no client)
-   - No DNS errors
-   - Form stays filled
-   - Buttons unlock after payment
-   - Lock icons show
+   QUICKCOVERLETTER — FINAL PRODUCTION VERSION ✅
+   ---------------------------------------------------------
+   🔹 Features:
+     - 4 cover letter templates (Professional, Formal, Friendly, Artistic)
+     - Stripe checkout integration
+     - Supabase verification (no client SDK)
+     - LocalStorage persistence (form + payment)
+     - PDF + Copy functionality
+     - Dark/light mode toggle 🌙☀️
+     - Lock icons 🔒 for unpaid users
 ========================================================= */
 
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // === ELEMENTS ===
+  /* ----------------------------------------------------------
+     🧩 ELEMENT REFERENCES
+  ---------------------------------------------------------- */
   const form = document.getElementById("form");
   const jobField = document.getElementById("jobTitle");
   const companyField = document.getElementById("companyName");
@@ -32,14 +38,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let isProUser = false;
 
-  // === RESTORE FORM DATA ===
+  /* ----------------------------------------------------------
+     💾 RESTORE PREVIOUS FORM DATA
+  ---------------------------------------------------------- */
   const saved = JSON.parse(localStorage.getItem("userData") || "{}");
   if (saved.job) jobField.value = saved.job;
   if (saved.company) companyField.value = saved.company;
   if (saved.name) nameField.value = saved.name;
   if (saved.email) emailField.value = saved.email;
 
-  // === FULL LETTER TEMPLATES (ALL 4) ===
+  /* ----------------------------------------------------------
+     📝 LETTER TEMPLATES — 4 STYLES
+  ---------------------------------------------------------- */
   const templates = {
     professional: (name, job, company, date) => `${name}
 [Your Address]
@@ -105,112 +115,129 @@ What interests me in ${company} is its focus on quality and forward thinking. I 
 Thank you for your time and consideration.
 
 Warm regards,
-${name}`
+${name}`,
   };
 
+  /* ----------------------------------------------------------
+     🔒 LOCK STATE HANDLING
+     - Shows 🔒 icon for unpaid users
+     - Unlocks buttons after verified payment
+  ---------------------------------------------------------- */
   function updateLockState() {
-  console.log("Updating lock state. isProUser =", isProUser);
-  templateButtons.forEach(btn => {
-    let lock = btn.querySelector(".lock-icon");
-    if (!isProUser) {
-      btn.disabled = true;
-      payButton?.classList.remove("hidden");
-      if (!lock) {
-        lock = document.createElement("span");
-        lock.className = "lock-icon";
-        lock.textContent = " 🔒"; // changed here
-        lock.style.marginLeft = "6px";
-        lock.style.color = "#ff6b6b";
-        lock.style.fontWeight = "bold";
-        btn.appendChild(lock);
-      }
-    } else {
-      btn.disabled = false;
-      payButton?.classList.add("hidden");
-      if (lock) lock.remove();
-    }
-  });
-}
-
-
-// === SUPABASE CHECK (HARD CODED FULL URL) ===
-async function checkPaid(email) {
-  if (!email) return false;
-  try {
-    const url = `https://ztrsuveqeftmgoeiwjgz.supabase.co/rest/v1/transactions?email=eq.${encodeURIComponent(email)}&status=eq.paid&select=id`;
-    console.log("Fetching:", url);
-
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo",
-        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo"
+    console.log("Updating lock state. isProUser =", isProUser);
+    templateButtons.forEach((btn) => {
+      let lock = btn.querySelector(".lock-icon");
+      if (!isProUser) {
+        btn.disabled = true;
+        payButton?.classList.remove("hidden");
+        if (!lock) {
+          lock = document.createElement("span");
+          lock.className = "lock-icon";
+          lock.textContent = " 🔒";
+          lock.style.marginLeft = "6px";
+          lock.style.color = "#ff6b6b";
+          lock.style.fontWeight = "bold";
+          btn.appendChild(lock);
+        }
+      } else {
+        btn.disabled = false;
+        payButton?.classList.add("hidden");
+        if (lock) lock.remove();
       }
     });
+  }
 
-    if (!res.ok) {
-      console.error("HTTP", res.status);
+  /* ----------------------------------------------------------
+     💳 VERIFY PAYMENT VIA SUPABASE REST API
+  ---------------------------------------------------------- */
+  async function checkPaid(email) {
+    if (!email) return false;
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/transactions?email=eq.${encodeURIComponent(
+        email
+      )}&status=eq.paid&select=id`;
+      console.log("Fetching:", url);
+
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      });
+
+      if (!res.ok) {
+        console.error("HTTP", res.status);
+        return false;
+      }
+
+      const data = await res.json();
+      console.log("Supabase returned:", data);
+      return data.length > 0;
+    } catch (e) {
+      console.error("Fetch failed:", e.message);
       return false;
     }
-
-    const data = await res.json();
-    console.log("Supabase returned:", data);
-    return data.length > 0;
-  } catch (e) {
-    console.error("Fetch failed:", e.message);
-    return false;
   }
-}
 
+  /* ----------------------------------------------------------
+     ✅ VALIDATION + INITIAL CHECK
+  ---------------------------------------------------------- */
   function validate() {
-  const email = saved.email || emailField.value.trim();
-  if (!email || !email.includes("@")) {
-    isProUser = false;
-    updateLockState();
-    return;
+    const email = saved.email || emailField.value.trim();
+    if (!email || !email.includes("@")) {
+      isProUser = false;
+      updateLockState();
+      return;
+    }
+
+    if (localStorage.getItem("hasPaid") === "true") {
+      isProUser = true;
+      updateLockState();
+    }
+
+    checkPaid(email).then((paid) => {
+      isProUser = paid;
+      localStorage.setItem("hasPaid", paid ? "true" : "false");
+      updateLockState();
+      showToast(
+        paid ? "Payment confirmed! Unlocked." : "Not paid yet.",
+        paid ? "success" : "error"
+      );
+    });
   }
 
-  if (localStorage.getItem("hasPaid") === "true") {
-    isProUser = true;
-    updateLockState();
+  /* ----------------------------------------------------------
+     🧾 STRIPE RETURN HANDLING (POST-CHECKOUT)
+  ---------------------------------------------------------- */
+  if (location.search.includes("session_id")) {
+    showToast("Verifying payment...", "info");
+    localStorage.setItem("hasPaid", "true");
+    setTimeout(validate, 3000); // Wait 3s for webhook update
+  } else {
+    validate();
   }
 
-  checkPaid(email).then(paid => {
-    isProUser = paid;
-    localStorage.setItem("hasPaid", paid ? "true" : "false");
-    updateLockState();
-    showToast(paid ? "Payment confirmed! Unlocked." : "Not paid yet.", paid ? "success" : "error");
-  });
-}
-
-  // === STRIPE RETURN ===
- if (location.search.includes("session_id")) {
-  showToast("Verifying payment...", "info");
-  localStorage.setItem("hasPaid", "true");
-  setTimeout(validate, 3000); // Wait 3 sec for webhook
-} else {
-  validate();
-}
-
-  // === PAY BUTTON ===
+  /* ----------------------------------------------------------
+     💶 STRIPE CHECKOUT BUTTON
+  ---------------------------------------------------------- */
   payButton?.addEventListener("click", async () => {
     const userData = {
-  job: jobField.value.trim(),
-  company: companyField.value.trim(),
-  name: nameField.value.trim(),
-  email: emailField.value.trim()
-};
-localStorage.setItem("userData", JSON.stringify(userData));
-
-    if (!userData.email.includes("@")) return showToast("Enter a valid email.", "error");
-
+      job: jobField.value.trim(),
+      company: companyField.value.trim(),
+      name: nameField.value.trim(),
+      email: emailField.value.trim(),
+    };
     localStorage.setItem("userData", JSON.stringify(userData));
+
+    if (!userData.email.includes("@"))
+      return showToast("Enter a valid email.", "error");
 
     try {
       const res = await fetch("/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userData.email })
+        body: JSON.stringify({ email: userData.email }),
       });
       const { url } = await res.json();
       if (url) location.href = url;
@@ -220,30 +247,38 @@ localStorage.setItem("userData", JSON.stringify(userData));
     }
   });
 
-  // === TEMPLATE BUTTONS ===
-  templateButtons.forEach(btn => {
+  /* ----------------------------------------------------------
+     ✍️ TEMPLATE GENERATION BUTTONS
+  ---------------------------------------------------------- */
+  templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       if (!isProUser) return showToast("Pay €1.99 to unlock.", "error");
 
       const name = nameField.value.trim();
       const job = jobField.value.trim();
       const company = companyField.value.trim();
-      if (!name || !job || !company) return showToast("Fill name, job & company.", "error");
+      if (!name || !job || !company)
+        return showToast("Fill name, job & company.", "error");
 
       const date = new Date().toLocaleDateString("en-IE", {
         day: "numeric",
         month: "long",
-        year: "numeric"
+        year: "numeric",
       });
 
       const type = btn.dataset.type;
       coverLetter.value = templates[type](name, job, company, date);
       resultBox.classList.remove("hidden");
-      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} letter generated!`, "success");
+      showToast(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} letter generated!`,
+        "success"
+      );
     });
   });
 
-  // === PDF & COPY ===
+  /* ----------------------------------------------------------
+     📄 PDF & COPY TO CLIPBOARD
+  ---------------------------------------------------------- */
   const { jsPDF } = window.jspdf;
 
   function renderExact(pdf, text, x, y, maxW, lineH = 7) {
@@ -252,7 +287,10 @@ localStorage.setItem("userData", JSON.stringify(userData));
     for (const line of lines) {
       const chunks = pdf.splitTextToSize(line, maxW);
       for (const chunk of chunks) {
-        if (y > pageH - 20) { pdf.addPage(); y = 20; }
+        if (y > pageH - 20) {
+          pdf.addPage();
+          y = 20;
+        }
         pdf.text(chunk, x, y);
         y += lineH;
       }
@@ -270,12 +308,15 @@ localStorage.setItem("userData", JSON.stringify(userData));
 
   copyBtn?.addEventListener("click", () => {
     if (!coverLetter.value.trim()) return;
-    navigator.clipboard.writeText(coverLetter.value)
+    navigator.clipboard
+      .writeText(coverLetter.value)
       .then(() => showToast("Copied to clipboard", "success"))
       .catch(() => showToast("Copy failed", "error"));
   });
 
-  // === CLEAR BUTTON ===
+  /* ----------------------------------------------------------
+     🧹 CLEAR FORM + RESET LOCKS
+  ---------------------------------------------------------- */
   clearBtn?.addEventListener("click", () => {
     form.reset();
     coverLetter.value = "";
@@ -287,7 +328,9 @@ localStorage.setItem("userData", JSON.stringify(userData));
     showToast("Form cleared — locked again.", "info");
   });
 
-  // === TOAST ===
+  /* ----------------------------------------------------------
+     🔔 TOAST NOTIFICATIONS
+  ---------------------------------------------------------- */
   function showToast(msg, type = "info", time = 3000) {
     if (!toast) return;
     toast.textContent = msg;
@@ -295,22 +338,26 @@ localStorage.setItem("userData", JSON.stringify(userData));
     setTimeout(() => toast.classList.remove("show"), time);
   }
 
-// === DARK MODE ===
-const savedTheme = localStorage.getItem("theme");
-if (savedTheme === "dark") {
-  document.body.classList.add("dark");
-  themeToggle && (themeToggle.textContent = "☀️"); // Sun emoji when dark
-} else {
-  themeToggle && (themeToggle.textContent = "🌙"); // Moon emoji when light
-}
-themeToggle?.addEventListener("click", () => {
-  document.body.classList.toggle("dark");
-  const dark = document.body.classList.contains("dark");
-  themeToggle.textContent = dark ? "☀️" : "🌙"; // toggle between sun/moon
-  localStorage.setItem("theme", dark ? "dark" : "light");
-});
+  /* ----------------------------------------------------------
+     🌙 DARK / LIGHT MODE TOGGLE
+  ---------------------------------------------------------- */
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark") {
+    document.body.classList.add("dark");
+    themeToggle && (themeToggle.textContent = "☀️");
+  } else {
+    themeToggle && (themeToggle.textContent = "🌙");
+  }
 
+  themeToggle?.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+    const dark = document.body.classList.contains("dark");
+    themeToggle.textContent = dark ? "☀️" : "🌙";
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  });
 
-  // === INITIAL LOCK STATE ===
+  /* ----------------------------------------------------------
+     🚀 INITIAL LOCK STATE
+  ---------------------------------------------------------- */
   updateLockState();
 });
