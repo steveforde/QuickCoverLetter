@@ -131,51 +131,49 @@ ${name}`
     });
   }
 
-  // === SUPABASE CHECK (RAW FETCH) ===
-  async function checkPaid(email) {
-    if (!email) return false;
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/transactions?email=eq.${encodeURIComponent(email)}&status=eq.paid&select=id`,
-        {
-          method: "GET",
-          headers: {
-            "apikey": SUPABASE_ANON_KEY,
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
-          }
+ // === SUPABASE CHECK (NOW USES EMAIL) ===
+async function checkPaid(email) {
+  if (!email) return false;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/transactions?email=eq.${encodeURIComponent(email)}&status=eq.paid&select=id`,
+      {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
         }
-      );
-      if (!res.ok) return false;
-      const data = await res.json();
-      return Array.isArray(data) && data.length > 0;
-    } catch (e) {
-      console.warn("Supabase check failed:", e.message);
-      return false;
-    }
+      }
+    );
+    if (!res.ok) return false;
+    const data = await res.json();
+    return Array.isArray(data) && data.length > 0;
+  } catch (e) {
+    console.warn("Supabase check failed:", e.message);
+    return false;
   }
+}
 
-  // === VALIDATE ACCESS ===
   function validate() {
-    const email = saved.email || emailField.value.trim();
-    if (!email.includes("@")) {
-      isProUser = false;
-      updateLockState();
-      return;
-    }
-
-    // Optimistic unlock
-    if (localStorage.getItem("hasPaid") === "true") {
-      isProUser = true;
-      updateLockState();
-    }
-
-    checkPaid(email).then(paid => {
-      isProUser = paid;
-      localStorage.setItem("hasPaid", paid ? "true" : "false");
-      updateLockState();
-      showToast(paid ? "Payment confirmed! Unlocked." : "Payment not found yet.", paid ? "success" : "error");
-    });
+  const email = saved.email || emailField.value.trim();
+  if (!email || !email.includes("@")) {
+    isProUser = false;
+    updateLockState();
+    return;
   }
+
+  if (localStorage.getItem("hasPaid") === "true") {
+    isProUser = true;
+    updateLockState();
+  }
+
+  checkPaid(email).then(paid => {
+    isProUser = paid;
+    localStorage.setItem("hasPaid", paid ? "true" : "false");
+    updateLockState();
+    showToast(paid ? "Payment confirmed! Unlocked." : "Not paid yet.", paid ? "success" : "error");
+  });
+}
 
   // === STRIPE RETURN ===
   if (location.search.includes("session_id")) {
@@ -189,11 +187,13 @@ ${name}`
   // === PAY BUTTON ===
   payButton?.addEventListener("click", async () => {
     const userData = {
-      job: jobField.value.trim(),
-      company: companyField.value.trim(),
-      name: nameField.value.trim(),
-      email: emailField.value.trim()
-    };
+  job: jobField.value.trim(),
+  company: companyField.value.trim(),
+  name: nameField.value.trim(),
+  email: emailField.value.trim()
+};
+localStorage.setItem("userData", JSON.stringify(userData));
+
     if (!userData.email.includes("@")) return showToast("Enter a valid email.", "error");
 
     localStorage.setItem("userData", JSON.stringify(userData));
