@@ -180,7 +180,7 @@ app.get("/api/test-email", async (req, res) => {
                     <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
                     alt="QuickCoverLetter"
                      width="64" height="64"
-                     style="display:block;margin:auto;border-radius:8px;">
+                     style="display:block;margin:auto;border-radius:50%;background:#fff;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
                     <h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1>
                   </td>
                 </tr>
