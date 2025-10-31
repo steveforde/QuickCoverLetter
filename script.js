@@ -10,7 +10,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
    - Lock icons show
 ========================================================= */
 
-const SUPABASE_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co";
+
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -132,27 +132,27 @@ ${name}`
   });
 }
 
- // === SUPABASE CHECK (HARD CODED FULL URL) ===
+// === SUPABASE CHECK (HARD CODED FULL URL) ===
 async function checkPaid(email) {
   if (!email) return false;
   try {
     const url = `https://pjrqqrxlzbpjkpxligup.supabase.co/rest/v1/transactions?email=eq.${encodeURIComponent(email)}&status=eq.paid&select=id`;
-    console.log("Fetching:", url);  // DEBUG: SEE THE URL
+    console.log("Fetching Supabase:", url);
 
     const res = await fetch(url, {
       method: "GET",
       headers: {
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo",
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo"
       }
     });
 
     if (!res.ok) {
-      console.error("HTTP error:", res.status);
+      console.error("HTTP", res.status);
       return false;
     }
     const data = await res.json();
-    console.log("Supabase data:", data);  // DEBUG: SEE RESULT
+    console.log("Supabase returned:", data);
     return Array.isArray(data) && data.length > 0;
   } catch (e) {
     console.error("Fetch failed:", e.message);
@@ -183,12 +183,12 @@ async function checkPaid(email) {
 
   // === STRIPE RETURN ===
   if (location.search.includes("session_id")) {
-    showToast("Verifying payment...", "info");
-    localStorage.setItem("hasPaid", "true");
-    validate();
-  } else {
-    validate();
-  }
+  showToast("Verifying payment...", "info");
+  localStorage.setItem("hasPaid", "true");
+  setTimeout(validate, 2000); // Wait 2 seconds for webhook
+} else {
+  validate();
+}
 
   // === PAY BUTTON ===
   payButton?.addEventListener("click", async () => {
