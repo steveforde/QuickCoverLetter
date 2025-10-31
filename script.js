@@ -10,22 +10,6 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
-  const cameFromStripe = window.location.search.includes("session_id");
-
-  // 🧹 Only clear data if this is a brand new session (not coming from Stripe)
-  if (!cameFromStripe) {
-    localStorage.removeItem("userData");
-    localStorage.removeItem("hasPaid");
-  }
-
-  // ✅ If coming from Stripe, keep data and immediately set unlock flag
-  if (cameFromStripe) {
-    const savedData = JSON.parse(localStorage.getItem("userData") || "{}");
-    if (savedData.email) {
-      localStorage.setItem("hasPaid", "true");
-    }
-  }
-
   /* =========================================================
      2) GRAB ELEMENTS
   ========================================================= */
@@ -48,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let isProUser = false;
 
   /* =========================================================
-     3) RESTORE FORM + PAID FLAG
+     3) RESTORE FORM FROM localStorage (never auto-clear)
   ========================================================= */
   const savedData = JSON.parse(localStorage.getItem("userData") || "{}");
   if (savedData.job) jobField.value = savedData.job;
@@ -56,24 +40,22 @@ document.addEventListener("DOMContentLoaded", () => {
   if (savedData.name) nameField.value = savedData.name;
   if (savedData.email) emailField.value = savedData.email;
 
- 
-
   /* =========================================================
-     4) DARK MODE (you said it broke)
+     4) DARK MODE
   ========================================================= */
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
     document.body.classList.add("dark");
-    if (themeToggle) themeToggle.textContent = "☀️";
+    if (themeToggle) themeToggle.textContent = "Sun";
   } else {
-    if (themeToggle) themeToggle.textContent = "🌙";
+    if (themeToggle) themeToggle.textContent = "Moon";
   }
 
   if (themeToggle) {
     themeToggle.addEventListener("click", () => {
       document.body.classList.toggle("dark");
       const isDark = document.body.classList.contains("dark");
-      themeToggle.textContent = isDark ? "☀️" : "🌙";
+      themeToggle.textContent = isDark ? "Sun" : "Moon";
       localStorage.setItem("theme", isDark ? "dark" : "light");
     });
   }
@@ -161,7 +143,7 @@ ${name}`,
         if (!lockIcon) {
           lockIcon = document.createElement("span");
           lockIcon.classList.add("lock-icon");
-          lockIcon.textContent = " 🔒";
+          lockIcon.textContent = " Lock";
           btn.appendChild(lockIcon);
         }
       } else {
@@ -174,8 +156,6 @@ ${name}`,
 
   /* =========================================================
      7) CHECK SUPABASE FOR PAID ROW
-     - your table: transactions
-     - paid column: status = 'paid'
   ========================================================= */
   async function checkPaymentInSupabase(email) {
     if (!email) return false;
@@ -198,69 +178,48 @@ ${name}`,
     }
   }
 
- /* =========================================================
-   8) HANDLE STRIPE RETURN (?session_id=...)
-========================================================= */
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.has("session_id")) {
-  const saved = JSON.parse(localStorage.getItem("userData") || "{}");
-  const email = saved.email;
+  /* =========================================================
+     8) VALIDATE ACCESS ON EVERY LOAD
+  ========================================================= */
+  function validateAccess() {
+    const email = savedData.email || emailField?.value.trim();
 
-  if (email) {
-    showToast("Verifying payment...", "info");
-    localStorage.setItem("hasPaid", "true"); // optimistic
-    updateLockState();
+    if (!email || !email.includes("@")) {
+      isProUser = false;
+      updateLockState();
+      return;
+    }
 
-    // Re-check Supabase after 2 seconds
-    setTimeout(() => {
-      checkPaymentInSupabase(email).then((paid) => {
-        if (paid) {
-          showToast("Payment confirmed! Unlocked.", "success");
-        } else {
-          showToast("Payment not found yet. Refresh in 10s.", "error");
-          localStorage.removeItem("hasPaid");
-          isProUser = false;
-          updateLockState();
-        }
-      });
-    }, 2000);
+    // Optimistic unlock while waiting
+    if (localStorage.getItem("hasPaid") === "true") {
+      isProUser = true;
+      updateLockState();
+    }
+
+    checkPaymentInSupabase(email).then((paid) => {
+      isProUser = paid;
+      localStorage.setItem("hasPaid", paid ? "true" : "false");
+      updateLockState();
+
+      if (paid) {
+        showToast("Payment verified! Templates unlocked.", "success");
+      } else if (localStorage.getItem("hasPaid") === "true") {
+        showToast("Payment not found yet. Refresh in 10s.", "error");
+      }
+    });
   }
-}
 
   /* =========================================================
-   9) ON EVERY LOAD: Check Supabase first, then fallback
-========================================================= */
-async function validateUserAccess() {
-  const saved = JSON.parse(localStorage.getItem("userData") || "{}");
-  const email = saved.email || emailField?.value.trim();
-
-  if (!email || !email.includes("@")) {
-    isProUser = false;
-    updateLockState();
-    return;
-  }
-
-  // Always try Supabase first
-  const paid = await checkPaymentInSupabase(email);
-  isProUser = paid;
-
-  if (paid) {
-    localStorage.setItem("hasPaid", "true");
+     9) HANDLE STRIPE RETURN (?session_id=...)
+  ========================================================= */
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.has("session_id")) {
+    showToast("Verifying payment...", "info");
+    localStorage.setItem("hasPaid", "true"); // temporary
+    validateAccess();
   } else {
-    // Only trust localStorage if Supabase says no
-    const localPaid = localStorage.getItem("hasPaid") === "true";
-    if (localPaid) {
-      showToast("⚠️ Verifying payment... please wait.", "info");
-      // Optional: retry in 5s
-      setTimeout(() => validateUserAccess(), 5000);
-    }
+    validateAccess();
   }
-
-  updateLockState();
-}
-
-// Run on load
-validateUserAccess();
 
   /* =========================================================
      10) TEMPLATE BUTTONS
@@ -268,7 +227,7 @@ validateUserAccess();
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       if (!isProUser) {
-        showToast("🔒 Locked. Please pay €1.99 first.", "error");
+        showToast("Locked. Please pay €1.99 first.", "error");
         return;
       }
 
@@ -276,7 +235,7 @@ validateUserAccess();
       const job = jobField.value.trim();
       const company = companyField.value.trim();
       if (!name || !job || !company) {
-        showToast("⚠️ Fill in job, company, and name first.", "error");
+        showToast("Fill in job, company, and name first.", "error");
         return;
       }
 
@@ -290,7 +249,7 @@ validateUserAccess();
       const letter = templates[type](name, job, company, date);
       coverLetter.value = letter;
       resultBox.classList.remove("hidden");
-      showToast(`✅ ${type} letter generated.`, "success");
+      showToast(`${type} letter generated.`, "success");
     });
   });
 
@@ -307,15 +266,15 @@ validateUserAccess();
       };
 
       if (!userData.email || !userData.email.includes("@")) {
-        showToast("⚠️ Enter your email first.", "error");
+        showToast("Enter your email first.", "error");
         return;
       }
 
-      // save form so we still have it after Stripe
+      // Save form data BEFORE redirect
       localStorage.setItem("userData", JSON.stringify(userData));
 
       try {
-         const res = await fetch("/create-checkout-session", {
+        const res = await fetch("/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userData.email }),
@@ -324,11 +283,11 @@ validateUserAccess();
         if (data.url) {
           window.location.href = data.url;
         } else {
-          showToast("❌ Could not start payment.", "error");
+          showToast("Could not start payment.", "error");
         }
       } catch (err) {
         console.error("Stripe error:", err);
-        showToast("❌ Payment setup failed.", "error");
+        showToast("Payment setup failed.", "error");
       }
     });
   }
@@ -360,15 +319,15 @@ validateUserAccess();
     pdf.setFont("times", "normal").setFontSize(12);
     renderExact(pdf, coverLetter.value, 20, 20, 170);
     pdf.save("CoverLetter.pdf");
-    showToast("📄 PDF downloaded", "success");
+    showToast("PDF downloaded", "success");
   });
 
   copyBtn.addEventListener("click", () => {
     if (!coverLetter.value.trim()) return;
     navigator.clipboard
       .writeText(coverLetter.value)
-      .then(() => showToast("Copied to clipboard ✅", "success"))
-      .catch(() => showToast("❌ Copy failed", "error"));
+      .then(() => showToast("Copied to clipboard", "success"))
+      .catch(() => showToast("Copy failed", "error"));
   });
 
   /* =========================================================
@@ -379,9 +338,10 @@ validateUserAccess();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
     isProUser = false;
+    localStorage.removeItem("userData");
     localStorage.removeItem("hasPaid");
     updateLockState();
-    showToast("🧹 Form cleared — locked again.", "info");
+    showToast("Form cleared — locked again.", "info");
   });
 
   /* =========================================================
