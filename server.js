@@ -5,8 +5,9 @@ import Stripe from "stripe";
 import bodyParser from "body-parser";
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "./email.js";
-import path from "path"; 
-import { fileURLToPath } from "url"; 
+import brevo from "@getbrevo/brevo"; // ✅ moved here (top-level import)
+import path from "path";
+import { fileURLToPath } from "url";
 
 // DEFINE __dirname for ES Modules
 const __filename = fileURLToPath(import.meta.url);
@@ -17,34 +18,28 @@ dotenv.config();
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Define a safe fallback URL for Supabase initialization
-const SUPABASE_FALLBACK_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co"; 
+// ✅ Initialize Brevo client globally
+const brevoClient = new brevo.TransactionalEmailsApi();
+brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
+// ✅ Supabase setup with safe fallback
+const SUPABASE_FALLBACK_URL = "https://pjrqqrxlzbpjkpxligup.supabase.co";
 let supabase;
-
-// 🛠️ FIX: Wrap Supabase initialization in try/catch to prevent server crash 
-// if environment variables are missing.
 try {
-  // Use environment variable if available, otherwise use the fallback URL.
   const supabaseUrl = process.env.SUPABASE_URL || SUPABASE_FALLBACK_URL;
-  
-  // The service role MUST be present in the environment for the backend 
-  // to log webhooks.
   const supabaseServiceRole = process.env.SUPABASE_SERVICE_ROLE;
 
   if (!supabaseServiceRole) {
     console.warn("⚠️ SUPABASE_SERVICE_ROLE is MISSING. Webhook database logging will fail.");
   }
-  
+
   supabase = createClient(
     supabaseUrl,
-    supabaseServiceRole || "fallback_key_that_will_fail_but_not_crash" 
+    supabaseServiceRole || "fallback_key_that_will_fail_but_not_crash"
   );
-  
 } catch (e) {
   console.error("❌ Fatal error during Supabase initialization:", e.message);
 }
-
 
 // ========================================================
 // 🪝 STRIPE WEBHOOK (must be before express.json())
@@ -70,7 +65,10 @@ app.post(
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-      const email = session.customer_details?.email || session.customer_email || null;
+      const email =
+        session.customer_details?.email ||
+        session.customer_email ||
+        null;
       const name = session.customer_details?.name || "Customer";
       const amountInCents = session.amount_total;
       const currency = session.currency;
@@ -93,21 +91,17 @@ app.post(
         if (error) console.error("❌ DB insert error:", error.message);
       }
 
-      // ✅ Send branded QuickCoverLetter confirmation email
+      // ✅ Send branded QuickCoverLetter confirmation email via Brevo
       try {
-        const subject = "QuickCoverLetter Purchase Confirmation";
-        const html = `
-          <div style="font-family:Arial,sans-serif;padding:20px;background:#f4f8ff;border-radius:10px;">
-            <h2 style="color:#0070f3;">🚀 QuickCoverLetter</h2>
-            <p>Hi ${name},</p>
-            <p>Thank you for your purchase of <strong>€${(amountInCents / 100).toFixed(2)}</strong>.</p>
-            <p>Your cover letter templates are now <strong>unlocked</strong> and ready to use.</p>
-            <br>
-            <p>Warm regards,<br>The QuickCoverLetter Team 🇮🇪</p>
-          </div>
-        `;
-        await sendEmail(email, subject, html);
-        console.log(`✅ QuickCoverLetter email sent to ${email}`);
+        await brevoClient.sendTransacEmail({
+          to: [{ email, name }],
+          templateId: parseInt(process.env.BREVO_TEMPLATE_ID, 10), // e.g. 1
+          params: {
+            user_name: name,
+            amount: (amountInCents / 100).toFixed(2),
+          },
+        });
+        console.log(`✅ Brevo confirmation email sent to ${email}`);
       } catch (err) {
         console.error("❌ Email send failed:", err.message);
       }
@@ -117,17 +111,12 @@ app.post(
   }
 );
 
-
 // ========================================================
 // 🧰 MIDDLEWARE & STATIC
 // ========================================================
 app.use(cors());
 app.use(express.json());
-
-// 🛠️ FIX: Serve static files directly from the root (__dirname). 
-// This line handles serving index.html for the root path ('/') automatically.
-app.use(express.static(__dirname)); 
-
+app.use(express.static(__dirname)); // serve frontend
 
 // ========================================================
 // 💳 STRIPE CHECKOUT SESSION
@@ -138,12 +127,11 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       line_items: [
         {
-          price: process.env.PRICE_ID, 
+          price: process.env.PRICE_ID,
           quantity: 1,
         },
       ],
-      // CRITICAL FIX: Add session_id parameter for client-side unlocking
-      success_url: `${process.env.DOMAIN}/success.html?session_id={CHECKOUT_SESSION_ID}`, 
+      success_url: `${process.env.DOMAIN}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.DOMAIN}/cancel.html`,
       customer_email: req.body.email || undefined,
     });
@@ -155,20 +143,25 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-
 // ========================================================
 // 🔍 TEST EMAIL ENDPOINT
 // ========================================================
 app.get("/api/test-email", async (req, res) => {
   try {
-    await sendEmail("sforde08@gmail.com", "API Test Email", "<p>This is a test email sent via the unified Brevo API function.</p>");
-    res.send("✅ Test email sent successfully");
+    await brevoClient.sendTransacEmail({
+      to: [{ email: "sforde08@gmail.com", name: "Stephen" }],
+      templateId: parseInt(process.env.BREVO_TEMPLATE_ID, 10),
+      params: {
+        user_name: "Stephen",
+        amount: "1.99",
+      },
+    });
+    res.send("✅ Test Brevo email sent successfully");
   } catch (err) {
-    console.error("❌ Failed to send test email (API Error):", err.message);
+    console.error("❌ Test email failed:", err.message);
     res.status(500).send("❌ Email send failed");
   }
 });
-
 
 // 🚀 START SERVER
 const PORT = process.env.PORT || 10000;
