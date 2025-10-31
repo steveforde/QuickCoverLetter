@@ -16,11 +16,11 @@ dotenv.config();
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Brevo
+// ==================== 🟦 BREVO ====================
 const brevoClient = new brevo.TransactionalEmailsApi();
 brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
-// Supabase
+// ==================== 🟩 SUPABASE ====================
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
 let supabase = null;
 try {
@@ -28,24 +28,31 @@ try {
   if (serviceRole) {
     supabase = createClient(SUPABASE_URL, serviceRole);
   } else {
-    console.warn("SUPABASE_SERVICE_ROLE missing");
+    console.warn("⚠️ SUPABASE_SERVICE_ROLE missing");
   }
 } catch (e) {
-  console.error("Supabase init failed:", e.message);
+  console.error("❌ Supabase init failed:", e.message);
 }
 
-// STRIPE WEBHOOK
+// ===================================================
+// 🪝 STRIPE WEBHOOK
+// ===================================================
 app.post(
   "/webhook",
   bodyParser.raw({ type: "application/json" }),
   async (req, res) => {
+    console.log("⚡ Webhook triggered");
     const sig = req.headers["stripe-signature"];
     let event;
 
     try {
-      event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        process.env.STRIPE_WEBHOOK_SECRET
+      );
     } catch (err) {
-      console.error("Webhook sig failed:", err.message);
+      console.error("❌ Webhook signature verification failed:", err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
@@ -55,9 +62,9 @@ app.post(
       const name = session.customer_details?.name || "Customer";
       const amountInCents = session.amount_total;
 
-      console.log(`Payment: ${email}`);
+      console.log(`🧾 Payment completed for: ${email}`);
 
-      // Save to DB
+      // === Save to Supabase ===
       if (supabase) {
         const { error } = await supabase.from("transactions").insert({
           payment_intent: session.id,
@@ -68,32 +75,59 @@ app.post(
           status: session.payment_status,
           created_at: new Date(),
         });
-        if (error) console.error("DB error:", error.message);
+        if (error) console.error("❌ DB insert error:", error.message);
       }
 
-      // SEND EMAIL (HTML ONLY)
+      // === Send confirmation email via Brevo ===
       try {
-        const response = await brevoClient.sendTransacEmail({
-          sender: { name: "QuickCoverLetter", email: "hello@quickcoverletter.com" },
+        console.log("📨 Preparing to send confirmation email to:", email);
+
+        await brevoClient.sendTransacEmail({
+          sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
           to: [{ email, name }],
-          subject: "Your Cover Letter is Ready!",
+          subject: "✅ Payment Successful – Your Cover Letter is Ready!",
           htmlContent: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background: #f9f9f9;">
-              <h2 style="color: #2563eb;">Hi ${name}!</h2>
-              <p>Your payment of <strong>€${(amountInCents / 100).toFixed(2)}</strong> was successful!</p>
-              <p>Your cover letters are now <strong>unlocked</strong>.</p>
-              <p style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.DOMAIN}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                  Generate Your Letter Now
-                </a>
-              </p>
-              <p>Thanks for using <strong>QuickCoverLetter</strong>!</p>
-            </div>
+            <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+              <tr>
+                <td align="center">
+                  <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
+                    <tr>
+                      <td align="center" style="background:linear-gradient(135deg,#0070f3,#3898ff);padding:25px;">
+                        <img src="https://quickprocv.com/icon.png" alt="QuickCoverLetter" width="64" height="64" style="display:block;margin:auto;border-radius:8px;">
+                        <h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:30px 40px;text-align:left;">
+                        <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>${name}</strong> 👋,</p>
+                        <p style="font-size:16px;color:#333;margin:0 0 15px;">
+                          We’ve received your payment of <strong>€${(amountInCents / 100).toFixed(2)}</strong>.
+                        </p>
+                        <p style="font-size:16px;color:#333;margin:0 0 25px;">
+                          Your cover letters are now <strong>unlocked</strong> and ready to use.
+                        </p>
+                        <div style="text-align:center;margin:30px 0;">
+                          <a href="${process.env.DOMAIN}" 
+                            style="background:#0070f3;color:#fff;padding:12px 24px;border-radius:6px;
+                                   text-decoration:none;font-weight:bold;display:inline-block;">
+                            Generate Your Letter Now
+                          </a>
+                        </div>
+                        <p style="font-size:14px;color:#666;text-align:center;">
+                          Thanks for choosing <strong>QuickCoverLetter</strong> 💙
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           `,
         });
-        console.log("EMAIL SENT (HTML):", response);
+
+        console.log("✅ Confirmation email sent to:", email);
       } catch (err) {
-        console.error("BREVO ERROR:", err.response?.body || err.message);
+        console.error("❌ BREVO ERROR:", err.response?.body || err.message);
       }
     }
 
@@ -101,12 +135,16 @@ app.post(
   }
 );
 
-// MIDDLEWARE
+// ===================================================
+// 🌐 MIDDLEWARE
+// ===================================================
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// CHECKOUT
+// ===================================================
+// 💳 STRIPE CHECKOUT SESSION
+// ===================================================
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
@@ -118,31 +156,68 @@ app.post("/create-checkout-session", async (req, res) => {
     });
     res.json({ url: session.url });
   } catch (err) {
+    console.error("❌ Stripe checkout error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// TEST EMAIL (HTML ONLY)
+// ===================================================
+// 📧 TEST EMAIL ENDPOINT
+// ===================================================
 app.get("/api/test-email", async (req, res) => {
   try {
     await brevoClient.sendTransacEmail({
-      sender: { name: "QuickCoverLetter", email: "hello@quickcoverletter.com" },
+      sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
       to: [{ email: "sforde08@gmail.com", name: "Stephen" }],
       subject: "Test: Cover Letter Ready!",
       htmlContent: `
-        <h2>Hi Stephen!</h2>
-        <p>This is a <strong>test email</strong> from QuickCoverLetter.</p>
-        <p>Payment: €1.99</p>
-        <p><a href="${process.env.DOMAIN}">Go to App</a></p>
+        <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+          <tr>
+            <td align="center">
+              <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
+                <tr>
+                  <td align="center" style="background:linear-gradient(135deg,#0070f3,#3898ff);padding:25px;">
+                    <img src="https://quickprocv.com/icon.png" alt="QuickCoverLetter" width="64" height="64" style="display:block;margin:auto;border-radius:8px;">
+                    <h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:30px 40px;text-align:left;">
+                    <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>Stephen</strong> 👋,</p>
+                    <p style="font-size:16px;color:#333;margin:0 0 15px;">
+                      This is a <strong>test email</strong> confirming your setup is complete.
+                    </p>
+                    <p style="font-size:16px;color:#333;margin:0 0 25px;">
+                      Payment: <strong>€1.99</strong>
+                    </p>
+                    <div style="text-align:center;margin:30px 0;">
+                      <a href="${process.env.DOMAIN}" 
+                        style="background:#0070f3;color:#fff;padding:12px 24px;border-radius:6px;
+                               text-decoration:none;font-weight:bold;display:inline-block;">
+                        Go to QuickCoverLetter
+                      </a>
+                    </div>
+                    <p style="font-size:14px;color:#666;text-align:center;">
+                      Thanks for choosing <strong>QuickCoverLetter</strong> 💙
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
       `,
     });
-    res.send("TEST EMAIL SENT!");
+
+    res.send("✅ TEST EMAIL SENT!");
   } catch (err) {
-    console.error("TEST FAILED:", err.response?.body || err.message);
-    res.status(500).send("Failed");
+    console.error("❌ TEST FAILED:", err.response?.body || err.message);
+    res.status(500).send("Failed to send email");
   }
 });
 
-// START
+// ===================================================
+// 🚀 START SERVER
+// ===================================================
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
