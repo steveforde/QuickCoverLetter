@@ -22,18 +22,19 @@ brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
 // Supabase
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
-let supabase;
+let supabase = null;
 try {
   const serviceRole = process.env.SUPABASE_SERVICE_ROLE;
-  if (!serviceRole) console.warn("SUPABASE_SERVICE_ROLE missing");
-  supabase = createClient(SUPABASE_URL, serviceRole || "fallback");
+  if (serviceRole) {
+    supabase = createClient(SUPABASE_URL, serviceRole);
+  } else {
+    console.warn("SUPABASE_SERVICE_ROLE missing");
+  }
 } catch (e) {
   console.error("Supabase init failed:", e.message);
 }
 
-// ========================================================
 // STRIPE WEBHOOK
-// ========================================================
 app.post(
   "/webhook",
   bodyParser.raw({ type: "application/json" }),
@@ -70,39 +71,42 @@ app.post(
         if (error) console.error("DB error:", error.message);
       }
 
-      // Send Email
+      // SEND EMAIL (HTML ONLY)
       try {
         const response = await brevoClient.sendTransacEmail({
           sender: { name: "QuickCoverLetter", email: "hello@quickcoverletter.com" },
           to: [{ email, name }],
           subject: "Your Cover Letter is Ready!",
-          templateId: 1,
-          params: {
-            user_name: name,
-            amount: (amountInCents / 100).toFixed(2),
-          },
+          htmlContent: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; background: #f9f9f9;">
+              <h2 style="color: #2563eb;">Hi ${name}!</h2>
+              <p>Your payment of <strong>€${(amountInCents / 100).toFixed(2)}</strong> was successful!</p>
+              <p>Your cover letters are now <strong>unlocked</strong>.</p>
+              <p style="text-align: center; margin: 30px 0;">
+                <a href="${process.env.DOMAIN}" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+                  Generate Your Letter Now
+                </a>
+              </p>
+              <p>Thanks for using <strong>QuickCoverLetter</strong>!</p>
+            </div>
+          `,
         });
-        console.log("EMAIL SENT via Template #1:", response);
+        console.log("EMAIL SENT (HTML):", response);
       } catch (err) {
         console.error("BREVO ERROR:", err.response?.body || err.message);
       }
     }
 
-    // MUST BE OUTSIDE THE IF
     res.json({ received: true });
   }
 );
 
-// ========================================================
 // MIDDLEWARE
-// ========================================================
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// ========================================================
 // CHECKOUT
-// ========================================================
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
@@ -118,27 +122,27 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-// ========================================================
-// TEST EMAIL
-// ========================================================
+// TEST EMAIL (HTML ONLY)
 app.get("/api/test-email", async (req, res) => {
   try {
     await brevoClient.sendTransacEmail({
       sender: { name: "QuickCoverLetter", email: "hello@quickcoverletter.com" },
       to: [{ email: "sforde08@gmail.com", name: "Stephen" }],
       subject: "Test: Cover Letter Ready!",
-      templateId: 1,
-      params: { user_name: "Stephen", amount: "1.99" },
+      htmlContent: `
+        <h2>Hi Stephen!</h2>
+        <p>This is a <strong>test email</strong> from QuickCoverLetter.</p>
+        <p>Payment: €1.99</p>
+        <p><a href="${process.env.DOMAIN}">Go to App</a></p>
+      `,
     });
-    res.send("Test email sent!");
+    res.send("TEST EMAIL SENT!");
   } catch (err) {
-    console.error("Test failed:", err.response?.body || err.message);
+    console.error("TEST FAILED:", err.response?.body || err.message);
     res.status(500).send("Failed");
   }
 });
 
-// ========================================================
 // START
-// ========================================================
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server on port ${PORT}`));
