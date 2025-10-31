@@ -10,7 +10,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
    - Lock icons show
 ========================================================= */
 
-
+const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -136,8 +136,8 @@ ${name}`
 async function checkPaid(email) {
   if (!email) return false;
   try {
-    const url = `https://pjrqqrxlzbpjkpxligup.supabase.co/rest/v1/transactions?email=eq.${encodeURIComponent(email)}&status=eq.paid&select=id`;
-    console.log("Fetching Supabase:", url);
+    const url = `https://ztrsuveqeftmgoeiwjgz.supabase.co/rest/v1/transactions?email=eq.${encodeURIComponent(email)}&status=eq.paid&select=id`;
+    console.log("Fetching:", url);
 
     const res = await fetch(url, {
       method: "GET",
@@ -151,9 +151,10 @@ async function checkPaid(email) {
       console.error("HTTP", res.status);
       return false;
     }
+
     const data = await res.json();
     console.log("Supabase returned:", data);
-    return Array.isArray(data) && data.length > 0;
+    return data.length > 0;
   } catch (e) {
     console.error("Fetch failed:", e.message);
     return false;
@@ -182,10 +183,10 @@ async function checkPaid(email) {
 }
 
   // === STRIPE RETURN ===
-  if (location.search.includes("session_id")) {
+ if (location.search.includes("session_id")) {
   showToast("Verifying payment...", "info");
   localStorage.setItem("hasPaid", "true");
-  setTimeout(validate, 2000); // Wait 2 seconds for webhook
+  setTimeout(validate, 3000); // Wait 3 sec for webhook
 } else {
   validate();
 }
