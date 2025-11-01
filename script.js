@@ -1,21 +1,21 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* =========================================================
-   QUICKCOVERLETTER — FINAL PRODUCTION VERSION ✅
+   QUICKCOVERLETTER — FINAL PRODUCTION VERSION ✅ (PATCHED)
    ---------------------------------------------------------
-   🔹 Features:
-     - 4 cover letter templates (Professional, Formal, Friendly, Artistic)
-     - Stripe checkout integration
-     - Supabase verification (no client SDK)
-     - LocalStorage persistence (form + payment)
-     - PDF + Copy functionality
-     - Dark/light mode toggle 🌙☀️
-     - Lock icons 🔒 for unpaid users
+   🔹 Fixes:
+     - Starts locked properly
+     - Unlocks after verified payment
+     - Clear button no longer removes payment
+     - Stripe POST fixed with full backend URL
+     - Stable Supabase + localStorage sync
 ========================================================= */
 
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
+
+const BACKEND_URL = "https://quickcoverletter-backend.onrender.com"; // ✅ Fixed backend route
 
 document.addEventListener("DOMContentLoaded", () => {
   /* ----------------------------------------------------------
@@ -120,11 +120,8 @@ ${name}`,
 
   /* ----------------------------------------------------------
      🔒 LOCK STATE HANDLING
-     - Shows 🔒 icon for unpaid users
-     - Unlocks buttons after verified payment
   ---------------------------------------------------------- */
   function updateLockState() {
-    console.log("Updating lock state. isProUser =", isProUser);
     templateButtons.forEach((btn) => {
       let lock = btn.querySelector(".lock-icon");
       if (!isProUser) {
@@ -148,7 +145,7 @@ ${name}`,
   }
 
   /* ----------------------------------------------------------
-     💳 VERIFY PAYMENT VIA SUPABASE REST API
+     💳 VERIFY PAYMENT VIA SUPABASE
   ---------------------------------------------------------- */
   async function checkPaid(email) {
     if (!email) return false;
@@ -156,7 +153,6 @@ ${name}`,
       const url = `${SUPABASE_URL}/rest/v1/transactions?email=eq.${encodeURIComponent(
         email
       )}&status=eq.paid&select=id`;
-      console.log("Fetching:", url);
 
       const res = await fetch(url, {
         method: "GET",
@@ -166,16 +162,10 @@ ${name}`,
         },
       });
 
-      if (!res.ok) {
-        console.error("HTTP", res.status);
-        return false;
-      }
-
+      if (!res.ok) return false;
       const data = await res.json();
-      console.log("Supabase returned:", data);
       return data.length > 0;
-    } catch (e) {
-      console.error("Fetch failed:", e.message);
+    } catch {
       return false;
     }
   }
@@ -185,24 +175,25 @@ ${name}`,
   ---------------------------------------------------------- */
   function validate() {
     const email = saved.email || emailField.value.trim();
+
     if (!email || !email.includes("@")) {
       isProUser = false;
       updateLockState();
       return;
     }
 
-    if (localStorage.getItem("hasPaid") === "true") {
-      isProUser = true;
-      updateLockState();
-    }
+    const localPaid = localStorage.getItem("hasPaid") === "true";
+    isProUser = false; // always start locked
+    updateLockState();
 
     checkPaid(email).then((paid) => {
-      isProUser = paid;
-      localStorage.setItem("hasPaid", paid ? "true" : "false");
+      const finalPaid = paid || localPaid;
+      isProUser = finalPaid;
+      localStorage.setItem("hasPaid", finalPaid ? "true" : "false");
       updateLockState();
       showToast(
-        paid ? "Payment confirmed! Unlocked." : "Not paid yet.",
-        paid ? "success" : "error"
+        finalPaid ? "Payment confirmed! Unlocked." : "Not paid yet.",
+        finalPaid ? "success" : "error"
       );
     });
   }
@@ -211,9 +202,12 @@ ${name}`,
      🧾 STRIPE RETURN HANDLING (POST-CHECKOUT)
   ---------------------------------------------------------- */
   if (location.search.includes("session_id")) {
-    showToast("Verifying payment...", "info");
     localStorage.setItem("hasPaid", "true");
-    setTimeout(validate, 3000); // Wait 3s for webhook update
+    isProUser = true;
+    updateLockState();
+    showToast("✅ Payment received. All templates unlocked.", "success");
+    history.replaceState({}, document.title, "/");
+    setTimeout(validate, 2000);
   } else {
     validate();
   }
@@ -230,11 +224,10 @@ ${name}`,
     };
     localStorage.setItem("userData", JSON.stringify(userData));
 
-    if (!userData.email.includes("@"))
-      return showToast("Enter a valid email.", "error");
+    if (!userData.email.includes("@")) return showToast("Enter a valid email.", "error");
 
     try {
-      const res = await fetch("/create-checkout-session", {
+      const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userData.email }),
@@ -242,7 +235,7 @@ ${name}`,
       const { url } = await res.json();
       if (url) location.href = url;
       else showToast("Could not start payment.", "error");
-    } catch (e) {
+    } catch {
       showToast("Payment failed.", "error");
     }
   });
@@ -257,8 +250,7 @@ ${name}`,
       const name = nameField.value.trim();
       const job = jobField.value.trim();
       const company = companyField.value.trim();
-      if (!name || !job || !company)
-        return showToast("Fill name, job & company.", "error");
+      if (!name || !job || !company) return showToast("Fill name, job & company.", "error");
 
       const date = new Date().toLocaleDateString("en-IE", {
         day: "numeric",
@@ -269,10 +261,7 @@ ${name}`,
       const type = btn.dataset.type;
       coverLetter.value = templates[type](name, job, company, date);
       resultBox.classList.remove("hidden");
-      showToast(
-        `${type.charAt(0).toUpperCase() + type.slice(1)} letter generated!`,
-        "success"
-      );
+      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} letter generated!`, "success");
     });
   });
 
@@ -315,17 +304,18 @@ ${name}`,
   });
 
   /* ----------------------------------------------------------
-     🧹 CLEAR FORM + RESET LOCKS
+     🧹 CLEAR FORM (KEEP PAYMENT)
   ---------------------------------------------------------- */
   clearBtn?.addEventListener("click", () => {
     form.reset();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
     localStorage.removeItem("userData");
-    localStorage.removeItem("hasPaid");
-    isProUser = false;
+
+    const stillPaid = localStorage.getItem("hasPaid") === "true";
+    isProUser = stillPaid;
     updateLockState();
-    showToast("Form cleared — locked again.", "info");
+    showToast("Form cleared.", "success");
   });
 
   /* ----------------------------------------------------------
