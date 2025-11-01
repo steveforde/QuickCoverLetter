@@ -171,30 +171,22 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     });
   }
 
-  // ❌ 2. PAYMENT FAILED (Updated Clean Version)
-  if (event.type === "payment_intent.payment_failed") {
-    const obj = event.data.object;
-    const email =
-      obj?.charges?.data?.[0]?.billing_details?.email || obj?.customer_details?.email || null;
-    const name =
-      obj?.charges?.data?.[0]?.billing_details?.name || obj?.customer_details?.name || "Customer";
-
-    console.log("⚠️ Payment failed for:", email);
-
-    if (email) {
-      await sendBrevoEmail({
-        toEmail: email,
-        toName: name,
+  // ===================================================
+  // 📧 TEST FAILED PAYMENT EMAIL
+  // ===================================================
+  app.get("/api/test-failed-email", async (req, res) => {
+    try {
+      await brevoClient.sendTransacEmail({
+        sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
+        to: [{ email: "sforde08@gmail.com", name: "Stephen" }],
         subject: "⚠️ Payment Failed – Please Try Again",
-        html: `
+        htmlContent: `
         <table width="100%" cellspacing="0" cellpadding="0" border="0"
           style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
           <tr>
             <td align="center">
               <table width="600" cellspacing="0" cellpadding="0" border="0"
                 style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
-                
-                <!-- HEADER -->
                 <tr>
                   <td align="center" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);padding:25px;">
                     <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
@@ -206,18 +198,15 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                     <p style="color:#dbeafe;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
                   </td>
                 </tr>
-
-                <!-- BODY -->
                 <tr>
                   <td style="padding:35px 45px;text-align:left;">
-                    <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
+                    <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>Stephen</strong> 👋,</p>
                     <p style="font-size:16px;color:#333;margin:0 0 18px;">
                       Unfortunately, your payment for <strong>€1.99</strong> didn’t go through.
                     </p>
                     <p style="font-size:16px;color:#333;margin:0 0 25px;">
                       Don’t worry — you haven’t been charged. This usually happens if your card was declined or the session expired.
                     </p>
-
                     <div style="text-align:center;margin:35px 0;">
                       <a href="${process.env.DOMAIN}"
                         style="background:#1e3a8a;color:#fff;padding:14px 28px;border-radius:8px;
@@ -225,14 +214,11 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                         Try Again
                       </a>
                     </div>
-
                     <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
                       If this keeps happening, reply to this email — we’ll help you out. 💬
                     </p>
                   </td>
                 </tr>
-
-                <!-- FOOTER -->
                 <tr>
                   <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
                     <p style="font-size:13px;color:#777;margin:0;">
@@ -241,14 +227,17 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                     </p>
                   </td>
                 </tr>
-
               </table>
             </td>
           </tr>
         </table>`,
       });
+      res.send("✅ TEST FAILED EMAIL SENT!");
+    } catch (err) {
+      console.error("❌ TEST FAILED EMAIL ERROR:", err.response?.body || err.message);
+      res.status(500).send("Failed to send failed email");
     }
-  }
+  });
 
   // 🕓 3. CHECKOUT CANCELED / EXPIRED
   if (event.type === "checkout.session.expired" || event.type === "checkout.session.canceled") {
