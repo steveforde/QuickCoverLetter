@@ -343,10 +343,6 @@ app.post("/create-checkout-session", async (req, res) => {
       success_url: `${process.env.DOMAIN}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.DOMAIN}/cancel.html`,
       customer_email: req.body.email || undefined,
-      metadata: {
-        email: req.body.email || "",
-        name: req.body.name || "Customer",
-      },
     });
     res.json({ url: session.url });
   } catch (err) {
