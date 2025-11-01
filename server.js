@@ -171,7 +171,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     });
   }
 
-  // ❌ 2. PAYMENT FAILED
+  // ❌ 2. PAYMENT FAILED (Updated Clean Version)
   if (event.type === "payment_intent.payment_failed") {
     const obj = event.data.object;
     const email =
@@ -187,31 +187,65 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
         toName: name,
         subject: "⚠️ Payment Failed – Please Try Again",
         html: `
-          <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
-            <tr>
-              <td align="center">
-                <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
-                  <tr>
-                    <td align="center" style="background:linear-gradient(135deg,#f97316,#ea580c);padding:25px;">
-                      <h1 style="color:#fff;font-size:22px;margin:0;">QuickCoverLetter</h1>
-                      <p style="color:#ffe9db;font-size:13px;margin:6px 0 0;">Payment could not be completed</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:30px 40px;text-align:left;">
-                      <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>${name}</strong>,</p>
-                      <p style="font-size:15px;color:#333;margin:0 0 15px;">Your payment for <strong>€1.99</strong> did not go through.</p>
-                      <p style="font-size:14px;color:#555;margin:0 0 25px;">You have <strong>not</strong> been charged. This normally happens when the bank declines the card or the session expired.</p>
-                      <div style="text-align:center;margin:30px 0;">
-                        <a href="${process.env.DOMAIN}" style="background:#f97316;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Try Again</a>
-                      </div>
-                      <p style="font-size:13px;color:#888;text-align:center;">If this keeps happening, reply to this email and we’ll sort it. 💬</p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>`,
+        <table width="100%" cellspacing="0" cellpadding="0" border="0"
+          style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+          <tr>
+            <td align="center">
+              <table width="600" cellspacing="0" cellpadding="0" border="0"
+                style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
+                
+                <!-- HEADER -->
+                <tr>
+                  <td align="center" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);padding:25px;">
+                    <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
+                      alt="QuickCoverLetter"
+                      width="70" height="70"
+                      style="display:block;margin:auto;border-radius:50%;background:#fff;
+                             padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                    <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
+                    <p style="color:#dbeafe;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
+                  </td>
+                </tr>
+
+                <!-- BODY -->
+                <tr>
+                  <td style="padding:35px 45px;text-align:left;">
+                    <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
+                    <p style="font-size:16px;color:#333;margin:0 0 18px;">
+                      Unfortunately, your payment for <strong>€1.99</strong> didn’t go through.
+                    </p>
+                    <p style="font-size:16px;color:#333;margin:0 0 25px;">
+                      Don’t worry — you haven’t been charged. This usually happens if your card was declined or the session expired.
+                    </p>
+
+                    <div style="text-align:center;margin:35px 0;">
+                      <a href="${process.env.DOMAIN}"
+                        style="background:#1e3a8a;color:#fff;padding:14px 28px;border-radius:8px;
+                               text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
+                        Try Again
+                      </a>
+                    </div>
+
+                    <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
+                      If this keeps happening, reply to this email — we’ll help you out. 💬
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- FOOTER -->
+                <tr>
+                  <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
+                    <p style="font-size:13px;color:#777;margin:0;">
+                      Made with 💙 in Ireland<br>
+                      <span style="color:#999;">QuickCoverLetter · quickprocv.com</span>
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+        </table>`,
       });
     }
   }
