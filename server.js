@@ -335,30 +335,16 @@ app.use(express.static(__dirname));
 // ===================================================
 // STRIPE CHECKOUT SESSION
 // ===================================================
-// ===================================================
-// STRIPE CHECKOUT SESSION (100% HARD CODED)
-// ===================================================
 app.post("/create-checkout-session", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      line_items: [
-        {
-          price: "price_1SNgpsKTaBe4eyVe81WVku8b", // ← CHANGE THIS
-          quantity: 1,
-        },
-      ],
+      line_items: [{ price: "price_1SNgpsKTaBe4eyVe81WVku8b", quantity: 1 }],
       success_url:
         "https://quickcoverletter.onrender.com/success.html?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: "https://quickcoverletter.onrender.com/cancel.html",
-      customer_email: req.body.email || "test@quickcoverletter.com",
-      payment_intent_data: {
-        metadata: {
-          email: req.body.email || "test@quickcoverletter.com",
-        },
-      },
+      customer_email: req.body.email || undefined,
     });
-
     res.json({ url: session.url });
   } catch (err) {
     console.error("STRIPE ERROR:", err.message);
