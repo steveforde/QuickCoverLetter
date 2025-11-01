@@ -343,6 +343,29 @@ app.get("/api/test-email", async (req, res) => {
 });
 
 // ===================================================
+// 📧 TEST FAILED EMAIL ENDPOINT
+// ===================================================
+app.get("/api/test-failed-email", async (req, res) => {
+  try {
+    await brevoClient.sendTransacEmail({
+      sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
+      to: [{ email: "sforde08@gmail.com", name: "Stephen" }],
+      subject: "⚠️ Payment Failed – Please Try Again",
+      htmlContent: `
+        <h2 style="color:#f97316;">Payment Failed</h2>
+        <p>Hi Stephen,</p>
+        <p>Your payment for €1.99 didn’t go through. Please try again using the button below.</p>
+        <a href="${process.env.DOMAIN}" style="background:#f97316;color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;">Try Again</a>
+      `,
+    });
+    res.send("✅ TEST FAILED EMAIL SENT!");
+  } catch (err) {
+    console.error("❌ TEST FAILED EMAIL:", err.response?.body || err.message);
+    res.status(500).send("Failed to send email");
+  }
+});
+
+// ===================================================
 // 🚀 START SERVER
 // ===================================================
 
