@@ -172,7 +172,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
   }
 
   // ===================================================
-  // 📧 TEST FAILED PAYMENT EMAIL
+  // 📧 TEST FAILED EMAIL (BRANDED VERSION)
   // ===================================================
   app.get("/api/test-failed-email", async (req, res) => {
     try {
@@ -181,72 +181,72 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
         to: [{ email: "sforde08@gmail.com", name: "Stephen" }],
         subject: "⚠️ Payment Failed – Please Try Again",
         htmlContent: `
-  <table width="100%" cellspacing="0" cellpadding="0" border="0"
-    style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
-    <tr>
-      <td align="center">
-        <table width="600" cellspacing="0" cellpadding="0" border="0"
-          style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
-          
-          <!-- HEADER -->
+        <table width="100%" cellspacing="0" cellpadding="0" border="0"
+          style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
           <tr>
-            <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
-              <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
-                alt="QuickCoverLetter"
-                width="70" height="70"
-                style="display:block;margin:auto;border-radius:50%;background:#fff;
-                       padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-              <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
-              <p style="color:#eaf1ff;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
-            </td>
-          </tr>
+            <td align="center">
+              <table width="600" cellspacing="0" cellpadding="0" border="0"
+                style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
+                
+                <!-- HEADER -->
+                <tr>
+                  <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
+                    <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
+                      alt="QuickCoverLetter"
+                      width="70" height="70"
+                      style="display:block;margin:auto;border-radius:50%;background:#fff;
+                            padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                    <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
+                    <p style="color:#eaf1ff;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
+                  </td>
+                </tr>
 
-          <!-- BODY -->
-          <tr>
-            <td style="padding:35px 45px;text-align:left;">
-              <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>Stephen</strong> 👋,</p>
-              
-              <p style="font-size:16px;color:#333;margin:0 0 18px;">
-                Your payment for <strong>€1.99</strong> didn’t go through.
-              </p>
+                <!-- BODY -->
+                <tr>
+                  <td style="padding:35px 45px;text-align:left;">
+                    <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>Stephen</strong> 👋,</p>
+                    
+                    <p style="font-size:16px;color:#333;margin:0 0 18px;">
+                      Your payment for <strong>€1.99</strong> didn’t go through.
+                    </p>
 
-              <p style="font-size:16px;color:#333;margin:0 0 25px;">
-                You have <strong>not</strong> been charged. This usually happens when a card is declined or the session expires.
-              </p>
+                    <p style="font-size:16px;color:#333;margin:0 0 25px;">
+                      You have <strong>not</strong> been charged. This usually happens when a card is declined or the session expires.
+                    </p>
 
-              <div style="text-align:center;margin:35px 0;">
-                <a href="${process.env.DOMAIN}"
-                  style="background:#f97316;color:#fff;padding:14px 28px;border-radius:8px;
-                         text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
-                  Try Again
-                </a>
-              </div>
+                    <div style="text-align:center;margin:35px 0;">
+                      <a href="${process.env.DOMAIN}"
+                        style="background:#f97316;color:#fff;padding:14px 28px;border-radius:8px;
+                              text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
+                        Try Again
+                      </a>
+                    </div>
 
-              <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
-                You’ll only ever be charged once — no subscriptions or renewals. ✅
-              </p>
-            </td>
-          </tr>
+                    <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
+                      You’ll only ever be charged once — no subscriptions or renewals. ✅
+                    </p>
+                  </td>
+                </tr>
 
-          <!-- FOOTER -->
-          <tr>
-            <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
-              <p style="font-size:13px;color:#777;margin:0;">
-                Made with 💙 in Ireland<br>
-                <span style="color:#999;">QuickCoverLetter · quickprocv.com</span>
-              </p>
+                <!-- FOOTER -->
+                <tr>
+                  <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
+                    <p style="font-size:13px;color:#777;margin:0;">
+                      Made with 💙 in Ireland<br>
+                      <span style="color:#999;">QuickCoverLetter · quickprocv.com</span>
+                    </p>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
-      </td>
-    </tr>
-  </table>
-`,
+      `,
       });
       res.send("✅ TEST FAILED EMAIL SENT!");
     } catch (err) {
-      console.error("❌ TEST FAILED EMAIL ERROR:", err.response?.body || err.message);
-      res.status(500).send("Failed to send failed email");
+      console.error("❌ TEST FAILED EMAIL:", err.response?.body || err.message);
+      res.status(500).send("Failed to send email");
     }
   });
 
