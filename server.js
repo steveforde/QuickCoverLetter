@@ -102,39 +102,72 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
       if (error) console.error("❌ DB insert error:", error.message);
     }
 
-    // 📧 Success Email
+    // 📧 SUCCESS EMAIL (Improved Professional Version)
     await sendBrevoEmail({
       toEmail: email,
       toName: name,
-      subject: "✅ Payment Successful – Your Cover Letter is Ready!",
+      subject: "✅ Payment Successful – Your Cover Letter Is Ready!",
       html: `
-        <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+  <table width="100%" cellspacing="0" cellpadding="0" border="0"
+    style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+    <tr>
+      <td align="center">
+        <table width="600" cellspacing="0" cellpadding="0" border="0"
+          style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
+          
+          <!-- HEADER -->
           <tr>
-            <td align="center">
-              <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
-                <tr>
-                  <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
-                    <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png" alt="QuickCoverLetter"
-                      width="64" height="64" style="display:block;margin:auto;border-radius:50%;background:#fff;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-                    <h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1>
-                    <p style="color:#eaf1ff;font-size:13px;margin:4px 0 0;">Professional Cover Letter Templates</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:30px 40px;text-align:left;">
-                    <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>${name}</strong> 👋,</p>
-                    <p style="font-size:16px;color:#333;margin:0 0 15px;">We’ve received your payment of <strong>€${(amountInCents / 100).toFixed(2)}</strong>.</p>
-                    <p style="font-size:16px;color:#333;margin:0 0 25px;">Your cover letters are now <strong>unlocked</strong> and ready to use.</p>
-                    <div style="text-align:center;margin:30px 0;">
-                      <a href="${process.env.DOMAIN}" style="background:#0070f3;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Generate Your Letter Now</a>
-                    </div>
-                    <p style="font-size:14px;color:#666;text-align:center;">Thanks for choosing <strong>QuickCoverLetter</strong> 💙</p>
-                  </td>
-                </tr>
-              </table>
+            <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
+              <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
+                alt="QuickCoverLetter"
+                width="70" height="70"
+                style="display:block;margin:auto;border-radius:50%;background:#fff;
+                       padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+              <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
+              <p style="color:#eaf1ff;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
             </td>
           </tr>
-        </table>`,
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:35px 45px;text-align:left;">
+              <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
+              
+              <p style="font-size:16px;color:#333;margin:0 0 18px;">
+                Your payment of <strong>€${(amountInCents / 100).toFixed(2)}</strong> has been received successfully.
+              </p>
+
+              <p style="font-size:16px;color:#333;margin:0 0 25px;">
+                You can now create and download your custom cover letter instantly.
+              </p>
+
+              <div style="text-align:center;margin:35px 0;">
+                <a href="${process.env.DOMAIN}"
+                  style="background:#0070f3;color:#fff;padding:14px 28px;border-radius:8px;
+                         text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
+                  Build My Cover Letter
+                </a>
+              </div>
+
+              <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
+                You will only ever be charged once – no subscriptions, no renewals. ✅
+              </p>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
+              <p style="font-size:13px;color:#777;margin:0;">
+                Made with 💙 in Ireland<br>
+                <span style="color:#999;">QuickCoverLetter · quickprocv.com</span>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>`,
     });
   }
 
@@ -289,5 +322,7 @@ app.get("/api/test-email", async (req, res) => {
 // ===================================================
 // 🚀 START SERVER
 // ===================================================
+
 const PORT = process.env.PORT || 10000;
+
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
