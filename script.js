@@ -230,22 +230,27 @@ ${name}`,
   //    - show success toast for 4 seconds
   // -------------------------------------------------------
   // -------------------------------------------------------
-  // Handle Stripe return reliably (unlock + toast)
+  // Handle Stripe return reliably (FINAL)
   // -------------------------------------------------------
   if (location.search.includes("session_id")) {
-    // ✅ unlock immediately
+    // 1️⃣  Unlock instantly
     isProUser = true;
     localStorage.setItem("hasPaid", "true");
-    updateLockState();
 
-    // ✅ delay to ensure DOM fully rendered before showing toast
-    setTimeout(() => {
-      showToast("✅ Payment successful — templates unlocked.", "success");
-      // re-run lock update to guarantee visible unlock
-      updateLockState();
-    }, 750);
+    // 2️⃣  Wait a moment to let the page render fully
+    window.addEventListener("load", () => {
+      // Double update to be 100% sure buttons unlock
+      setTimeout(() => {
+        updateLockState();
+      }, 300);
 
-    // ✅ clean URL so session_id disappears
+      setTimeout(() => {
+        updateLockState();
+        showToast("✅ Payment successful — templates unlocked.", "success");
+      }, 800);
+    });
+
+    // 3️⃣  Clean URL (remove ?session_id)
     history.replaceState({}, document.title, "/");
   }
 
