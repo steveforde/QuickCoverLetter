@@ -292,26 +292,24 @@ ${name}`,
       .catch(() => showToast("Copy failed", "error"));
   });
 
-  // 🧹 CLEAR — but KEEP PAYMENT
+  // 🧹 CLEAR — full reset (locks everything again)
   clearBtn?.addEventListener("click", () => {
+    // Reset all inputs and letter output
     form.reset();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
+
+    // Completely clear saved data and payment
     localStorage.removeItem("userData");
+    localStorage.removeItem("hasPaid");
 
-    // KEEP hasPaid!
-    const stillPaid = localStorage.getItem("hasPaid") === "true";
-    isProUser = stillPaid;
+    // Lock templates again
+    isProUser = false;
     updateLockState();
-    showToast("Form cleared.", "success");
-  });
 
-  function showToast(msg, type = "info", time = 3000) {
-    if (!toast) return;
-    toast.textContent = msg;
-    toast.className = `toast show ${type}`;
-    setTimeout(() => toast.classList.remove("show"), time);
-  }
+    // Feedback
+    showToast("All cleared — templates locked again. Pay again to start new letter.", "info");
+  });
 
   // theme (your version)
   const savedTheme = localStorage.getItem("theme");
