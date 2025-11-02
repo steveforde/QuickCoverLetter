@@ -193,6 +193,19 @@ main {
 /* ---------------------------------------------------------
    6. FORM CARD (left column on desktop, centered on mobile)
    --------------------------------------------------------- */
+@media (min-width: 1024px) {
+  .form-box {
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
 .form-box {
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(12px);

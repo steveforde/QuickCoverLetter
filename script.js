@@ -230,19 +230,22 @@ ${name}`,
   //    - show success toast for 4 seconds
   // -------------------------------------------------------
   // -------------------------------------------------------
-  // Handle Stripe return reliably (with delay)
+  // Handle Stripe return reliably (unlock + toast)
   // -------------------------------------------------------
   if (location.search.includes("session_id")) {
+    // ✅ unlock immediately
     isProUser = true;
     localStorage.setItem("hasPaid", "true");
     updateLockState();
 
-    // small delay so toast renders after DOM paint
+    // ✅ delay to ensure DOM fully rendered before showing toast
     setTimeout(() => {
       showToast("✅ Payment successful — templates unlocked.", "success");
-    }, 400);
+      // re-run lock update to guarantee visible unlock
+      updateLockState();
+    }, 750);
 
-    // clean URL
+    // ✅ clean URL so session_id disappears
     history.replaceState({}, document.title, "/");
   }
 
