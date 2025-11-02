@@ -199,15 +199,22 @@ main {
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  padding: 36px 28px 34px;
-  max-width: 500px; /* wider like before */
+  padding: 40px 32px 36px;
+  max-width: 540px; /* 🧩 desktop-friendly width */
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.9rem;
   transition:
     background var(--speed-med),
     border var(--speed-med);
+}
+
+@media (max-width: 768px) {
+  .form-box {
+    max-width: 95%; /* stay fluid on tablets/mobiles */
+    padding: 30px 20px;
+  }
 }
 
 .form-box label {

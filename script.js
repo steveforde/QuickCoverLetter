@@ -229,17 +229,21 @@ ${name}`,
   //    - keep form data (we saved it before redirect)
   //    - show success toast for 4 seconds
   // -------------------------------------------------------
+  // -------------------------------------------------------
+  // Handle Stripe return reliably (with delay)
+  // -------------------------------------------------------
   if (window.location.search.includes("session_id")) {
-    // we trust Stripe redirect
-    isProUser = true;
-    localStorage.setItem("hasPaid", "true");
-    updateLockState();
-    showToast("✅ Payment successful — templates unlocked.", "success");
+    // Wait a tick so DOM ready before showing toast
+    setTimeout(() => {
+      isProUser = true;
+      localStorage.setItem("hasPaid", "true");
+      updateLockState();
+      showToast("✅ Payment successful — templates unlocked.", "success");
+    }, 300);
 
-    // clean the URL so refresh doesn't re-run this
+    // Clean the URL so refresh doesn't re-run this
     history.replaceState({}, document.title, "/");
   } else {
-    // normal load
     initialValidate();
   }
 
@@ -346,8 +350,11 @@ ${name}`,
     if (!coverLetter.value.trim()) return;
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     pdf.setFont("times", "normal").setFontSize(12);
-    renderToPdf(pdf, coverLetter.value, 20, 20, 170);
-    pdf.save("CoverLetter.pdf");
+    renderExact(pdf, coverLetter.value, 20, 20, 170);
+    const safeJob = jobField.value.trim().replace(/\s+/g, "_");
+    const safeCompany = companyField.value.trim().replace(/\s+/g, "_");
+    const fileName = safeJob && safeCompany ? `${safeJob}-${safeCompany}.pdf` : "CoverLetter.pdf";
+    pdf.save(fileName);
     showToast("PDF downloaded.", "success");
   });
 
