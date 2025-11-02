@@ -1,110 +1,126 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QuickCoverLetter</title>
-  <link rel="stylesheet" href="style.css" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuickCoverLetter</title>
 
-  <!-- ✅ App Branding -->
-  <link rel="icon" type="image/png" href="/icon.png">
-  <link rel="apple-touch-icon" href="/icon.png">
+    <!-- ✅ Core Styles -->
+    <link rel="stylesheet" href="style.css" />
 
-  <!-- ✅ Splash Screen -->
-  <link rel="apple-touch-startup-image" href="/splash.png">
-  <meta name="theme-color" content="#0070f3">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-</head>
+    <!-- ✅ App Branding -->
+    <link rel="icon" type="image/png" href="/icon.png" />
+    <link rel="apple-touch-icon" href="/icon.png" />
 
-<body>
-  <!-- 🔹 Banner -->
-  <header class="hero">
-    <div class="hero-content">
-      <h1>🚀 QuickCoverLetter</h1>
-      <p>Create clean, personalized cover letters in seconds.</p>
-    </div>
+    <!-- ✅ Splash Screen + Theme -->
+    <link rel="apple-touch-startup-image" href="/splash.png" />
+    <meta name="theme-color" content="#0070f3" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  </head>
 
-    <!-- ✅ Only one theme toggle here -->
-    <button id="themeToggle" class="theme-btn">🌙</button>
-  </header>
-
-  <div id="toast" class="toast hidden"></div>
-
-  <main>
-    <form id="form" class="form-box">
-      <label for="jobTitle">Job Title</label>
-      <input type="text" id="jobTitle" placeholder="e.g. Developer" required>
-
-      <label for="companyName">Company Name</label>
-      <input type="text" id="companyName" placeholder="e.g. Google" required>
-
-      <label for="userName">Your Name</label>
-      <input type="text" id="userName" placeholder="e.g. John Smith" required>
-
-     <label for="userEmail">Your Email</label>
-     <input type="email" id="userEmail" placeholder="e.g. john@example.com" required />
-
-
-      <button id="payButton" type="button" class="pay-btn">💳 Pay €1.99 to Unlock</button>
-    </form>
-
-    <!-- 🔸 Template Selection -->
-    <div class="template-buttons">
-      <div class="template-option">
-        <button class="template-btn" data-type="professional">Professional</button>
-        <small>Clean and confident — ideal for corporate or tech roles or gov.</small>
+  <body>
+    <!-- 🔹 HERO / APP HEADER -->
+    <header class="hero">
+      <div class="hero-content">
+        <h1>🚀 QuickCoverLetter</h1>
+        <p>Create clean, personalized cover letters in seconds.</p>
       </div>
 
-      <div class="template-option">
-        <button class="template-btn" data-type="formal">Formal</button>
-        <small>Traditional and respectful — great for finance senior positions or legal positions.</small>
+      <!-- 🌙 / ☀️ THEME TOGGLE -->
+      <button id="themeToggle" class="theme-btn">🌙</button>
+    </header>
+
+    <!-- 🔔 TOAST AREA (used for all notifications) -->
+    <div id="toast" class="toast hidden"></div>
+
+    <!-- 🧾 MAIN FORM -->
+    <main>
+      <form id="form" class="form-box">
+        <!-- Job Title -->
+        <label for="jobTitle">Job Title</label>
+        <input type="text" id="jobTitle" placeholder="e.g. Customer Service Advisor" required />
+
+        <!-- Company Name -->
+        <label for="companyName">Company Name</label>
+        <input type="text" id="companyName" placeholder="e.g. Fexco" required />
+
+        <!-- User Name -->
+        <label for="userName">Your Name</label>
+        <input type="text" id="userName" placeholder="e.g. Stephen Forde" required />
+
+        <!-- Email -->
+        <label for="userEmail">Your Email</label>
+        <input type="email" id="userEmail" placeholder="e.g. sforde08@gmail.com" required />
+
+        <!-- 💳 Stripe Pay Button -->
+        <button id="payButton" type="button" class="pay-btn">💳 Pay €1.99 to Unlock</button>
+      </form>
+
+      <!-- 🧩 TEMPLATE SELECTION -->
+      <div class="template-buttons">
+        <div class="template-option">
+          <button class="template-btn" data-type="professional">Professional</button>
+          <small>Clean and confident — ideal for corporate, tech, or government roles.</small>
+        </div>
+
+        <div class="template-option">
+          <button class="template-btn" data-type="formal">Formal</button>
+          <small>Traditional and respectful — great for finance, senior, or legal positions.</small>
+        </div>
+
+        <div class="template-option">
+          <button class="template-btn" data-type="friendly">Friendly</button>
+          <small>Warm and approachable — suited to customer support or public-facing roles.</small>
+        </div>
+
+        <div class="template-option">
+          <button class="template-btn" data-type="artistic">Artistic</button>
+          <small>Creative and expressive — perfect for design, media, or marketing roles.</small>
+        </div>
       </div>
 
-      <div class="template-option">
-        <button class="template-btn" data-type="friendly">Friendly</button>
-        <small>Warm and approachable — suited to customer-facing jobs or customer support roles.</small>
+      <!-- ⏳ SPINNER (for loading state) -->
+      <div id="spinner" class="hidden">
+        <div class="spin"></div>
+        <span>Generating your letter...</span>
       </div>
 
-      <div class="template-option">
-        <button class="template-btn" data-type="artistic">Artistic</button>
-        <small>Creative and expressive — perfect for design or marketing roles or any creative positions.</small>
-      </div>
-    </div>
+      <!-- 📄 RESULT BOX (generated letter + buttons) -->
+      <div id="resultBox" class="hidden">
+        <h2>Your Cover Letter</h2>
+        <textarea id="coverLetter" readonly></textarea>
 
-    <!-- 🔸 Spinner -->
-    <div id="spinner" class="hidden">
-      <div class="spin"></div>
-      <span>Generating your letter...</span>
-    </div>
-
-    <!-- 🔸 Result Box -->
-    <div id="resultBox" class="hidden">
-      <h2>Your Cover Letter</h2>
-      <textarea id="coverLetter" readonly></textarea>
-
-      <div class="result-buttons">
+        <!-- Action buttons -->
+        <div class="result-buttons">
           <button id="copyBtn">Copy</button>
           <button id="clearBtn">Clear</button>
           <button id="downloadBtn" class="pay-btn">
-          <span class="btn-text">Download PDF</span>
+            <span class="btn-text">Download PDF</span>
           </button>
+        </div>
       </div>
+    </main>
 
-    </div>
-  </main>
+    <!-- 📄 PDF GENERATION LIBRARY -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- jsPDF for PDF download -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-  window.__SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
-  window.__SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
-</script>
-<script type="module" src="script.js"></script>
-  <footer>
-  <p>© 2025 <strong>QuickCoverLetter</strong> — Crafted in Ireland 🇮🇪 | <a href="mailto:support@quickcoverletter.com">Contact Support</a></p>
-</footer>
+    <!-- 🧠 Supabase Credentials (Public Only) -->
+    <script>
+      window.__SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
+      window.__SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
+    </script>
 
-</body>
+    <!-- 🧩 MAIN LOGIC -->
+    <script type="module" src="script.js"></script>
+
+    <!-- 🌍 FOOTER -->
+    <footer>
+      <p>
+        © 2025 <strong>QuickCoverLetter</strong> — Crafted in Ireland 🇮🇪 |
+        <a href="mailto:support@quickcoverletter.com">Contact Support</a>
+      </p>
+    </footer>
+  </body>
 </html>
-

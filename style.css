@@ -1,711 +1,726 @@
 /* =========================================================
-   QuickCoverLetter — Final Production CSS (FIXED)
-   - Unified gradients (no banding / no cutoffs)
-   - Distinct rounded hero with soft fade into page
-   - Full feature parity (form, buttons, templates, toast, spinner)
-   - Dark mode tuned (deeper blue hero, charcoal background)
+   QuickCoverLetter — PRODUCTION STYLES
+   ---------------------------------------------------------
+   - Single brand look (blue → #0070f3)
+   - Light + dark mode
+   - Hero banner with soft fade to page background
+   - Frosted form card
+   - Template buttons grid
+   - Result box + action buttons
+   - Toast notifications (4s)
+   - Mobile responsive
+   - Matches index.html and script.js structure
    ========================================================= */
 
-/* --------------------------
-   1) Root variables
---------------------------- */
-:root {
-  --blue: #0070f3;
-  --blue-700: #0059c9;
-  --blue-500: #3898ff;
-
-  --dark-hero-1: #0a37d5; /* deeper royal in dark mode */
-  --dark-hero-2: #1e6aff; /* electric blue */
-
-  --green: #00c853;
-  --green-700: #009e42;
-
-  --text-dark: #111;
-  --text-muted: #555; /* Original light-mode muted text color */
-  --border: #d9d9d9;
-  --card-bg: #ffffff;
-
-  --shadow-1: 0 6px 20px rgba(0,0,0,.08);
-  --shadow-2: 0 8px 25px rgba(0,0,0,.10);
-
-  --radius-lg: 18px;
-  --radius-md: 12px;
-  --radius-sm: 8px;
-
-  --transition-fast: .2s ease;
-  --transition-med: .3s ease;
-  --transition-slow: .4s ease;
+/* ---------------------------------------------------------
+   0. RESET / BASE
+   --------------------------------------------------------- */
+* {
+  box-sizing: border-box;
 }
 
-* { box-sizing: border-box; }
-html, body { height: 100%; margin: 0; padding: 0; }
-
-/* --------------------------
-   2) Page background (Light & Dark) - FIXED GRADIENTS
---------------------------- */
-html, body {
-  min-height: 100vh;
-  background-attachment: fixed;
-  background-repeat: no-repeat;
-  background-size: cover;
-  transition: background var(--transition-slow), color var(--transition-slow);
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  scroll-behavior: smooth;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* 🌞 Light background (soft blue sky - using radial for smoothness) */
-body:not(.dark) {
-  background: radial-gradient(circle at top center,
-    #f9fbff 0%,
-    #e7edff 40%,
-    #d6e0ff 100%) fixed;
-  color: var(--text-dark);
+/* ---------------------------------------------------------
+   1. ROOT VARIABLES
+   - Keep everything on one palette so we can theme later
+   --------------------------------------------------------- */
+:root {
+  /* brand colours */
+  --brand: #0070f3;
+  --brand-500: #1f82ff;
+  --brand-600: #0060cf;
+  --brand-700: #004ba2;
+
+  /* neutrals */
+  --bg-light: #f3f6fc;
+  --bg-card: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #5f6b7a;
+  --border: rgba(0, 0, 0, 0.05);
+
+  /* states */
+  --success: #22c55e;
+  --danger: #ef4444;
+  --warning: #f97316;
+  --info: #0ea5e9;
+
+  /* radii */
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+
+  /* shadows */
+  --shadow-sm: 0 3px 20px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 5px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 15px 45px rgba(0, 0, 0, 0.12);
+
+  /* timing */
+  --speed-fast: 0.2s ease;
+  --speed-med: 0.35s ease;
+  --speed-slow: 0.5s ease;
 }
 
-/* 🌙 Dark background (matte charcoal - using radial for smoothness) */
+/* ---------------------------------------------------------
+   2. BODY BACKGROUNDS
+   - Light: very soft radial blue
+   - Dark: charcoal with blue tint
+   --------------------------------------------------------- */
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at 15% 10%, #ffffff 0%, #e1e9ff 50%, #d3ddff 100%);
+  background-attachment: fixed;
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Dark mode base */
 body.dark {
-  background: radial-gradient(circle at 20% 10%,
-    #0b1120 0%,
-    #111625 40%,
-    #181b26 100%) fixed;
-  color: #f5f5f5;
-  /* NEW VARIABLE for dark mode muted text (for descriptions) */
-  --text-muted-dark: #b3b3b3; 
+  background: radial-gradient(circle at 20% 10%, #0b1120 0%, #10172d 40%, #141827 100%);
+  color: #f4f4f5;
 }
 
-/* Ensure inner wrappers don’t override the gradient */
-main, section, footer, .container, .template-buttons {
-  background: transparent !important;
-}
-
-/* Constrain wide screens */
-.container {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-/* --------------------------
-   3) Hero (distinct, rounded, soft fade to page) - FIXED FADE
---------------------------- */
+/* ---------------------------------------------------------
+   3. HERO / TOP BAR
+   --------------------------------------------------------- */
 .hero {
   width: 100%;
+  background: linear-gradient(135deg, var(--brand), var(--brand-500));
+  padding: 56px 18px 56px 18px;
+  border-bottom-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.05);
   position: relative;
-  overflow: visible;
-  border-bottom-left-radius: 32px;
-  border-bottom-right-radius: 32px;
-  color: #fff;
+  z-index: 1;
   text-align: center;
-  padding: 56px 20px;
-  background: linear-gradient(135deg, var(--blue), var(--blue-500));
-  box-shadow: 0 10px 30px rgba(0,0,0,.10), 0 4px 20px rgba(0,112,243,.15);
-  margin-bottom: 30px;
-}
-.hero .hero-content { text-align: center; }
-.hero h1 { font-size: 2rem; margin: 0 0 .5rem 0; }
-.hero p  { font-size: 1rem; margin: 0; opacity: .95; }
-
-
-
-.hero::before {
-  content: "";
-  position: absolute;
-  bottom: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  height: 28px;
-  background: radial-gradient(circle at center, rgba(0,112,243,0.45), transparent 70%);
-  border-radius: 50%;
-  filter: blur(14px);
-  pointer-events: none;
-  z-index: -1;
 }
 
-.hero {
-  position: relative;
-  z-index: 0; /* ensures ::before at -1 sits “behind” the hero but above page bg */
+.hero .hero-content {
+  max-width: 880px;
+  margin: 0 auto;
 }
 
-.hero::before {
-  content: "";
-  position: absolute;
-  bottom: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90%;
-  height: 28px;
-  background: radial-gradient(circle at center, rgba(0,112,243,0.45), transparent 70%);
-  border-radius: 50%;
-  filter: blur(14px);
-  pointer-events: none;
-  z-index: -1;
+.hero h1 {
+  margin: 0 0 6px 0;
+  font-size: 2rem;
+  color: #fff;
 }
 
-/* Soft transparent fade under hero to blend into page bg */
+.hero p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.96);
+  font-size: 1rem;
+}
+
+/* Soft halo under hero */
 .hero::after {
   content: "";
   position: absolute;
-  left: 0; right: 0;
-  bottom: -28px;
-  height: 56px;
+  left: 0;
+  right: 0;
+  bottom: -38px;
+  height: 65px;
+  background: radial-gradient(circle, rgba(0, 112, 243, 0.35), rgba(0, 112, 243, 0));
+  filter: blur(16px);
   pointer-events: none;
-  background: linear-gradient(to bottom,
-    rgba(56,152,255,0.35),
-    rgba(56,152,255,0.15),
-    rgba(56,152,255,0.05),
-    rgba(56,152,255,0)
-  );
+  z-index: -1;
 }
 
-/* Dark-mode hero: deeper blue + stronger glow */
+/* Dark hero */
 body.dark .hero {
-  background: linear-gradient(135deg, var(--dark-hero-1), var(--dark-hero-2));
-  box-shadow: 0 10px 40px rgba(0,0,0,.45), 0 6px 25px rgba(30,106,255,.25);
+  background: linear-gradient(135deg, #0a37d5, #2e6cff);
+  box-shadow: 0 14px 55px rgba(0, 0, 0, 0.35);
 }
 
-body.dark .hero::after {
-  background: linear-gradient(to bottom,
-    rgba(30,106,255,0.28),
-    rgba(30,106,255,0.12),
-    rgba(30,106,255,0.05),
-    rgba(30,106,255,0)
-  );
-}
-
-
-/* --------------------------
-   4) Main spacing
---------------------------- */
-main {
-  width: 100%;
-  margin-top: 12px;
-  margin-bottom: 40px;
-}
-.section { margin: 26px auto; }
-
-/* --------------------------
-   5) Form box (frosted card)
---------------------------- */
-.form-box {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  box-shadow: var(--shadow-1);
-  border-radius: var(--radius-lg);
-  padding: 32px 28px;
-  width: 100%;
-  max-width: 420px;
-  display: flex;
-  flex-direction: column;
-  gap: .85rem;
-  margin: 0 auto;
-  transition: box-shadow var(--transition-med), transform var(--transition-fast), background var(--transition-slow), color var(--transition-slow), border-color var(--transition-fast);
-}
-.form-box:hover { box-shadow: var(--shadow-2); }
-
-.form-box label {
-  font-weight: 600;
-  font-size: .92rem;
-}
-.form-box input,
-.form-box select,
-textarea {
-  padding: .55rem .6rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: .98rem;
-  outline: none;
-  transition: border var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-slow), color var(--transition-slow);
-}
-.form-box input:focus,
-.form-box select:focus,
-textarea:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(0,112,243,.12);
-}
-
-/* Dark mode form card */
-body.dark .form-box {
-  background: rgba(255, 255, 255, 0.045);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 8px 28px rgba(0,0,0,.45);
-}
-body.dark .form-box input,
-body.dark .form-box select,
-body.dark textarea {
-  background: #0f1012;
-  color: #eaeaea;
-  border: 1px solid rgba(255,255,255,.12);
-}
-
-/* --------------------------
-   6) Buttons (global + variants)
---------------------------- */
-button {
-  font-family: inherit;
-  font-weight: 600;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-med), color var(--transition-med);
-}
-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,112,243,.2);
-}
-button:disabled {
-  background: #f2f4f7;
-  color: #aaa;
-  border: 1px solid #e0e0e0;
-  cursor: not-allowed;
-  opacity: .85;
-  box-shadow: none;
-}
-
-.btn-primary,
-.pay-btn {
-  background: var(--blue);
-  color: #fff;
-  padding: 12px 20px;
-  margin: 10px auto 0 auto;
-  display: block;
-  font-size: 1rem;
-}
-.btn-primary:hover,
-.pay-btn:hover { background: var(--blue-700); }
-
-.btn-secondary {
-  background: var(--green);
-  color: #fff;
-  padding: 10px 18px;
-}
-.btn-secondary:hover { background: var(--green-700); }
-
-/* =====================================================
-   🎯 Unified Action Buttons (Copy / Clear / Download) - FINAL FIX
-   ===================================================== */
-.result-buttons button {
-  font-family: inherit;
-  font-weight: 600;
-  font-size: 1rem;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  padding: 15px 22px; /* Remove vertical padding since we use fixed height/line-height */
-  width: 130px; 
-  height: 50px; /* NEW: Fixed height tall enough for two lines */
-  
-  /* Reset button display to be safe, but align text content center */
-  display: flex; /* Changed to flex to internally center text */
-  justify-content: center;
-  align-items: center;
-
-  text-align: center;
-  line-height: 1.1; /* Tighter line height for two lines */
-  
-  color: #fff;
-  transition: background var(--transition-fast),
-              box-shadow var(--transition-fast),
-              transform var(--transition-fast);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-}
-
-/* NEW: Styles for the single-line buttons (Copy/Clear) to match alignment */
-#copyBtn, #clearBtn {
-    /* Ensures single-line buttons align their text vertically inside the 50px height */
-    padding: 0 22px; 
-    line-height: 1; 
-}
-
-/* NEW: Styles for the text wrapper inside the Download PDF button */
-.result-buttons button .btn-text {
-    /* Use Flexbox internally to force multi-line text alignment */
-    display: block;
-    width: 100%;
-    /* No change to text-align, which is inherited */
-}
-
-/* --- Colors --- */
-#copyBtn {
-  background: var(--green);
-  box-shadow: 0 4px 10px rgba(0,200,83,.25);
-}
-#clearBtn {
-  background: #dc3545;
-  box-shadow: 0 4px 10px rgba(220,53,69,.25);
-}
-#downloadBtn {
-  background: var(--blue);
-  box-shadow: 0 4px 10px rgba(0,112,243,.25);
-}
-
-/* --- Hover & Lift Effects --- */
-.result-buttons button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.25);
-}
-#copyBtn:hover { background: var(--green-700); }
-#clearBtn:hover { background: #b52b3a; }
-#downloadBtn:hover { background: var(--blue-700); }
-
-/* --- Layout --- */
-.result-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 14px;
-  margin-top: 1rem;
-  /* KEY ALIGNMENT FIX: Forces all buttons to align on their bottom edge (baseline) */
-  align-items: flex-end; 
-}
-
-/* --- Mobile --- */
-@media (max-width: 480px) {
-  .result-buttons {
-    flex-direction: column;
-    align-items: center;
-  }
-  .result-buttons button {
-    width: 80%;
-  }
-}
-
-
-/* --------------------------
-   7) Spinner
---------------------------- */
-#spinner { text-align: center; margin-top: 1.5rem; }
-.spin {
-  display: inline-block;
-  width: 16px; height: 16px;
-  border: 3px solid #cde; border-top-color: #0077ff;
-  border-radius: 50%;
-  animation: spin .8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.hidden { display: none; }
-
-/* --------------------------
-   8) Template buttons grid
---------------------------- */
-.template-wrap {
-  width: 100%;
-  margin: 22px auto 0 auto;
-}
-.template-buttons {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 18px 22px;
-  justify-items: center;
-  align-items: start;
-  width: 100%;
-  max-width: 900px;
-  margin: 0 auto;
-  padding-top: 8px;
-}
-.template-option {
-  display: grid;
-  grid-auto-rows: min-content;
-  justify-items: center;
-  text-align: center;
-  width: 100%;
-  max-width: 220px;
-}
-
-.template-btn {
-  width: 180px;
-  min-width: 150px;
-  background: var(--blue);
-  color: white;
-  border: none;
-  padding: 12px 18px;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition-med);
-  box-shadow: 0 4px 10px rgba(0,112,243,.2);
-}
-.template-btn:hover:not(:disabled) {
-  background: var(--blue-700);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(0,112,243,.25);
-}
-.template-btn:disabled {
-  background: #cfdfff;
-  color: #3576e0;
-  opacity: 1;
-  cursor: not-allowed;
-  box-shadow: none;
-  position: relative;
-}
-.template-btn:disabled:hover { animation: shake .4s ease; }
-@keyframes shake {
-  0%,100%{transform:translateX(0)}
-  25%{transform:translateX(-3px)}
-  75%{transform:translateX(3px)}
-}
-.template-btn .lock-icon { margin-left: 4px; }
-
-/* Tooltip for locked buttons */
-.template-btn:disabled:hover::after {
-  content: "Unlock this template for €1.99";
-  position: absolute;
-  top: -38px; left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0,0,0,.85);
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: .82rem;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  animation: fadeIn .25s ease forwards;
-}
-@keyframes fadeIn { to { opacity: 1; } }
-
-.template-option small {
-  margin-top: 10px;
-  max-width: 180px;
-  line-height: 1.35;
-  min-height: 3.0em;
-  display: block;
-  font-size: .86rem;
-  color: var(--text-muted); /* Uses the dark muted text color for light mode */
-}
-
-/* Dark mode override for the button descriptions - FIXED VISIBILITY */
-body.dark .template-option small {
-  color: var(--text-muted-dark); /* Uses the new lighter color for dark mode */
-}
-
-/* --------------------------
-   9) Result box
---------------------------- */
-#resultBox {
-  background: var(--card-bg);
-  padding: 1.5rem 1.6rem;
-  margin: 30px auto 0 auto;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-1);
-  max-width: 720px;
-  width: 92%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  text-align: left;
-  transition: transform var(--transition-med), box-shadow var(--transition-med), background var(--transition-slow), color var(--transition-slow);
-}
-#resultBox.hidden { opacity: 0; transform: translateY(16px); }
-#resultBox:not(.hidden) { opacity: 1; transform: translateY(0); }
-
-#resultBox h2 {
-  margin: 0 0 8px 0;
-  font-size: 1.1rem;
-  color: var(--text-dark);
-}
-#coverLetter {
-  width: 100%;
-  height: 240px;
-  margin-top: .6rem;
-  padding: .6rem .7rem;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  font-size: .98rem;
-  line-height: 1.5;
-  resize: vertical;
-}
-
-/* Dark mode result card & textareas */
-body.dark #resultBox {
-  background: #151516;
-  color: #f5f5f5;
-  box-shadow: 0 10px 28px rgba(0,0,0,.45);
-  border: 1px solid rgba(255,255,255,.06);
-}
-body.dark #coverLetter {
-  background: #0f0f10;
-  color: #eaeaea;
-  border: 1px solid rgba(255,255,255,.12);
-}
-
-/* --------------------------
-   10) Toast
---------------------------- */
-.toast {
-  position: fixed;
-  top: -80px; left: 50%;
-  transform: translateX(-50%);
-  background-color: #28a745;
-  color: #fff;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  box-shadow: 0 4px 8px rgba(0,0,0,.15);
-  opacity: 0;
-  pointer-events: none;
-  transition: top .6s ease, opacity .6s ease;
-  z-index: 1000;
-}
-.toast.show { top: 25px; opacity: 1; pointer-events: auto; }
-.toast.hidden { display: none; }
-.toast.success { background-color: #28a745 !important; }
-.toast.error   { background-color: #dc3545 !important; }
-.toast.info    { background-color: var(--blue) !important; }
-
-/* --------------------------
-   11) Theme toggle button (fixed)
---------------------------- */
+/* ---------------------------------------------------------
+   4. THEME TOGGLE BUTTON (fixed, top-right)
+   --------------------------------------------------------- */
 .theme-btn {
   position: fixed;
   top: 20px;
   right: 20px;
-  background: rgba(255,255,255,0.15);
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
   border: none;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
   font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  color: white;
-  transition: background var(--transition-med), transform var(--transition-fast), color var(--transition-med);
-  z-index: 9999;
+  z-index: 99;
+  backdrop-filter: blur(6px);
+  transition:
+    transform var(--speed-fast),
+    background var(--speed-fast);
 }
-.theme-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.06); }
-body.dark .theme-btn { background: rgba(255,255,255,.1); color: #0a84ff; }
 
-/* --------------------------
-   12) Footer
---------------------------- */
+.theme-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+body.dark .theme-btn {
+  background: rgba(0, 0, 0, 0.3);
+  color: #0ea5e9;
+}
+
+/* ---------------------------------------------------------
+   5. MAIN LAYOUT
+   --------------------------------------------------------- */
+main {
+  width: 100%;
+  max-width: 1150px;
+  margin: 35px auto 45px;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ---------------------------------------------------------
+   6. FORM CARD (left column on desktop, centered on mobile)
+   --------------------------------------------------------- */
+.form-box {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 32px 26px 30px;
+  max-width: 420px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  transition:
+    background var(--speed-med),
+    border var(--speed-med);
+}
+
+.form-box label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.2rem;
+}
+
+.form-box input,
+.form-box select,
+.form-box textarea {
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.93);
+  border-radius: 8px;
+  padding: 10px 11px;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border var(--speed-fast),
+    box-shadow var(--speed-fast);
+}
+
+.form-box input:focus,
+.form-box select:focus,
+.form-box textarea:focus {
+  border: 1px solid rgba(0, 112, 243, 0.4);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.08);
+}
+
+/* dark form */
+body.dark .form-box {
+  background: rgba(13, 16, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 10px 55px rgba(0, 0, 0, 0.35);
+}
+body.dark .form-box input,
+body.dark .form-box textarea {
+  background: rgba(7, 10, 16, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: #f8fafc;
+}
+
+/* ---------------------------------------------------------
+   7. PAY BUTTON (always visible)
+   --------------------------------------------------------- */
+.pay-btn {
+  margin-top: 6px;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition:
+    background var(--speed-fast),
+    transform var(--speed-fast);
+  box-shadow: 0 4px 14px rgba(0, 112, 243, 0.28);
+}
+
+.pay-btn:hover {
+  background: var(--brand-600);
+  transform: translateY(-1px);
+}
+
+.pay-btn:active {
+  transform: translateY(0);
+}
+
+.pay-btn.hidden {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   8. TEMPLATE BUTTONS GRID
+   - 4 boxes in desktop
+   - 2 in tablet
+   - 1 in mobile
+   --------------------------------------------------------- */
+.template-buttons {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
+  gap: 18px 20px;
+  align-items: stretch;
+  justify-items: center;
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+}
+
+.template-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  width: 100%;
+}
+
+.template-btn {
+  width: 180px;
+  max-width: 200px;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  transition:
+    transform var(--speed-fast),
+    box-shadow var(--speed-fast),
+    background var(--speed-fast);
+  box-shadow: 0 3px 12px rgba(0, 112, 243, 0.3);
+  position: relative;
+}
+
+.template-btn:hover:not(:disabled) {
+  background: var(--brand-700);
+  transform: translateY(-2px);
+}
+
+.template-option small {
+  max-width: 180px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+/* locked state from JS */
+.template-btn:disabled {
+  background: rgba(0, 112, 243, 0.05);
+  color: rgba(0, 112, 243, 0.65);
+  border: 1px solid rgba(0, 112, 243, 0.25);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Tooltip on hover locked */
+.template-btn:disabled:hover::after {
+  content: "Pay €1.99 to unlock";
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  color: #fff;
+  font-size: 0.65rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 30;
+  animation: fade-in 0.2s ease;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -4px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* dark mode small text in template cards */
+body.dark .template-option small {
+  color: rgba(226, 232, 255, 0.6);
+}
+
+/* ---------------------------------------------------------
+   9. SPINNER (uses #spinner in HTML)
+   --------------------------------------------------------- */
+#spinner {
+  text-align: center;
+  margin-top: 1.4rem;
+}
+
+#spinner .spin {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #cde;
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 0.85s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+#spinner span {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* spinner animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   10. RESULT BOX (your cover letter area)
+   --------------------------------------------------------- */
+#resultBox {
+  background: var(--bg-card);
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
+  max-width: 780px;
+  width: 100%;
+  margin: 24px auto 0;
+  padding: 1.25rem 1.4rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition:
+    transform var(--speed-med),
+    box-shadow var(--speed-med),
+    opacity var(--speed-med);
+}
+
+#resultBox.hidden {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+#resultBox h2 {
+  margin: 0 0 3px 0;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--text-main);
+}
+
+/* text area for letter */
+#coverLetter {
+  width: 100%;
+  height: 240px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 9px;
+  resize: vertical;
+  font-size: 0.93rem;
+  line-height: 1.45;
+  padding: 0.6rem 0.65rem;
+  background: #fff;
+  transition: border var(--speed-fast);
+}
+
+/* dark result box */
+body.dark #resultBox {
+  background: rgba(15, 15, 16, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+body.dark #resultBox h2 {
+  color: #fefefe;
+}
+body.dark #coverLetter {
+  background: rgba(4, 4, 5, 0.4);
+  color: #f4f4f5;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* ---------------------------------------------------------
+   11. RESULT BUTTON ROW (Copy, Clear, Download PDF)
+   --------------------------------------------------------- */
+.result-buttons {
+  display: flex;
+  gap: 13px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.result-buttons button {
+  border: none;
+  border-radius: 9px;
+  padding: 0.85rem 1.2rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--brand);
+  color: #fff;
+  min-width: 120px;
+  text-align: center;
+  transition:
+    transform var(--speed-fast),
+    box-shadow var(--speed-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 4px 15px rgba(0, 112, 243, 0.22);
+}
+
+.result-buttons button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 112, 243, 0.22);
+}
+
+/* specific colours */
+#copyBtn {
+  background: var(--success);
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.3);
+}
+#copyBtn:hover {
+  background: #1fa956;
+}
+
+#clearBtn {
+  background: var(--danger);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+}
+#clearBtn:hover {
+  background: #d73333;
+}
+
+#downloadBtn {
+  background: var(--brand);
+}
+
+/* ---------------------------------------------------------
+   12. TOAST NOTIFICATION
+   - We use JS to add .show and a type
+   --------------------------------------------------------- */
+.toast {
+  position: fixed;
+  top: -90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--brand);
+  color: #fff;
+  padding: 11px 22px 12px;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    top 0.4s ease,
+    opacity 0.4s ease;
+  z-index: 999;
+}
+
+.toast.show {
+  top: 24px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.toast.success {
+  background: var(--success);
+}
+.toast.error {
+  background: var(--danger);
+}
+.toast.info {
+  background: var(--brand);
+}
+
+/* ---------------------------------------------------------
+   13. FOOTER
+   --------------------------------------------------------- */
 footer {
   width: 100%;
   text-align: center;
-  font-size: 0.9rem;
-  opacity: 0.9;
-  padding: 18px 10px 26px 10px;
-  color: #333;
-  background: rgba(255, 255, 255, 0.1);
-  border-top: 1px solid rgba(0,0,0,0.05);
-  border-radius: 0 0 18px 18px;
-  backdrop-filter: blur(6px);
+  padding: 15px 12px 28px;
+  font-size: 0.82rem;
+  color: rgba(15, 23, 42, 0.5);
+  margin-top: auto;
 }
 
 footer a {
-  color: var(--blue);
+  color: var(--brand);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 500;
 }
-
 footer a:hover {
   text-decoration: underline;
 }
 
-/* Dark mode */
 body.dark footer {
-  color: #ccc;
-  background: rgba(0,0,0,0.25);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  color: rgba(241, 245, 249, 0.5);
 }
 
-/* --------------------------
-   13) Global smooth transitions
---------------------------- */
-body, button, .template-btn, .form-box, #resultBox,
-.form-box input, .form-box select, textarea {
-  transition: background var(--transition-slow), color var(--transition-slow),
-              border-color var(--transition-fast), transform var(--transition-fast),
-              box-shadow var(--transition-med);
+/* ---------------------------------------------------------
+   14. GLOBAL TRANSITIONS
+   --------------------------------------------------------- */
+body,
+.form-box,
+.template-buttons,
+#resultBox,
+button {
+  transition:
+    background var(--speed-slow),
+    color var(--speed-slow),
+    border-color var(--speed-fast);
 }
 
-/* Optional ultra-subtle overlay to hide any banding */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: rgba(255,255,255,0.015);
-  pointer-events: none;
-}
-body.dark::after {
-  background: rgba(0,0,0,0.03);
-}
+/* ---------------------------------------------------------
+   15. RESPONSIVE BREAKPOINTS
+   --------------------------------------------------------- */
 
-/* --------------------------
-   14) Responsive
---------------------------- */
-@media (max-width: 1024px) {
+/* ⬇️ screens <= 1100px */
+@media (max-width: 1100px) {
   .template-buttons {
-    grid-template-columns: repeat(3, minmax(160px, 1fr));
-    max-width: 760px;
+    grid-template-columns: repeat(3, minmax(170px, 1fr));
   }
 }
-@media (max-width: 768px) {
-  .hero { padding: 44px 20px; }
-  .hero h1 { font-size: 1.7rem; }
-  .container { padding: 0 16px; }
 
-  .form-box { max-width: 92%; padding: 24px 20px; }
+/* ⬇️ screens <= 820px (iPad vertical) */
+@media (max-width: 820px) {
+  main {
+    max-width: 100%;
+  }
+
+  .form-box {
+    max-width: 95%;
+  }
+
   .template-buttons {
-    grid-template-columns: repeat(2, minmax(150px, 1fr));
-    gap: 14px 16px;
-    max-width: 540px;
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+    gap: 15px 16px;
   }
-  .template-btn { width: 100%; max-width: 220px; }
-  #resultBox { width: 94%; }
-}
-@media (max-width: 420px) {
-  .hero h1 { font-size: 1.5rem; }
-  .form-box { padding: 20px 16px; }
-  .template-buttons { grid-template-columns: 1fr; max-width: 360px; }
-  .template-option { max-width: 100%; }
-  .template-btn { width: 100%; }
-  #coverLetter { height: 260px; }
-}
 
-/* === Fix result actions row: equal sizes, aligned === */
-#resultBox .actions {
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 14px;
-}
-
-/* Normalize all three buttons inside the actions row */
-#resultBox .actions button,
-#resultBox .actions .btn-primary,
-#resultBox .actions .btn-secondary {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  margin: 0 !important;              /* kill the .btn-primary auto center */
-  flex: 1 1 0;                        /* equal widths */
-  min-width: 160px;                   /* prevents tiny buttons on wide screens */
-  height: 44px;                       /* identical height */
-  padding: 0 18px;                    /* horizontal breathing room */
-  border-radius: 10px;
-  font-weight: 700;
-  line-height: 1;                     /* keeps text vertically centered */
-}
-
-/* Optional: tighter layout on small screens (stack) */
-@media (max-width: 560px) {
-  #resultBox .actions {
-    flex-direction: column;
-    gap: 10px;
+  #resultBox {
+    width: 95%;
   }
-  #resultBox .actions button {
+
+  .hero h1 {
+    font-size: 1.7rem;
+  }
+}
+
+/* ⬇️ screens <= 540px (phones) */
+@media (max-width: 540px) {
+  .hero {
+    padding-top: 55px;
+    padding-bottom: 55px;
+  }
+
+  .hero h1 {
+    font-size: 1.45rem;
+  }
+
+  .form-box {
+    padding: 24px 18px 24px;
+  }
+
+  .template-buttons {
+    grid-template-columns: 1fr;
+    max-width: 380px;
+  }
+
+  .template-btn {
     width: 100%;
-    min-width: 0;
+    max-width: unset;
+  }
+
+  #resultBox {
+    width: 100%;
+    margin-top: 22px;
+  }
+
+  .result-buttons {
+    flex-direction: column;
+  }
+
+  .theme-btn {
+    right: 14px;
+    top: 14px;
   }
 }
 
-input[type="email"] {
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  padding: 10px;
-  width: 100%;
-  margin-bottom: 12px;
-  font-size: 1rem;
+/* ---------------------------------------------------------
+   16. PRINT (in case someone prints the letter)
+   --------------------------------------------------------- */
+@media print {
+  body {
+    background: #fff !important;
+  }
+  .hero,
+  .form-box,
+  .template-buttons,
+  .theme-btn,
+  .toast,
+  footer {
+    display: none !important;
+  }
+  #resultBox {
+    box-shadow: none;
+    border: none;
+    margin: 0;
+    width: 100%;
+  }
+  #coverLetter {
+    height: auto;
+    border: none;
+  }
 }
