@@ -232,19 +232,18 @@ ${name}`,
   // -------------------------------------------------------
   // Handle Stripe return reliably (with delay)
   // -------------------------------------------------------
-  if (window.location.search.includes("session_id")) {
-    // Wait a tick so DOM ready before showing toast
-    setTimeout(() => {
-      isProUser = true;
-      localStorage.setItem("hasPaid", "true");
-      updateLockState();
-      showToast("✅ Payment successful — templates unlocked.", "success");
-    }, 300);
+  if (location.search.includes("session_id")) {
+    isProUser = true;
+    localStorage.setItem("hasPaid", "true");
+    updateLockState();
 
-    // Clean the URL so refresh doesn't re-run this
+    // small delay so toast renders after DOM paint
+    setTimeout(() => {
+      showToast("✅ Payment successful — templates unlocked.", "success");
+    }, 400);
+
+    // clean URL
     history.replaceState({}, document.title, "/");
-  } else {
-    initialValidate();
   }
 
   // -------------------------------------------------------
@@ -330,7 +329,8 @@ ${name}`,
   // -------------------------------------------------------
   const { jsPDF } = window.jspdf;
 
-  function renderToPdf(pdf, text, x, y, maxW, lineH = 7) {
+  // === PDF Render Helper (moved right above the download button) ===
+  function renderExact(pdf, text, x, y, maxW, lineH = 7) {
     const pageH = pdf.internal.pageSize.getHeight();
     const lines = text.split("\n");
     for (const line of lines) {
@@ -346,6 +346,7 @@ ${name}`,
     }
   }
 
+  // === PDF Download Button ===
   downloadBtn?.addEventListener("click", () => {
     if (!coverLetter.value.trim()) return;
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
