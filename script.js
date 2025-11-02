@@ -1,15 +1,13 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* =========================================================
-   QUICKCOVERLETTER — FINAL STABLE BUILD
+   QUICKCOVERLETTER — FINAL PATCHED BUILD
    ---------------------------------------------------------
-   ✅ Features:
-   - Form persists after Stripe redirect
-   - Templates unlock only after payment
-   - Pay button always visible
-   - Clear resets & relocks all
-   - Toasts auto-hide (4s)
-   - Smooth scroll to text area on letter generation
+   ✅ Keeps form details after Stripe redirect
+   ✅ Toasts: 4 seconds
+   ✅ Unlocks templates after payment redirect
+   ✅ Pay button always visible
+   ✅ Clear resets everything
 ========================================================= */
 
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
@@ -36,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let isProUser = false;
 
   /* -------------------------------------------------------
-     💾 RESTORE SAVED FORM
+     💾 RESTORE SAVED FORM (keeps data after redirect)
   ------------------------------------------------------- */
   const saved = JSON.parse(localStorage.getItem("userData") || "{}");
   if (saved.job) jobField.value = saved.job;
@@ -65,6 +63,7 @@ Thank you for your time and consideration.
 
 Sincerely,
 ${name}`,
+
     formal: (name, job, company, date) => `${name}
 [Your Address]
 [City, County]
@@ -80,6 +79,7 @@ I would appreciate the opportunity to discuss how my background aligns with your
 
 Yours faithfully,
 ${name}`,
+
     friendly: (name, job, company, date) => `${name}
 [Your Address]
 [City, County]
@@ -95,6 +95,7 @@ Thank you for considering my application. I would be happy to speak further abou
 
 Kind regards,
 ${name}`,
+
     artistic: (name, job, company, date) => `${name}
 [Your Address]
 [City, County]
@@ -137,12 +138,16 @@ ${name}`,
   }
 
   /* -------------------------------------------------------
-     💳 STRIPE FLOW
+     💳 STRIPE FLOW (handles redirect + toast)
   ------------------------------------------------------- */
   if (location.search.includes("session_id")) {
     isProUser = true;
     localStorage.setItem("hasPaid", "true");
     updateLockState();
+
+    showToast("✅ Payment successful — templates unlocked!", "success");
+
+    // clean up URL (remove ?session_id)
     history.replaceState({}, document.title, "/");
   }
 
@@ -195,7 +200,7 @@ ${name}`,
 
       showToast("Letter generated!", "success");
 
-      // 🔽 Auto-scroll to textarea
+      // 🔽 Smooth scroll to text area
       coverLetter.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
@@ -248,11 +253,11 @@ ${name}`,
     navigator.clipboard
       .writeText(coverLetter.value)
       .then(() => showToast("Copied to clipboard", "success"))
-      .catch(() => showToast("Copy failed", "error"));
+      .catch(() => showToast("Copy failed.", "error"));
   });
 
   /* -------------------------------------------------------
-     🔔 TOAST SYSTEM (auto-hide 4s)
+     🔔 TOAST SYSTEM — 4s auto-hide
   ------------------------------------------------------- */
   function showToast(msg, type = "info") {
     if (!toast) return;
