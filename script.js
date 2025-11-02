@@ -172,24 +172,26 @@ ${name}`,
   // 6) handle Stripe return - 💡 FIX: Ensure toast fires immediately
   // -------------------------------------------------------
 
-  if (isProUser || justReturnedFromPayment) {
+  if (justReturnedFromPayment) {
+    // <-- BUG FIX: Only check for session_id here
+    // Set isProUser and update lock state immediately
     isProUser = true;
+    sessionStorage.setItem("isProUser", "true");
     updateLockState();
 
     // Delay slightly so DOM paints before toast renders (fix for fast redirects)
-    if (justReturnedFromPayment) {
-      setTimeout(() => {
-        showToast("✅ Payment successful! Choose a letter type.", "success");
-      }, 500); // half-second delay so it never skips
+    setTimeout(() => {
+      showToast("✅ Payment successful! Choose a letter type.", "success");
+    }, 500); // half-second delay so it never skips
 
-      // Save Pro flag in sessionStorage so refresh still shows unlocked
-      sessionStorage.setItem("isProUser", "true");
-
-      // Clean the URL after confirming payment was handled
-      setTimeout(() => {
-        history.replaceState({}, document.title, window.location.pathname);
-      }, 1000);
-    }
+    // Clean the URL after confirming payment was handled
+    setTimeout(() => {
+      history.replaceState({}, document.title, window.location.pathname);
+    }, 1000);
+  } else if (isProUser) {
+    // <-- BUG FIX: Check isProUser separately for page load
+    // If not returning from payment but isProUser is true (e.g., page refresh)
+    updateLockState();
   }
 
   // -------------------------------------------------------
