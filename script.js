@@ -167,24 +167,21 @@ ${name}`,
 
   // -------------------------------------------------------
   // 6) handle Stripe return (?session_id=...)
-  //    THIS WAS THE BIT NOT FIRING FOR YOU
-  //    We force unlock immediately + show toast
   // -------------------------------------------------------
-  if (window.location.search.includes("session_id")) {
+  const hasStripeSession =
+    window.location.search.includes("session_id") || window.location.href.includes("success.html"); // covers Render redirect
+
+  if (hasStripeSession) {
     // user just paid → unlock
     isProUser = true;
-
-    // NO automatic re-use next time → don’t keep hasPaid for future
-    // but we DO keep userData (already saved before going to Stripe)
-
     updateLockState();
 
-    // give browser a tiny moment so toast actually shows
+    // delay slightly so toast actually appears
     setTimeout(() => {
       showToast("✅ Payment successful — templates unlocked.", "success");
     }, 600);
 
-    // clean URL so refresh doesn’t re-run this
+    // clean the URL so refresh doesn’t re-run this
     history.replaceState({}, document.title, "/index.html");
   }
 
