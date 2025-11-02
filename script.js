@@ -148,6 +148,24 @@ Thank you for your time and consideration.
 
 Warm regards,
 ${name}`,
+
+    graduate: (name, job, company, date) => `${name}
+[Your Address]
+[City, County]
+${date}
+
+Dear Hiring Manager,
+
+I am writing to express my keen interest in the ${job} position at ${company}. As a recent graduate, I am eager to apply the knowledge, skills, and determination I’ve developed through my studies to make a strong contribution to your team.
+
+During my degree, I built a solid foundation in communication, problem-solving, and adaptability. I’m confident these strengths — combined with my enthusiasm for continuous learning — will allow me to quickly add value within a professional environment.
+
+I have followed ${company}'s work and admire its commitment to excellence and innovation. I would welcome the opportunity to bring my fresh perspective, energy, and drive to your organisation.
+
+Thank you for your time and consideration. I look forward to the possibility of contributing to ${company}’s success.
+
+Kind regards,
+${name}`,
   };
 
   // -------------------------------------------------------

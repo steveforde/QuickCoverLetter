@@ -324,6 +324,13 @@ body.dark .form-box textarea {
   margin: 0 auto;
 }
 
+/* Support 5 templates gracefully */
+@media (min-width: 901px) {
+  .template-buttons {
+    grid-template-columns: repeat(5, minmax(160px, 1fr));
+  }
+}
+
 .template-option {
   display: flex;
   flex-direction: column;
