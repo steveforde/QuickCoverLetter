@@ -2,13 +2,11 @@
 // QuickCoverLetter — FRONTEND LOGIC (FINAL PATCH)
 // ---------------------------------------------------------
 // WHAT THIS DOES:
-// 1. **CRITICAL FIX:** Initializes 'isProUser' by checking sessionStorage,
-//    which is set by success.html after payment.
-// 2. Restores form after Stripe redirect (reads localStorage.userData).
-// 3. Forces ALL 4 fields to be filled before allowing payment.
-// 4. On return with ?session_id=... (or if sessionStorage is set):
-//    → **Unlocks templates.**
-//    → Shows green toast with "Payment successful! Choose a letter type."
+// 1. **CRITICAL FIX:** Initializes 'isProUser' by checking sessionStorage.
+// 2. **CRITICAL FIX:** Form data now uses sessionStorage and clears after read,
+//    ensuring a blank form on fresh load.
+// 3. **CRITICAL FIX:** Success toast now uses a one-time sessionStorage flag.
+// 4. Forces ALL 4 fields to be filled before allowing payment.
 // 5. Generates 4 letter types with your exact wording.
 // 6. Smooth scrolls to the textarea when letter is generated.
 // 7. Download → pdf name = job-company.pdf.
@@ -50,19 +48,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const themeToggle = document.getElementById("themeToggle");
 
   // single source of truth - Initialize by checking session storage
-  // 💡 CRITICAL FIX: isProUser is now determined by sessionStorage flag
   let isProUser = sessionStorage.getItem("isProUser") === "true";
-  const urlParams = new URLSearchParams(window.location.search);
-  const justReturnedFromPayment = urlParams.has("session_id");
+  // const urlParams = new URLSearchParams(window.location.search); // No longer needed
+  // const justReturnedFromPayment = urlParams.has("session_id"); // No longer needed
 
   // -------------------------------------------------------
-  // 2) restore form from localStorage (so Stripe roundtrip keeps data)
+  // 2) restore form from sessionStorage (for payment roundtrip only)
   // -------------------------------------------------------
-  const saved = JSON.parse(localStorage.getItem("userData") || "{}");
+  // 🛠️ FIX: Now uses sessionStorage instead of localStorage
+  const saved = JSON.parse(sessionStorage.getItem("userData") || "{}");
   if (saved.job) jobField.value = saved.job;
   if (saved.company) companyField.value = saved.company;
   if (saved.name) nameField.value = saved.name;
   if (saved.email) emailField.value = saved.email;
+
+  // 🛠️ FIX: Immediately clear the temporary form data.
+  // This ensures the form is blank on the next fresh load or tab open.
+  sessionStorage.removeItem("userData");
 
   // -------------------------------------------------------
   // 3) toasts
@@ -176,25 +178,24 @@ ${name}`,
   }
 
   // -------------------------------------------------------
-  // 6) handle Stripe return - 💡 CRITICAL FIX: Toast fires immediately and only once
+  // 6) handle Stripe return / Show Success Toast
   // -------------------------------------------------------
 
-  // If the user just returned from payment (URL has session_id)
-  if (justReturnedFromPayment) {
-    // If the success page did its job, isProUser should already be true from sessionStorage check,
-    // but we ensure it here too, just in case.
-    isProUser = true;
-    updateLockState();
+  // 💡 CRITICAL FIX: The previous URL check failed.
+  // We now check for a one-time session flag set by the success page.
+  const shouldShowToast = sessionStorage.getItem("showSuccessToast") === "true";
 
-    // 💡 FIX: Show the required green toast IMMEDIATELY
+  if (shouldShowToast) {
+    // Note: isProUser is already set to true via the initial check on load.
+    // 1. Show the required green toast IMMEDIATELY
     showToast("✅ Payment successful! Choose a letter type.", "success");
 
-    // Clean the URL after confirming payment was handled
-    history.replaceState({}, document.title, window.location.pathname);
+    // 2. Consume the flag so the toast only shows once.
+    sessionStorage.removeItem("showSuccessToast");
   }
 
   // -------------------------------------------------------
-  // 7) pay button - CRITICAL FIX APPLIED HERE
+  // 7) pay button
   // -------------------------------------------------------
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
@@ -208,7 +209,8 @@ ${name}`,
     }
 
     // save for after redirect
-    localStorage.setItem("userData", JSON.stringify({ job, company, name, email }));
+    // 🛠️ FIX: Use sessionStorage for form data
+    sessionStorage.setItem("userData", JSON.stringify({ job, company, name, email }));
 
     try {
       // 🛠️ CRITICAL FIX: Use the full URL for the Render backend
@@ -314,11 +316,10 @@ ${name}`,
     coverLetter.value = "";
     resultBox.classList.add("hidden");
 
-    // wipe everything so next letter = new €1.99
-    localStorage.removeItem("userData");
-
-    // 🛠️ FIX: Clear the session storage flag
+    // Clear the session storage flag for the license
     sessionStorage.removeItem("isProUser");
+
+    // userData is no longer in localStorage, so no need to clear it here.
 
     isProUser = false;
     updateLockState();

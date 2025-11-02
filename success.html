@@ -102,7 +102,6 @@
       </div>
 
       <h1>✅ Payment Successful!</h1>
-      <!-- We removed the redundant "Your templates are now unlocked" message here -->
       <p>We're sending you back to the app now.</p>
       <div class="loader"></div>
       <p>Redirecting back to the app...</p>
@@ -112,22 +111,19 @@
       <span>🇮🇪 Made in Ireland | QuickCoverLetter</span>
     </footer>
 
-    <!-- 🛠️ CRITICAL FIX: Use sessionStorage for single-use license and redirect to root -->
+    <!-- 🛠️ CRITICAL FIX: Sets the two necessary session flags for app unlock and toast -->
     <script>
-      // Preserve existing user data
-      const data = localStorage.getItem("userData");
-      if (data) {
-        console.log("✅ Preserved user data for post-payment return");
-      }
-
-      // Set the unlock flag in SESSION STORAGE
+      // 1. Set the unlock flag in SESSION STORAGE
       sessionStorage.setItem("isProUser", "true");
+
+      // 2. NEW: Set the one-time flag to show the toast on the main page
+      sessionStorage.setItem("showSuccessToast", "true");
 
       // Redirect back after short delay (using '/' for absolute path fix)
       setTimeout(() => {
         // Redirect to the root path, where the main app will load and show the toast
         window.location.href = "/";
-      }, 1500); // <-- Back to 1.5 seconds for a faster redirect
+      }, 1500);
     </script>
   </body>
 </html>
