@@ -1,26 +1,41 @@
 // =========================================================
-// QuickCoverLetter — FRONTEND LOGIC (FINAL + sessionStorage hook)
+// QuickCoverLetter — FRONTEND LOGIC (FINAL PATCH)
+// ---------------------------------------------------------
+// WHAT THIS DOES:
+// 1. Restores form after Stripe redirect (reads localStorage.userData)
+// 2. Forces ALL 4 fields to be filled before allowing payment
+// 3. Calls your Render backend to create Stripe checkout session
+// 4. On return with ?session_id=... → unlocks templates + shows green toast
+// 5. Generates 4 letter types with your exact wording
+// 6. Smooth scrolls to the textarea when letter is generated
+// 7. Download → pdf name = job-company.pdf
+// 8. Clear → wipes everything + locks again (user must pay again)
+// 9. Toasts auto-hide after 4 seconds
+// NOTE: this version does NOT try to be clever with “remembering paid”
+//       because YOUR business rule is: pay €1.99 for EVERY letter.
 // =========================================================
 
-// ✅ your backend on Render (keep absolute, you are on 2 domains)
+// ✅ your Supabase (still used for safety read, but NOT required to unlock)
+const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
+
+// ✅ your backend on Render
 const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------
-  // 1) DOM
+  // 1) grab DOM elements
   // -------------------------------------------------------
   const form = document.getElementById("form");
   const jobField = document.getElementById("jobTitle");
   const companyField = document.getElementById("companyName");
   const nameField = document.getElementById("userName");
   const emailField = document.getElementById("userEmail");
-
   const payButton = document.getElementById("payButton");
   const templateButtons = document.querySelectorAll(".template-btn");
-
   const coverLetter = document.getElementById("coverLetter");
   const resultBox = document.getElementById("resultBox");
-
   const clearBtn = document.getElementById("clearBtn");
   const downloadBtn = document.getElementById("downloadBtn");
   const copyBtn = document.getElementById("copyBtn");
@@ -31,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let isProUser = false;
 
   // -------------------------------------------------------
-  // 2) restore user form (you already used this)
+  // 2) restore form from localStorage (so Stripe roundtrip keeps data)
   // -------------------------------------------------------
   const saved = JSON.parse(localStorage.getItem("userData") || "{}");
   if (saved.job) jobField.value = saved.job;
@@ -40,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (saved.email) emailField.value = saved.email;
 
   // -------------------------------------------------------
-  // 3) toast
+  // 3) toasts
   // -------------------------------------------------------
   function showToast(msg, type = "info") {
     if (!toast) return;
@@ -53,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // -------------------------------------------------------
-  // 4) templates
+  // 4) templates (your wording, unchanged)
   // -------------------------------------------------------
   const templates = {
     professional: (name, job, company, date) => `${name}
@@ -127,7 +142,9 @@ ${name}`,
   // 5) lock / unlock
   // -------------------------------------------------------
   function updateLockState() {
+    // pay button must NEVER hide
     payButton?.classList.remove("hidden");
+
     templateButtons.forEach((btn) => {
       let lock = btn.querySelector(".lock-icon");
       if (!isProUser) {
@@ -149,26 +166,31 @@ ${name}`,
   }
 
   // -------------------------------------------------------
-  // 6) 🔑 consume success.html flag
-  // success.html did: sessionStorage.setItem("isProUser", "true"); redirect("/")
-  // so here we read it ONCE, unlock, show toast, then remove it
+  // 6) handle Stripe return (?session_id=...)
+  //    THIS WAS THE BIT NOT FIRING FOR YOU
+  //    We force unlock immediately + show toast
   // -------------------------------------------------------
-  const paymentFlag = sessionStorage.getItem("isProUser");
-  if (paymentFlag === "true") {
+  if (window.location.search.includes("session_id")) {
+    // user just paid → unlock
     isProUser = true;
+
+    // NO automatic re-use next time → don’t keep hasPaid for future
+    // but we DO keep userData (already saved before going to Stripe)
+
     updateLockState();
 
-    // small delay to let layout paint
+    // give browser a tiny moment so toast actually shows
     setTimeout(() => {
-      showToast("✅ Payment successful! Choose a letter type.", "success");
-    }, 400);
+      showToast("✅ Payment successful — templates unlocked.", "success");
+    }, 600);
 
-    // important: so it doesn’t re-toast on refresh
-    sessionStorage.removeItem("isProUser");
+    // clean URL so refresh doesn’t re-run this
+    history.replaceState({}, document.title, "/index.html");
   }
 
   // -------------------------------------------------------
-  // 7) pay button → Stripe
+  // 7) pay button
+  //    enforce ALL 4 fields
   // -------------------------------------------------------
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
@@ -181,7 +203,7 @@ ${name}`,
       return;
     }
 
-    // keep for after redirect
+    // save for after redirect
     localStorage.setItem("userData", JSON.stringify({ job, company, name, email }));
 
     try {
@@ -203,7 +225,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 8) template click
+  // 8) template clicks
   // -------------------------------------------------------
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -231,6 +253,7 @@ ${name}`,
       resultBox.classList.remove("hidden");
       showToast("Letter generated.", "success");
 
+      // scroll to output
       coverLetter.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
@@ -279,15 +302,16 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 10) CLEAR → reset for new €1.99
+  // 10) CLEAR — your rule: this is FINAL
   // -------------------------------------------------------
   clearBtn?.addEventListener("click", () => {
     form.reset();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
 
+    // wipe everything so next letter = new €1.99
     localStorage.removeItem("userData");
-    sessionStorage.removeItem("isProUser");
+    localStorage.removeItem("hasPaid");
 
     isProUser = false;
     updateLockState();
@@ -295,7 +319,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 11) theme toggle
+  // 11) theme toggle (leave as you had)
   // -------------------------------------------------------
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
@@ -313,7 +337,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 12) start locked
+  // 12) init: start LOCKED (because every letter must be paid)
   // -------------------------------------------------------
   updateLockState();
 });
