@@ -102,7 +102,8 @@
       </div>
 
       <h1>✅ Payment Successful!</h1>
-      <p>Thank you for your purchase. Your templates are now unlocked.</p>
+      <!-- We removed the redundant "Your templates are now unlocked" message here -->
+      <p>We're sending you back to the app now.</p>
       <div class="loader"></div>
       <p>Redirecting back to the app...</p>
     </div>
@@ -124,8 +125,9 @@
 
       // Redirect back after short delay (using '/' for absolute path fix)
       setTimeout(() => {
+        // Redirect to the root path, where the main app will load and show the toast
         window.location.href = "/";
-      }, 3000);
+      }, 1500); // <-- Back to 1.5 seconds for a faster redirect
     </script>
   </body>
 </html>

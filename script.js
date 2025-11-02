@@ -4,13 +4,14 @@
 // WHAT THIS DOES:
 // 1. Restores form after Stripe redirect (reads localStorage.userData)
 // 2. Forces ALL 4 fields to be filled before allowing payment
-// 3. Calls your Render backend to create Stripe checkout session
-// 4. On return with ?session_id=... → unlocks templates + shows green toast
-// 5. Generates 4 letter types with your exact wording
-// 6. Smooth scrolls to the textarea when letter is generated
-// 7. Download → pdf name = job-company.pdf
-// 8. Clear → wipes everything + locks again (user must pay again)
-// 9. Toasts auto-hide after 4 seconds
+// 3. Calls your Render backend to create Stripe checkout session using **relative path** (FIXED!)
+// 4. On return, reads sessionStorage (set by success.html) to **unlock templates** (FIXED!)
+// 5. Shows **green toast** on successful payment return **immediately** (FIXED!)
+// 6. Generates 4 letter types with your exact wording
+// 7. Smooth scrolls to the textarea when letter is generated
+// 8. Download → pdf name = job-company.pdf
+// 9. Clear → wipes everything + locks again (user must pay again)
+// 10. Toasts auto-hide after 4 seconds
 // =========================================================
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -19,8 +20,6 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
-
-// NOTE: BACKEND_URL is removed. We use relative paths for fetch.
 
 // Initialize Supabase (optional, but good practice)
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -46,6 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // single source of truth - Initialize by checking session storage
   let isProUser = sessionStorage.getItem("isProUser") === "true";
+  const urlParams = new URLSearchParams(window.location.search);
+  const justReturnedFromPayment = urlParams.has("session_id");
 
   // -------------------------------------------------------
   // 2) restore form from localStorage (so Stripe roundtrip keeps data)
@@ -118,7 +119,7 @@ I am excited to apply for the ${job} position at ${company}. I enjoy working wit
 
 I am known for being approachable, dependable, and easy to work with. I bring good communication skills, patience, and a genuine interest in helping others — which I believe would be a good fit for ${company}.
 
-Thank Thank you for considering my application. I would be happy to speak further about how I can contribute to your team.
+Thank you for considering my application. I would be happy to speak further about how I can contribute to your team.
 
 Kind regards,
 ${name}`,
@@ -168,21 +169,18 @@ ${name}`,
   }
 
   // -------------------------------------------------------
-  // 6) handle Stripe return (?session_id=...)
+  // 6) handle Stripe return - 💡 FIX: Ensure toast fires immediately
   // -------------------------------------------------------
-  const urlParams = new URLSearchParams(window.location.search);
 
-  // 🛠️ FIX: Check session storage first, then check the URL (session_id is
-  // removed from URL in success.html, but we check for the new flag set there).
-  if (sessionStorage.getItem("isProUser") === "true" || urlParams.has("session_id")) {
+  // Check if the unlock flag is set in session storage OR if we just returned with a session_id
+  if (isProUser || justReturnedFromPayment) {
     isProUser = true;
     updateLockState();
 
-    // 💡 NEW: Show the required green toast if the user just returned from payment
-    if (urlParams.has("session_id")) {
-      setTimeout(() => {
-        showToast("✅ Payment successful! Choose a letter type.", "success");
-      }, 600);
+    // 💡 FIX: Show the required green toast IMMEDIATELY if the user just returned from payment
+    if (justReturnedFromPayment) {
+      // No setTimeout needed, fire it instantly
+      showToast("✅ Payment successful! Choose a letter type.", "success");
 
       // clean the URL after confirming payment was handled
       history.replaceState({}, document.title, window.location.pathname);
@@ -226,7 +224,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 8) template clicks (No change needed)
+  // 8) template clicks
   // -------------------------------------------------------
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -260,7 +258,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 9) PDF + COPY (No change needed)
+  // 9) PDF + COPY
   // -------------------------------------------------------
   const { jsPDF } = window.jspdf;
 
@@ -322,7 +320,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 11) theme toggle (No change needed)
+  // 11) theme toggle
   // -------------------------------------------------------
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
