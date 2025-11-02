@@ -1,20 +1,20 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* =========================================================
-   QUICKCOVERLETTER — FINAL PRODUCTION
+   QUICKCOVERLETTER — FINAL STABLE BUILD
    ---------------------------------------------------------
-   ✅ Behaviour:
-   - Starts locked
+   ✅ Features:
+   - Form persists after Stripe redirect
+   - Templates unlock only after payment
    - Pay button always visible
-   - Unlocks after Stripe payment
-   - “Clear” resets everything and locks again
+   - Clear resets & relocks all
+   - Toasts auto-hide (4s)
+   - Smooth scroll to text area on letter generation
 ========================================================= */
 
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
-
-// 👉 use your real backend, not relative
 const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -35,14 +35,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let isProUser = false;
 
-  // restore saved form
+  /* -------------------------------------------------------
+     💾 RESTORE SAVED FORM
+  ------------------------------------------------------- */
   const saved = JSON.parse(localStorage.getItem("userData") || "{}");
   if (saved.job) jobField.value = saved.job;
   if (saved.company) companyField.value = saved.company;
   if (saved.name) nameField.value = saved.name;
   if (saved.email) emailField.value = saved.email;
 
-  // your templates (unchanged)
+  /* -------------------------------------------------------
+     ✉️ LETTER TEMPLATES
+  ------------------------------------------------------- */
   const templates = {
     professional: (name, job, company, date) => `${name}
 [Your Address]
@@ -108,71 +112,40 @@ Warm regards,
 ${name}`,
   };
 
-  async function checkPaid(email) {
-    if (!email) return false;
-    try {
-      const url = `${SUPABASE_URL}/rest/v1/transactions?email=eq.${encodeURIComponent(
-        email
-      )}&status=eq.paid&select=id`;
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-      });
-      if (!res.ok) return false;
-      const data = await res.json();
-      return data.length > 0;
-    } catch (e) {
-      console.error("Supabase check failed:", e.message);
-      return false;
-    }
-  }
-
-  // ✅ this was the main problem: it was unlocking too early
-  function validate() {
-    const email = saved.email || emailField.value.trim();
-
-    // no email → keep locked, no toast
-    if (!email || !email.includes("@")) {
-      isProUser = false;
-      updateLockState();
-      return;
-    }
-
-    // check localStorage but DON'T show unlocked yet
-    const localPaid = localStorage.getItem("hasPaid") === "true";
-
-    // start locked
-    isProUser = false;
-    updateLockState();
-
-    // now check Supabase
-    checkPaid(email).then((paid) => {
-      const finalPaid = paid || localPaid;
-      isProUser = finalPaid;
-      localStorage.setItem("hasPaid", finalPaid ? "true" : "false");
-      updateLockState();
-      // no noisy toast on load
+  /* -------------------------------------------------------
+     🔒 LOCK / UNLOCK HANDLER
+  ------------------------------------------------------- */
+  function updateLockState() {
+    payButton?.classList.remove("hidden");
+    templateButtons.forEach((btn) => {
+      let lock = btn.querySelector(".lock-icon");
+      if (!isProUser) {
+        btn.disabled = true;
+        if (!lock) {
+          lock = document.createElement("span");
+          lock.className = "lock-icon";
+          lock.textContent = " 🔒";
+          lock.style.marginLeft = "6px";
+          lock.style.color = "#ff6b6b";
+          btn.appendChild(lock);
+        }
+      } else {
+        btn.disabled = false;
+        if (lock) lock.remove();
+      }
     });
   }
 
-  // ✅ handle Stripe return
+  /* -------------------------------------------------------
+     💳 STRIPE FLOW
+  ------------------------------------------------------- */
   if (location.search.includes("session_id")) {
-    // user just paid → trust it
-    localStorage.setItem("hasPaid", "true");
     isProUser = true;
+    localStorage.setItem("hasPaid", "true");
     updateLockState();
-    // clean URL
     history.replaceState({}, document.title, "/");
-    // we can sync with Supabase in background
-    setTimeout(validate, 2000);
-  } else {
-    validate();
   }
 
-  // 💳 Stripe pay
   payButton?.addEventListener("click", async () => {
     const userData = {
       job: jobField.value.trim(),
@@ -182,10 +155,7 @@ ${name}`,
     };
     localStorage.setItem("userData", JSON.stringify(userData));
 
-    if (!userData.email.includes("@")) {
-      showToast("Enter a valid email.", "error");
-      return;
-    }
+    if (!userData.email.includes("@")) return showToast("Enter a valid email.", "error");
 
     try {
       const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
@@ -194,32 +164,24 @@ ${name}`,
         body: JSON.stringify({ email: userData.email }),
       });
       const data = await res.json();
-      if (data.url) {
-        location.href = data.url;
-      } else {
-        showToast("Could not start payment.", "error");
-      }
-    } catch (e) {
-      console.error(e);
+      if (data.url) location.href = data.url;
+      else showToast("Could not start payment.", "error");
+    } catch {
       showToast("Payment failed.", "error");
     }
   });
 
-  // template clicks
+  /* -------------------------------------------------------
+     ✍️ TEMPLATE GENERATION + SCROLL
+  ------------------------------------------------------- */
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (!isProUser) {
-        showToast("Pay €1.99 to unlock.", "error");
-        return;
-      }
+      if (!isProUser) return showToast("Pay €1.99 to unlock templates.", "error");
 
       const name = nameField.value.trim();
       const job = jobField.value.trim();
       const company = companyField.value.trim();
-      if (!name || !job || !company) {
-        showToast("Fill name, job & company.", "error");
-        return;
-      }
+      if (!name || !job || !company) return showToast("Fill name, job & company.", "error");
 
       const date = new Date().toLocaleDateString("en-IE", {
         day: "numeric",
@@ -230,13 +192,32 @@ ${name}`,
       const type = btn.dataset.type;
       coverLetter.value = templates[type](name, job, company, date);
       resultBox.classList.remove("hidden");
-      showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} letter generated!`, "success");
+
+      showToast("Letter generated!", "success");
+
+      // 🔽 Auto-scroll to textarea
+      coverLetter.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
 
-  // PDF + copy (your original logic)
-  const { jsPDF } = window.jspdf;
+  /* -------------------------------------------------------
+     🧹 CLEAR — FULL RESET
+  ------------------------------------------------------- */
+  clearBtn?.addEventListener("click", () => {
+    form.reset();
+    coverLetter.value = "";
+    resultBox.classList.add("hidden");
+    localStorage.removeItem("userData");
+    localStorage.removeItem("hasPaid");
+    isProUser = false;
+    updateLockState();
+    showToast("All cleared — templates locked again. Pay again to start new letter.", "info");
+  });
 
+  /* -------------------------------------------------------
+     📄 PDF + COPY
+  ------------------------------------------------------- */
+  const { jsPDF } = window.jspdf;
   function renderExact(pdf, text, x, y, maxW, lineH = 7) {
     const pageH = pdf.internal.pageSize.getHeight();
     const lines = text.split("\n");
@@ -270,59 +251,28 @@ ${name}`,
       .catch(() => showToast("Copy failed", "error"));
   });
 
-  function updateLockState() {
-    console.log("Updating lock state. isProUser =", isProUser);
-
-    // ✅ Pay button always visible
-    payButton?.classList.remove("hidden");
-
-    templateButtons.forEach((btn) => {
-      let lock = btn.querySelector(".lock-icon");
-
-      if (!isProUser) {
-        btn.disabled = true;
-        if (!lock) {
-          lock = document.createElement("span");
-          lock.className = "lock-icon";
-          lock.textContent = " 🔒";
-          lock.style.marginLeft = "6px";
-          lock.style.color = "#ff6b6b";
-          lock.style.fontWeight = "bold";
-          btn.appendChild(lock);
-        }
-      } else {
-        btn.disabled = false;
-        if (lock) lock.remove();
-      }
-    });
+  /* -------------------------------------------------------
+     🔔 TOAST SYSTEM (auto-hide 4s)
+  ------------------------------------------------------- */
+  function showToast(msg, type = "info") {
+    if (!toast) return;
+    toast.textContent = msg;
+    toast.className = `toast ${type} show`;
+    clearTimeout(toast.hideTimeout);
+    toast.hideTimeout = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 4000);
   }
 
-  // 🧹 CLEAR — full reset (locks everything again)
-  clearBtn?.addEventListener("click", () => {
-    // Reset all inputs and letter output
-    form.reset();
-    coverLetter.value = "";
-    resultBox.classList.add("hidden");
-
-    // Completely clear saved data and payment
-    localStorage.removeItem("userData");
-    localStorage.removeItem("hasPaid");
-
-    // Lock templates again
-    isProUser = false;
-    updateLockState();
-
-    // Feedback
-    showToast("All cleared — templates locked again. Pay again to start new letter.", "info");
-  });
-
-  // theme (your version)
+  /* -------------------------------------------------------
+     🌙 THEME TOGGLE
+  ------------------------------------------------------- */
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
     document.body.classList.add("dark");
-    themeToggle && (themeToggle.textContent = "☀️");
+    themeToggle.textContent = "☀️";
   } else {
-    themeToggle && (themeToggle.textContent = "🌙");
+    themeToggle.textContent = "🌙";
   }
 
   themeToggle?.addEventListener("click", () => {
@@ -332,6 +282,10 @@ ${name}`,
     localStorage.setItem("theme", dark ? "dark" : "light");
   });
 
-  // start locked
+  /* -------------------------------------------------------
+     🚀 INITIALISE STATE
+  ------------------------------------------------------- */
+  const paid = localStorage.getItem("hasPaid") === "true";
+  if (paid) isProUser = true;
   updateLockState();
 });
