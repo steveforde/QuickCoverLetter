@@ -1,12 +1,13 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* =========================================================
-   QUICKCOVERLETTER — YOUR VERSION (MINIMAL PATCH)
+   QUICKCOVERLETTER — FINAL PRODUCTION
    ---------------------------------------------------------
-   ✅ Fixes:
-   1. Start LOCKED and only unlock if paid
-   2. Use absolute backend URL for Stripe
-   3. Clear does NOT wipe payment
+   ✅ Behaviour:
+   - Starts locked
+   - Pay button always visible
+   - Unlocks after Stripe payment
+   - “Clear” resets everything and locks again
 ========================================================= */
 
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
@@ -106,29 +107,6 @@ Thank you for your time and consideration.
 Warm regards,
 ${name}`,
   };
-
-  // 🔒 same function, but we don’t spam or append 20 locks
-  function updateLockState() {
-    templateButtons.forEach((btn) => {
-      let lock = btn.querySelector(".lock-icon");
-      if (!isProUser) {
-        btn.disabled = true;
-        payButton?.classList.remove("hidden");
-        if (!lock) {
-          lock = document.createElement("span");
-          lock.className = "lock-icon";
-          lock.textContent = " 🔒";
-          lock.style.marginLeft = "6px";
-          lock.style.color = "#ff6b6b";
-          btn.appendChild(lock);
-        }
-      } else {
-        btn.disabled = false;
-        payButton?.classList.add("hidden");
-        if (lock) lock.remove();
-      }
-    });
-  }
 
   async function checkPaid(email) {
     if (!email) return false;
@@ -291,6 +269,33 @@ ${name}`,
       .then(() => showToast("Copied to clipboard", "success"))
       .catch(() => showToast("Copy failed", "error"));
   });
+
+  function updateLockState() {
+    console.log("Updating lock state. isProUser =", isProUser);
+
+    // ✅ Pay button always visible
+    payButton?.classList.remove("hidden");
+
+    templateButtons.forEach((btn) => {
+      let lock = btn.querySelector(".lock-icon");
+
+      if (!isProUser) {
+        btn.disabled = true;
+        if (!lock) {
+          lock = document.createElement("span");
+          lock.className = "lock-icon";
+          lock.textContent = " 🔒";
+          lock.style.marginLeft = "6px";
+          lock.style.color = "#ff6b6b";
+          lock.style.fontWeight = "bold";
+          btn.appendChild(lock);
+        }
+      } else {
+        btn.disabled = false;
+        if (lock) lock.remove();
+      }
+    });
+  }
 
   // 🧹 CLEAR — full reset (locks everything again)
   clearBtn?.addEventListener("click", () => {
