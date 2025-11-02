@@ -315,13 +315,13 @@ body.dark .form-box textarea {
    --------------------------------------------------------- */
 .template-buttons {
   display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: 18px 20px;
+  grid-template-columns: repeat(5, minmax(160px, 1fr)); /* now 5 columns */
+  gap: 22px 24px; /* 🔹 slightly increased from 18x20 to 22x24 */
   align-items: stretch;
   justify-items: center;
   width: 100%;
-  max-width: 950px;
-  margin: 0 auto;
+  max-width: 980px; /* 🔹 tiny bump for balance */
+  margin: 0 auto 20px auto; /* 🔹 small bottom margin for air below buttons */
 }
 
 /* Support 5 templates gracefully */
@@ -329,6 +329,16 @@ body.dark .form-box textarea {
   .template-buttons {
     grid-template-columns: repeat(5, minmax(160px, 1fr));
   }
+}
+
+.template-heading {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary, #fff);
+  margin: 40px 0 20px 0;
+  letter-spacing: 0.5px;
+  background: linear-gradient(90deg, #0070f3, #3898ff);
 }
 
 .template-option {
@@ -406,6 +416,33 @@ body.dark .form-box textarea {
   to {
     opacity: 1;
     transform: translate(-50%, 0);
+  }
+}
+
+/* ✅ Responsive layout for tablets and phones */
+@media (max-width: 1024px) {
+  .template-buttons {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+    gap: 18px 20px;
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 600px) {
+  .template-buttons {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 340px;
+  }
+
+  .template-option small {
+    max-width: 100%;
+    font-size: 0.78rem;
+  }
+
+  .template-btn {
+    width: 100%;
+    font-size: 0.9rem;
   }
 }
 
