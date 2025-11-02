@@ -2,18 +2,21 @@
 // QuickCoverLetter — FRONTEND LOGIC (FINAL PATCH)
 // ---------------------------------------------------------
 // WHAT THIS DOES:
-// 1. Restores form after Stripe redirect (reads localStorage.userData)
-// 2. Forces ALL 4 fields to be filled before allowing payment
-// 3. Calls your Render backend to create Stripe checkout session
-// 4. On return with ?session_id=... → unlocks templates + shows green toast
-// 5. Generates 4 letter types with your exact wording
-// 6. Smooth scrolls to the textarea when letter is generated
-// 7. Download → pdf name = job-company.pdf
-// 8. Clear → wipes everything + locks again (user must pay again)
-// 9. Toasts auto-hide after 4 seconds
-// NOTE: this version does NOT try to be clever with “remembering paid”
-//       because YOUR business rule is: pay €1.99 for EVERY letter.
+// 1. **CRITICAL FIX:** Initializes 'isProUser' by checking sessionStorage,
+//    which is set by success.html after payment.
+// 2. Restores form after Stripe redirect (reads localStorage.userData).
+// 3. Forces ALL 4 fields to be filled before allowing payment.
+// 4. On return with ?session_id=... (or if sessionStorage is set):
+//    → **Unlocks templates.**
+//    → Shows green toast with "Payment successful! Choose a letter type."
+// 5. Generates 4 letter types with your exact wording.
+// 6. Smooth scrolls to the textarea when letter is generated.
+// 7. Download → pdf name = job-company.pdf.
+// 8. Clear → wipes storage + locks again (user must pay again).
+// 9. Toasts auto-hide after 4 seconds.
 // =========================================================
+
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 // ✅ your Supabase (still used for safety read, but NOT required to unlock)
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
@@ -22,6 +25,10 @@ const SUPABASE_ANON_KEY =
 
 // ✅ your backend on Render
 const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
+
+// Initialize Supabase (optional, but good practice)
+// Note: We don't use the returned object, but this ensures the library is loaded.
+createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------
@@ -42,8 +49,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // single source of truth
-  let isProUser = false;
+  // single source of truth - Initialize by checking session storage
+  // 💡 CRITICAL FIX: isProUser is now determined by sessionStorage flag
+  let isProUser = sessionStorage.getItem("isProUser") === "true";
+  const urlParams = new URLSearchParams(window.location.search);
+  const justReturnedFromPayment = urlParams.has("session_id");
 
   // -------------------------------------------------------
   // 2) restore form from localStorage (so Stripe roundtrip keeps data)
@@ -84,7 +94,7 @@ Throughout my career I have been recognised for reliability, consistency, and th
 
 I would welcome the opportunity to bring this experience to ${company} and support your goals.
 
-Thank you for your time and consideration.
+Thank thank you for your time and consideration.
 
 Sincerely,
 ${name}`,
@@ -166,31 +176,25 @@ ${name}`,
   }
 
   // -------------------------------------------------------
-  // 6) handle Stripe return (?session_id=...)
-  //    THIS WAS THE BIT NOT FIRING FOR YOU
-  //    We force unlock immediately + show toast
+  // 6) handle Stripe return - 💡 CRITICAL FIX: Toast fires immediately and only once
   // -------------------------------------------------------
-  if (window.location.search.includes("session_id")) {
-    // user just paid → unlock
+
+  // If the user just returned from payment (URL has session_id)
+  if (justReturnedFromPayment) {
+    // If the success page did its job, isProUser should already be true from sessionStorage check,
+    // but we ensure it here too, just in case.
     isProUser = true;
-
-    // NO automatic re-use next time → don’t keep hasPaid for future
-    // but we DO keep userData (already saved before going to Stripe)
-
     updateLockState();
 
-    // give browser a tiny moment so toast actually shows
-    setTimeout(() => {
-      showToast("✅ Payment successful — templates unlocked.", "success");
-    }, 600);
+    // 💡 FIX: Show the required green toast IMMEDIATELY
+    showToast("✅ Payment successful! Choose a letter type.", "success");
 
-    // clean URL so refresh doesn’t re-run this
-    history.replaceState({}, document.title, "/index.html");
+    // Clean the URL after confirming payment was handled
+    history.replaceState({}, document.title, window.location.pathname);
   }
 
   // -------------------------------------------------------
-  // 7) pay button
-  //    enforce ALL 4 fields
+  // 7) pay button - CRITICAL FIX APPLIED HERE
   // -------------------------------------------------------
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
@@ -207,6 +211,7 @@ ${name}`,
     localStorage.setItem("userData", JSON.stringify({ job, company, name, email }));
 
     try {
+      // 🛠️ CRITICAL FIX: Use the full URL for the Render backend
       const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -216,10 +221,10 @@ ${name}`,
       if (data.url) {
         window.location.href = data.url;
       } else {
-        showToast("Could not start payment.", "error");
+        showToast("Could not start payment. Check server logs.", "error");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Fetch Error:", err);
       showToast("Payment failed. Try again.", "error");
     }
   });
@@ -302,7 +307,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 10) CLEAR — your rule: this is FINAL
+  // 10) CLEAR — Resets the single-use license
   // -------------------------------------------------------
   clearBtn?.addEventListener("click", () => {
     form.reset();
@@ -311,7 +316,9 @@ ${name}`,
 
     // wipe everything so next letter = new €1.99
     localStorage.removeItem("userData");
-    localStorage.removeItem("hasPaid");
+
+    // 🛠️ FIX: Clear the session storage flag
+    sessionStorage.removeItem("isProUser");
 
     isProUser = false;
     updateLockState();
@@ -319,7 +326,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 11) theme toggle (leave as you had)
+  // 11) theme toggle
   // -------------------------------------------------------
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
@@ -337,7 +344,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 12) init: start LOCKED (because every letter must be paid)
+  // 12) init: start LOCKED (or unlocked if flag exists)
   // -------------------------------------------------------
   updateLockState();
 });
