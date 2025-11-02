@@ -1,55 +1,37 @@
 // =========================================================
-// QuickCoverLetter — FRONTEND LOGIC (FINAL PATCH)
-// ---------------------------------------------------------
-// WHAT THIS DOES:
-// 1. Restores form after Stripe redirect (reads localStorage.userData)
-// 2. Forces ALL 4 fields to be filled before allowing payment
-// 3. Calls your Render backend to create Stripe checkout session using **relative path** (FIXED!)
-// 4. On return, reads sessionStorage (set by success.html) to **unlock templates** (FIXED!)
-// 5. Shows **green toast** on successful payment return **immediately** (FIXED!)
-// 6. Generates 4 letter types with your exact wording
-// 7. Smooth scrolls to the textarea when letter is generated
-// 8. Download → pdf name = job-company.pdf
-// 9. Clear → wipes everything + locks again (user must pay again)
-// 10. Toasts auto-hide after 4 seconds
+// QuickCoverLetter — FRONTEND LOGIC (FINAL + sessionStorage hook)
 // =========================================================
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-// ✅ your Supabase (still used for safety read, but NOT required to unlock)
-const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
-
-// Initialize Supabase (optional, but good practice)
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// ✅ your backend on Render (keep absolute, you are on 2 domains)
+const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------
-  // 1) grab DOM elements
+  // 1) DOM
   // -------------------------------------------------------
   const form = document.getElementById("form");
   const jobField = document.getElementById("jobTitle");
   const companyField = document.getElementById("companyName");
   const nameField = document.getElementById("userName");
   const emailField = document.getElementById("userEmail");
+
   const payButton = document.getElementById("payButton");
   const templateButtons = document.querySelectorAll(".template-btn");
+
   const coverLetter = document.getElementById("coverLetter");
   const resultBox = document.getElementById("resultBox");
+
   const clearBtn = document.getElementById("clearBtn");
   const downloadBtn = document.getElementById("downloadBtn");
   const copyBtn = document.getElementById("copyBtn");
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // single source of truth - Initialize by checking session storage
-  let isProUser = sessionStorage.getItem("isProUser") === "true";
-  const urlParams = new URLSearchParams(window.location.search);
-  const justReturnedFromPayment = urlParams.has("session_id");
+  // single source of truth
+  let isProUser = false;
 
   // -------------------------------------------------------
-  // 2) restore form from localStorage (so Stripe roundtrip keeps data)
+  // 2) restore user form (you already used this)
   // -------------------------------------------------------
   const saved = JSON.parse(localStorage.getItem("userData") || "{}");
   if (saved.job) jobField.value = saved.job;
@@ -58,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (saved.email) emailField.value = saved.email;
 
   // -------------------------------------------------------
-  // 3) toasts
+  // 3) toast
   // -------------------------------------------------------
   function showToast(msg, type = "info") {
     if (!toast) return;
@@ -71,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // -------------------------------------------------------
-  // 4) templates (your wording, unchanged)
+  // 4) templates
   // -------------------------------------------------------
   const templates = {
     professional: (name, job, company, date) => `${name}
@@ -145,9 +127,7 @@ ${name}`,
   // 5) lock / unlock
   // -------------------------------------------------------
   function updateLockState() {
-    // pay button must NEVER hide
     payButton?.classList.remove("hidden");
-
     templateButtons.forEach((btn) => {
       let lock = btn.querySelector(".lock-icon");
       if (!isProUser) {
@@ -169,33 +149,26 @@ ${name}`,
   }
 
   // -------------------------------------------------------
-  // 6) handle Stripe return - 💡 FIX: Ensure toast fires immediately
+  // 6) 🔑 consume success.html flag
+  // success.html did: sessionStorage.setItem("isProUser", "true"); redirect("/")
+  // so here we read it ONCE, unlock, show toast, then remove it
   // -------------------------------------------------------
-
-  if (justReturnedFromPayment) {
-    // <-- BUG FIX: Only check for session_id here
-    // Set isProUser and update lock state immediately
+  const paymentFlag = sessionStorage.getItem("isProUser");
+  if (paymentFlag === "true") {
     isProUser = true;
-    sessionStorage.setItem("isProUser", "true");
     updateLockState();
 
-    // Delay slightly so DOM paints before toast renders (fix for fast redirects)
+    // small delay to let layout paint
     setTimeout(() => {
       showToast("✅ Payment successful! Choose a letter type.", "success");
-    }, 500); // half-second delay so it never skips
+    }, 400);
 
-    // Clean the URL after confirming payment was handled
-    setTimeout(() => {
-      history.replaceState({}, document.title, window.location.pathname);
-    }, 1000);
-  } else if (isProUser) {
-    // <-- BUG FIX: Check isProUser separately for page load
-    // If not returning from payment but isProUser is true (e.g., page refresh)
-    updateLockState();
+    // important: so it doesn’t re-toast on refresh
+    sessionStorage.removeItem("isProUser");
   }
 
   // -------------------------------------------------------
-  // 7) pay button - CRITICAL FIX APPLIED HERE
+  // 7) pay button → Stripe
   // -------------------------------------------------------
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
@@ -208,12 +181,11 @@ ${name}`,
       return;
     }
 
-    // save for after redirect
+    // keep for after redirect
     localStorage.setItem("userData", JSON.stringify({ job, company, name, email }));
 
     try {
-      // 🛠️ CRITICAL FIX: Use a relative path to call the API on the same domain
-      const res = await fetch("/create-checkout-session", {
+      const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -222,16 +194,16 @@ ${name}`,
       if (data.url) {
         window.location.href = data.url;
       } else {
-        showToast("Could not start payment. Check server logs.", "error");
+        showToast("Could not start payment.", "error");
       }
     } catch (err) {
-      console.error("Fetch Error:", err);
+      console.error(err);
       showToast("Payment failed. Try again.", "error");
     }
   });
 
   // -------------------------------------------------------
-  // 8) template clicks
+  // 8) template click
   // -------------------------------------------------------
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -259,7 +231,6 @@ ${name}`,
       resultBox.classList.remove("hidden");
       showToast("Letter generated.", "success");
 
-      // scroll to output
       coverLetter.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
@@ -308,17 +279,14 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 10) CLEAR — Resets the single-use license
+  // 10) CLEAR → reset for new €1.99
   // -------------------------------------------------------
   clearBtn?.addEventListener("click", () => {
     form.reset();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
 
-    // wipe everything so next letter = new €1.99
     localStorage.removeItem("userData");
-
-    // 🛠️ FIX: Clear the session storage flag
     sessionStorage.removeItem("isProUser");
 
     isProUser = false;
@@ -345,7 +313,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 12) init: start LOCKED
+  // 12) start locked
   // -------------------------------------------------------
   updateLockState();
 });
