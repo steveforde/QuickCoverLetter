@@ -11,17 +11,19 @@
 // 7. Download → pdf name = job-company.pdf
 // 8. Clear → wipes everything + locks again (user must pay again)
 // 9. Toasts auto-hide after 4 seconds
-// NOTE: this version does NOT try to be clever with “remembering paid”
-//       because YOUR business rule is: pay €1.99 for EVERY letter.
 // =========================================================
+
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 // ✅ your Supabase (still used for safety read, but NOT required to unlock)
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
 
-// ✅ your backend on Render
-const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
+// NOTE: BACKEND_URL is removed. We use relative paths for fetch.
+
+// Initialize Supabase (optional, but good practice)
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------
@@ -42,8 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // single source of truth
-  let isProUser = false;
+  // single source of truth - Initialize by checking session storage
+  let isProUser = sessionStorage.getItem("isProUser") === "true";
 
   // -------------------------------------------------------
   // 2) restore form from localStorage (so Stripe roundtrip keeps data)
@@ -116,7 +118,7 @@ I am excited to apply for the ${job} position at ${company}. I enjoy working wit
 
 I am known for being approachable, dependable, and easy to work with. I bring good communication skills, patience, and a genuine interest in helping others — which I believe would be a good fit for ${company}.
 
-Thank you for considering my application. I would be happy to speak further about how I can contribute to your team.
+Thank Thank you for considering my application. I would be happy to speak further about how I can contribute to your team.
 
 Kind regards,
 ${name}`,
@@ -168,26 +170,27 @@ ${name}`,
   // -------------------------------------------------------
   // 6) handle Stripe return (?session_id=...)
   // -------------------------------------------------------
-  const hasStripeSession =
-    window.location.search.includes("session_id") || window.location.href.includes("success.html"); // covers Render redirect
+  const urlParams = new URLSearchParams(window.location.search);
 
-  if (hasStripeSession) {
-    // user just paid → unlock
+  // 🛠️ FIX: Check session storage first, then check the URL (session_id is
+  // removed from URL in success.html, but we check for the new flag set there).
+  if (sessionStorage.getItem("isProUser") === "true" || urlParams.has("session_id")) {
     isProUser = true;
     updateLockState();
 
-    // delay slightly so toast actually appears
-    setTimeout(() => {
-      showToast("✅ Payment successful — templates unlocked.", "success");
-    }, 600);
+    // 💡 NEW: Show the required green toast if the user just returned from payment
+    if (urlParams.has("session_id")) {
+      setTimeout(() => {
+        showToast("✅ Payment successful! Choose a letter type.", "success");
+      }, 600);
 
-    // clean the URL so refresh doesn’t re-run this
-    history.replaceState({}, document.title, "/index.html");
+      // clean the URL after confirming payment was handled
+      history.replaceState({}, document.title, window.location.pathname);
+    }
   }
 
   // -------------------------------------------------------
-  // 7) pay button
-  //    enforce ALL 4 fields
+  // 7) pay button - CRITICAL FIX APPLIED HERE
   // -------------------------------------------------------
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
@@ -204,7 +207,8 @@ ${name}`,
     localStorage.setItem("userData", JSON.stringify({ job, company, name, email }));
 
     try {
-      const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
+      // 🛠️ CRITICAL FIX: Use a relative path to call the API on the same domain
+      const res = await fetch("/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -213,16 +217,16 @@ ${name}`,
       if (data.url) {
         window.location.href = data.url;
       } else {
-        showToast("Could not start payment.", "error");
+        showToast("Could not start payment. Check server logs.", "error");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Fetch Error:", err);
       showToast("Payment failed. Try again.", "error");
     }
   });
 
   // -------------------------------------------------------
-  // 8) template clicks
+  // 8) template clicks (No change needed)
   // -------------------------------------------------------
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -256,7 +260,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 9) PDF + COPY
+  // 9) PDF + COPY (No change needed)
   // -------------------------------------------------------
   const { jsPDF } = window.jspdf;
 
@@ -299,7 +303,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 10) CLEAR — your rule: this is FINAL
+  // 10) CLEAR — Resets the single-use license
   // -------------------------------------------------------
   clearBtn?.addEventListener("click", () => {
     form.reset();
@@ -308,7 +312,9 @@ ${name}`,
 
     // wipe everything so next letter = new €1.99
     localStorage.removeItem("userData");
-    localStorage.removeItem("hasPaid");
+
+    // 🛠️ FIX: Clear the session storage flag
+    sessionStorage.removeItem("isProUser");
 
     isProUser = false;
     updateLockState();
@@ -316,7 +322,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 11) theme toggle (leave as you had)
+  // 11) theme toggle (No change needed)
   // -------------------------------------------------------
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
@@ -334,7 +340,7 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 12) init: start LOCKED (because every letter must be paid)
+  // 12) init: start LOCKED
   // -------------------------------------------------------
   updateLockState();
 });
