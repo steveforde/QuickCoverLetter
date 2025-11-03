@@ -1,15 +1,12 @@
+import fs from "fs";
+import path from "path";
 import axios from "axios";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 /**
- * Send an email using Brevo (Sendinblue) SMTP API.
- * Works with your Render + .env setup.
- *
- * @param {string} to - Recipient email address
- * @param {string} subject - Email subject line
- * @param {string} html - Full HTML content for the message
+ * Generic email sender (using Brevo)
  */
 export const sendEmail = async (to, subject, html) => {
   if (!process.env.BREVO_API_KEY) {
@@ -17,43 +14,51 @@ export const sendEmail = async (to, subject, html) => {
     return;
   }
 
-  if (!process.env.EMAIL_FROM) {
-    console.error("⚠️ Missing EMAIL_FROM in environment variables, using fallback address.");
-  }
-
-  const senderEmail = process.env.EMAIL_FROM || "support@quickcoverletter.com";
-
   const payload = {
     sender: {
-      name: "QuickCoverLetter Support",
-      email: senderEmail,
+      name: "QuickCoverLetter",
+      email: process.env.EMAIL_FROM || "support@quickcoverletter.com",
     },
     to: [{ email: to }],
     subject,
-    htmlContent: html || "<p>No content provided</p>",
+    htmlContent: html,
   };
 
   try {
-    const response = await axios.post(
-      "https://api.brevo.com/v3/smtp/email",
-      payload,
-      {
-        headers: {
-          "api-key": process.env.BREVO_API_KEY,
-          "Content-Type": "application/json",
-        },
-        timeout: 10000, // prevent Render timeouts
-      }
-    );
+    const response = await axios.post("https://api.brevo.com/v3/smtp/email", payload, {
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+      },
+    });
 
-    console.log(`✅ Brevo email sent to ${to}`);
+    console.log(`✅ Email sent to ${to}: ${subject}`);
     return response.data;
-  } catch (error) {
-    console.error(
-      "❌ Brevo email failed:",
-      error.response?.data || error.message
-    );
-    throw error;
+  } catch (err) {
+    console.error("❌ Email send failed:", err.response?.data || err.message);
   }
 };
 
+/**
+ * Payment confirmation email
+ */
+export const sendPaymentConfirmation = async (to) => {
+  try {
+    const html = fs.readFileSync(path.resolve("./payment_confirmation.html"), "utf8");
+    await sendEmail(to, "Your QuickCoverLetter Payment Confirmation", html);
+  } catch (err) {
+    console.error("❌ Failed to send payment confirmation:", err.message);
+  }
+};
+
+/**
+ * Cover letter ready email
+ */
+export const sendLetterReady = async (to) => {
+  try {
+    const html = fs.readFileSync(path.resolve("./cover_letter_ready.html"), "utf8");
+    await sendEmail(to, "Your Cover Letter is Ready!", html);
+  } catch (err) {
+    console.error("❌ Failed to send 'letter ready' email:", err.message);
+  }
+};

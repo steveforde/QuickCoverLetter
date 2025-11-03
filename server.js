@@ -10,6 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 import brevo from "@getbrevo/brevo";
 import path from "path";
 import { fileURLToPath } from "url";
+import { loadTemplate } from "./emailTemplates.js";
 
 // ===================================================
 // 📁 Path setup (ESM-friendly)
@@ -23,12 +24,28 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const PORT = process.env.PORT || 10000;
 
 // ===================================================
 // 🟦 BREVO (Transactional Email API)
 // ===================================================
 const brevoClient = new brevo.TransactionalEmailsApi();
 brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
+
+const sendBrevoEmail = async ({ toEmail, toName, subject, template }) => {
+  try {
+    const html = loadTemplate(template);
+    await brevoClient.sendTransacEmail({
+      sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
+      to: [{ email: toEmail, name: toName }],
+      subject,
+      htmlContent: html,
+    });
+    console.log(`✅ Email sent to ${toEmail} — ${template}`);
+  } catch (err) {
+    console.error("❌ Brevo send error:", err.response?.body || err.message);
+  }
+};
 
 // ===================================================
 // 🟩 SUPABASE (Database)
@@ -48,7 +65,7 @@ try {
 }
 
 // ===================================================
-// 🪝 STRIPE WEBHOOK (Success, Failed, Canceled)
+// 🪝 STRIPE WEBHOOK
 // ===================================================
 app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, res) => {
   console.log("⚡ Webhook triggered");
@@ -56,7 +73,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
   const sig = req.headers["stripe-signature"];
   let event;
 
-  // ✅ Verify webhook signature
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
@@ -64,31 +80,17 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Common Brevo helper
-  const sendBrevoEmail = async ({ toEmail, toName, subject, html }) => {
-    try {
-      await brevoClient.sendTransacEmail({
-        sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
-        to: [{ email: toEmail, name: toName }],
-        subject,
-        htmlContent: html,
-      });
-      console.log("✅ Email sent:", subject, "->", toEmail);
-    } catch (err) {
-      console.error("❌ Brevo send error:", err.response?.body || err.message);
-    }
-  };
-
+  // ===================================================
   // ✅ 1. SUCCESSFUL PAYMENT
+  // ===================================================
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const email = session.customer_details?.email || session.customer_email || null;
+    const email = session.customer_details?.email || session.customer_email;
     const name = session.customer_details?.name || "Customer";
     const amountInCents = session.amount_total;
 
-    console.log(`🧾 Payment completed for: ${email}`);
+    console.log(`🧾 Payment completed for ${email}`);
 
-    // 💾 Save transaction
     if (supabase) {
       const { error } = await supabase.from("transactions").insert({
         payment_intent: session.id,
@@ -102,76 +104,17 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
       if (error) console.error("❌ DB insert error:", error.message);
     }
 
-    // 📧 SUCCESS EMAIL (Improved Professional Version)
     await sendBrevoEmail({
       toEmail: email,
       toName: name,
       subject: "✅ Payment Successful – Your Cover Letter Is Ready!",
-      html: `
-  <table width="100%" cellspacing="0" cellpadding="0" border="0"
-    style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
-    <tr>
-      <td align="center">
-        <table width="600" cellspacing="0" cellpadding="0" border="0"
-          style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
-          
-          <!-- HEADER -->
-          <tr>
-            <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
-              <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
-                alt="QuickCoverLetter"
-                width="70" height="70"
-                style="display:block;margin:auto;border-radius:50%;background:#fff;
-                       padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-              <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
-              <p style="color:#eaf1ff;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
-            </td>
-          </tr>
-
-          <!-- BODY -->
-          <tr>
-            <td style="padding:35px 45px;text-align:left;">
-              <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
-              
-              <p style="font-size:16px;color:#333;margin:0 0 18px;">
-                Your payment of <strong>€${(amountInCents / 100).toFixed(2)}</strong> has been received successfully.
-              </p>
-
-              <p style="font-size:16px;color:#333;margin:0 0 25px;">
-                You can now create and download your custom cover letter instantly.
-              </p>
-
-              <div style="text-align:center;margin:35px 0;">
-                <a href="${process.env.DOMAIN}"
-                  style="background:#0070f3;color:#fff;padding:14px 28px;border-radius:8px;
-                         text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
-                  Build My Cover Letter
-                </a>
-              </div>
-
-              <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
-                You will only ever be charged once – no subscriptions, no renewals. ✅
-              </p>
-            </td>
-          </tr>
-
-          <!-- FOOTER -->
-          <tr>
-            <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
-              <p style="font-size:13px;color:#777;margin:0;">
-                Made with 💙 in Ireland<br>
-                <span style="color:#999;">QuickCoverLetter · quickprocv.com</span>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>`,
+      template: "payment_success",
     });
   }
 
-  // ❌ 2. PAYMENT FAILED (Updated Clean Version)
+  // ===================================================
+  // ❌ 2. PAYMENT FAILED
+  // ===================================================
   if (event.type === "payment_intent.payment_failed") {
     const obj = event.data.object;
     const email =
@@ -179,116 +122,32 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     const name =
       obj?.charges?.data?.[0]?.billing_details?.name || obj?.customer_details?.name || "Customer";
 
-    console.log("⚠️ Payment failed for:", email);
-
     if (email) {
+      console.log(`⚠️ Payment failed for ${email}`);
       await sendBrevoEmail({
         toEmail: email,
         toName: name,
         subject: "⚠️ Payment Failed – Please Try Again",
-        html: `
-        <table width="100%" cellspacing="0" cellpadding="0" border="0"
-          style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
-          <tr>
-            <td align="center">
-              <table width="600" cellspacing="0" cellpadding="0" border="0"
-                style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
-                
-                <!-- HEADER -->
-                <tr>
-                  <td align="center" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);padding:25px;">
-                    <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
-                      alt="QuickCoverLetter"
-                      width="70" height="70"
-                      style="display:block;margin:auto;border-radius:50%;background:#fff;
-                             padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-                    <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
-                    <p style="color:#dbeafe;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
-                  </td>
-                </tr>
-
-                <!-- BODY -->
-                <tr>
-                  <td style="padding:35px 45px;text-align:left;">
-                    <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
-                    <p style="font-size:16px;color:#333;margin:0 0 18px;">
-                      Unfortunately, your payment for <strong>€1.99</strong> didn’t go through.
-                    </p>
-                    <p style="font-size:16px;color:#333;margin:0 0 25px;">
-                      Don’t worry — you haven’t been charged. This usually happens if your card was declined or the session expired.
-                    </p>
-
-                    <div style="text-align:center;margin:35px 0;">
-                      <a href="${process.env.DOMAIN}"
-                        style="background:#1e3a8a;color:#fff;padding:14px 28px;border-radius:8px;
-                               text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
-                        Try Again
-                      </a>
-                    </div>
-
-                    <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
-                      If this keeps happening, reply to this email — we’ll help you out. 💬
-                    </p>
-                  </td>
-                </tr>
-
-                <!-- FOOTER -->
-                <tr>
-                  <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
-                    <p style="font-size:13px;color:#777;margin:0;">
-                      Made with 💙 in Ireland<br>
-                      <span style="color:#999;">QuickCoverLetter · quickprocv.com</span>
-                    </p>
-                  </td>
-                </tr>
-
-              </table>
-            </td>
-          </tr>
-        </table>`,
+        template: "payment_failed",
       });
     }
   }
 
-  // 🕓 3. CHECKOUT CANCELED / EXPIRED
-  if (event.type === "checkout.session.expired" || event.type === "checkout.session.canceled") {
+  // ===================================================
+  // 🕓 3. CANCELED / EXPIRED CHECKOUT
+  // ===================================================
+  if (["checkout.session.expired", "checkout.session.canceled"].includes(event.type)) {
     const session = event.data.object;
-    const email = session.customer_details?.email || session.customer_email || null;
+    const email = session.customer_details?.email || session.customer_email;
     const name = session.customer_details?.name || "Customer";
 
-    console.log("🟨 Session expired/canceled for:", email);
-
     if (email) {
+      console.log(`🟨 Checkout canceled/expired for ${email}`);
       await sendBrevoEmail({
         toEmail: email,
         toName: name,
         subject: "⏳ You didn’t finish your €1.99 cover letter",
-        html: `
-          <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
-            <tr>
-              <td align="center">
-                <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
-                  <tr>
-                    <td align="center" style="background:linear-gradient(135deg,#0f172a,#1f2937);padding:25px;">
-                      <h1 style="color:#fff;font-size:22px;margin:0;">QuickCoverLetter</h1>
-                      <p style="color:#e5e7eb;font-size:13px;margin:6px 0 0;">You can complete the purchase any time</p>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding:30px 40px;text-align:left;">
-                      <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>${name}</strong>,</p>
-                      <p style="font-size:15px;color:#333;margin:0 0 15px;">You started buying your cover letter for <strong>€1.99</strong> but didn’t finish.</p>
-                      <p style="font-size:14px;color:#555;margin:0 0 25px;">No stress — just click below and you can complete it in seconds.</p>
-                      <div style="text-align:center;margin:30px 0;">
-                        <a href="${process.env.DOMAIN}" style="background:#0f172a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Continue Your Cover Letter</a>
-                      </div>
-                      <p style="font-size:13px;color:#888;text-align:center;">You will only ever be charged once. No subscriptions. ✅</p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>`,
+        template: "letter_ready",
       });
     }
   }
@@ -297,14 +156,14 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
 });
 
 // ===================================================
-// 🌐 MIDDLEWARE
+// 🌐 Middleware
 // ===================================================
 app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
 // ===================================================
-// 💳 STRIPE CHECKOUT SESSION
+// 💳 STRIPE CHECKOUT
 // ===================================================
 app.post("/create-checkout-session", async (req, res) => {
   try {
@@ -317,46 +176,69 @@ app.post("/create-checkout-session", async (req, res) => {
     });
     res.json({ url: session.url });
   } catch (err) {
-    console.error("Stripe error:", err.message);
+    console.error("❌ Stripe session error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 // ===================================================
-// 📧 TEST EMAIL ENDPOINT
+// 📧 TEST EMAIL ENDPOINT (Dynamic Template Tester)
 // ===================================================
 app.get("/api/test-email", async (req, res) => {
+  const template = req.query.template || "letter_ready";
+  const subjectMap = {
+    payment_success: "✅ Test: Payment Successful – Your Cover Letter Is Ready!",
+    payment_failed: "⚠️ Test: Payment Failed – Please Try Again",
+    letter_ready: "📄 Test: Your Cover Letter Is Ready!",
+  };
+
   try {
-    await brevoClient.sendTransacEmail({
-      sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
-      to: [{ email: "sforde08@gmail.com", name: "Stephen" }],
-      subject: "Test: Cover Letter Ready!",
-      htmlContent: `
-        <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
-          <tr><td align="center"><table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
-          <tr><td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
-          <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png" alt="QuickCoverLetter" width="64" height="64" style="display:block;margin:auto;border-radius:50%;background:#fff;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-          <h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1>
-          <p style="color:#eaf1ff;font-size:13px;margin:4px 0 0;">Professional Cover Letter Templates</p>
-          </td></tr><tr><td style="padding:30px 40px;text-align:left;">
-          <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>Stephen</strong> 👋,</p>
-          <p style="font-size:16px;color:#333;margin:0 0 15px;">This is a <strong>test email</strong> confirming your setup is complete.</p>
-          <p style="font-size:16px;color:#333;margin:0 0 25px;">Payment: <strong>€1.99</strong></p>
-          <div style="text-align:center;margin:30px 0;"><a href="${process.env.DOMAIN}" style="background:#0070f3;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Go to QuickCoverLetter</a></div>
-          <p style="font-size:14px;color:#666;text-align:center;">Thanks for choosing <strong>QuickCoverLetter</strong> 💙</p>
-          </td></tr></table></td></tr></table>`,
+    await sendBrevoEmail({
+      toEmail: "sforde08@gmail.com",
+      toName: "Stephen",
+      subject: subjectMap[template] || "QuickCoverLetter Test",
+      template,
     });
-    res.send("✅ TEST EMAIL SENT!");
+
+    console.log(`✅ Test email sent using template: ${template}`);
+    res.send(`✅ Test email sent: ${template}`);
   } catch (err) {
-    console.error("❌ TEST FAILED:", err.response?.body || err.message);
-    res.status(500).send("Failed to send email");
+    console.error("❌ Test email error:", err.message);
+    res.status(500).send("Failed to send test email");
   }
 });
 
 // ===================================================
-// 🚀 START SERVER
+// 🩺 BACKEND STATUS CHECK
 // ===================================================
+app.get("/api/status", async (req, res) => {
+  const status = {
+    status: "ok",
+    stripe: "connected",
+    brevo: "connected",
+    supabase: supabase ? "connected" : "not_configured",
+    domain: process.env.DOMAIN || "not_set",
+    time: new Date().toISOString(),
+  };
 
-const PORT = process.env.PORT || 10000;
+  try {
+    // quick sanity check: test Stripe key validity
+    await stripe.products.list({ limit: 1 });
+  } catch {
+    status.stripe = "error";
+  }
 
+  try {
+    // basic Brevo test: verify API key presence
+    if (!process.env.BREVO_API_KEY) status.brevo = "missing_key";
+  } catch {
+    status.brevo = "error";
+  }
+
+  res.json(status);
+});
+
+// ===================================================
+// 🚀 Start Server
+// ===================================================
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
