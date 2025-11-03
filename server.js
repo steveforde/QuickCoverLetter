@@ -10,6 +10,7 @@ import { createClient } from "@supabase/supabase-js";
 import brevo from "@getbrevo/brevo";
 import path from "path";
 import { fileURLToPath } from "url";
+import { sendEmail } from "./email.js";
 
 // ===================================================
 // 📁 Path setup (ESM-friendly)
@@ -322,6 +323,21 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
+app.post("/api/send-test-email", async (req, res) => {
+  try {
+    const { to } = req.body;
+    await sendEmail(
+      to || "support@quickcoverletter.com",
+      "QuickCoverLetter — Test Email ✅",
+      `<h2>QuickCoverLetter</h2><p>Your Brevo email system is working perfectly!</p>`
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Email send failed:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ===================================================
 // 📧 TEST EMAIL ENDPOINT
 // ===================================================
@@ -351,6 +367,17 @@ app.get("/api/test-email", async (req, res) => {
     console.error("❌ TEST FAILED:", err.response?.body || err.message);
     res.status(500).send("Failed to send email");
   }
+});
+
+// ===================================================
+// 🔍 STATUS CHECK
+// ===================================================
+app.get("/api/status", (req, res) => {
+  res.json({
+    status: "ok",
+    message: "QuickCoverLetter backend is running ✅",
+    time: new Date().toISOString(),
+  });
 });
 
 // ===================================================
