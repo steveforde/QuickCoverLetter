@@ -89,7 +89,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     const { data: existing } = await supabase
       .from("transactions")
       .select("id")
-      .eq("payment_intent", event.data.object.id)
+      .eq("payment_intent", event.data.object.payment_intent || event.data.object.id)
       .limit(1);
 
     if (existing && existing.length > 0) {
@@ -98,12 +98,24 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     }
   }
 
-  // ✅ 1. SUCCESSFUL PAYMENT
+  // ✅ 1. SUCCESSFUL PAYMENT (deduplicated)
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
     const email = session.customer_details?.email || session.customer_email || null;
     const name = session.customer_details?.name || "Customer";
     const amountInCents = session.amount_total;
+
+    // 🔒 Avoid duplicates (check by session.id)
+    const { data: exists } = await supabase
+      .from("transactions")
+      .select("id")
+      .eq("payment_intent", session.id)
+      .limit(1);
+
+    if (exists && exists.length > 0) {
+      console.log("⚠️ Duplicate session.completed ignored for:", email);
+      return res.json({ received: true });
+    }
 
     console.log(`🧾 Payment completed for: ${email}`);
 

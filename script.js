@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 🛠️ FIX: Immediately clear the temporary form data.
   // This ensures the form is blank on the next fresh load or tab open.
-  sessionStorage.removeItem("userData");
+  //sessionStorage.removeItem("userData");
 
   // -------------------------------------------------------
   // 3) toasts
