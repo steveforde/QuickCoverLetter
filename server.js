@@ -10,7 +10,6 @@ import { createClient } from "@supabase/supabase-js";
 import brevo from "@getbrevo/brevo";
 import path from "path";
 import { fileURLToPath } from "url";
-import { sendEmail } from "./email.js";
 
 // ===================================================
 // 📁 Path setup (ESM-friendly)
@@ -31,6 +30,24 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const brevoClient = new brevo.TransactionalEmailsApi();
 brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
 
+/**
+ * Global helper function to send emails via Brevo.
+ * Moved outside the webhook handler to be accessible by all routes.
+ */
+const sendBrevoEmail = async ({ toEmail, toName, subject, html }) => {
+  try {
+    await brevoClient.sendTransacEmail({
+      sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
+      to: [{ email: toEmail, name: toName }],
+      subject,
+      htmlContent: html,
+    });
+    console.log("✅ Email sent:", subject, "->", toEmail);
+  } catch (err) {
+    console.error("❌ Brevo send error:", err.response?.body || err.message);
+  }
+};
+
 // ===================================================
 // 🟩 SUPABASE (Database)
 // ===================================================
@@ -50,6 +67,7 @@ try {
 
 // ===================================================
 // 🪝 STRIPE WEBHOOK (Success, Failed, Canceled)
+// NOTE: bodyParser.raw() must be used here instead of express.json()
 // ===================================================
 app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, res) => {
   console.log("⚡ Webhook triggered");
@@ -67,6 +85,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
 
   // 🧩 Prevent duplicate processing for the same payment
   if (supabase && event.id) {
+    // Check for transaction using session ID as payment_intent
     const { data: existing } = await supabase
       .from("transactions")
       .select("id")
@@ -78,21 +97,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
       return res.json({ received: true });
     }
   }
-
-  // Common Brevo helper
-  const sendBrevoEmail = async ({ toEmail, toName, subject, html }) => {
-    try {
-      await brevoClient.sendTransacEmail({
-        sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
-        to: [{ email: toEmail, name: toName }],
-        subject,
-        htmlContent: html,
-      });
-      console.log("✅ Email sent:", subject, "->", toEmail);
-    } catch (err) {
-      console.error("❌ Brevo send error:", err.response?.body || err.message);
-    }
-  };
 
   // ✅ 1. SUCCESSFUL PAYMENT
   if (event.type === "checkout.session.completed") {
@@ -106,6 +110,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     // 💾 Save transaction
     if (supabase) {
       const { error } = await supabase.from("transactions").insert({
+        // session.id is used here as the payment_intent identifier for checkout.session events
         payment_intent: session.id,
         email,
         name,
@@ -186,37 +191,47 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     });
   }
 
-  // ❌ 2. PAYMENT FAILED (Updated Clean Version)
+  // ❌ 2. PAYMENT FAILED (Final Fix)
   if (event.type === "payment_intent.payment_failed") {
     const obj = event.data.object;
 
-    // 🧠 Stripe sometimes nests customer email differently — cover all cases
+    // ✅ Try every possible Stripe field where an email can appear
     const email =
       obj?.receipt_email ||
       obj?.customer_email ||
-      obj?.charges?.data?.[0]?.billing_details?.email ||
+      obj?.billing_details?.email ||
       obj?.last_payment_error?.payment_method?.billing_details?.email ||
+      obj?.charges?.data?.[0]?.billing_details?.email ||
+      (obj?.customer && obj?.customer.email) ||
       null;
 
     const name =
-      obj?.charges?.data?.[0]?.billing_details?.name ||
+      obj?.billing_details?.name ||
       obj?.last_payment_error?.payment_method?.billing_details?.name ||
+      obj?.charges?.data?.[0]?.billing_details?.name ||
       "Customer";
 
-    if (email) {
-      await sendBrevoEmail({
-        toEmail: email,
-        toName: name,
-        subject: "⚠️ Payment Failed – Please Try Again",
-        html: `
+    console.log("⚠️ Payment failed for:", email);
+
+    if (!email) {
+      console.log("⚠️ No email found in failed payment payload. Skipping email send.");
+      return res.json({ received: true });
+    }
+
+    // --- Start of Corrected Email Block ---
+    // The duplicated email sending block below this section in the original code
+    // has been removed for cleanup and to prevent scoping errors.
+    await sendBrevoEmail({
+      toEmail: email,
+      toName: name,
+      subject: "⚠️ Payment Failed – Please Try Again",
+      html: `
         <table width="100%" cellspacing="0" cellpadding="0" border="0"
           style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
           <tr>
             <td align="center">
               <table width="600" cellspacing="0" cellpadding="0" border="0"
                 style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
-                
-                <!-- HEADER -->
                 <tr>
                   <td align="center" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);padding:25px;">
                     <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
@@ -228,8 +243,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                     <p style="color:#dbeafe;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
                   </td>
                 </tr>
-
-                <!-- BODY -->
                 <tr>
                   <td style="padding:35px 45px;text-align:left;">
                     <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
@@ -239,7 +252,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                     <p style="font-size:16px;color:#333;margin:0 0 25px;">
                       Don’t worry — you haven’t been charged. This usually happens if your card was declined or the session expired.
                     </p>
-
                     <div style="text-align:center;margin:35px 0;">
                       <a href="${process.env.DOMAIN}"
                         style="background:#1e3a8a;color:#fff;padding:14px 28px;border-radius:8px;
@@ -247,14 +259,11 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                         Try Again
                       </a>
                     </div>
-
                     <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
                       If this keeps happening, reply to this email — we’ll help you out. 💬
                     </p>
                   </td>
                 </tr>
-
-                <!-- FOOTER -->
                 <tr>
                   <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
                     <p style="font-size:13px;color:#777;margin:0;">
@@ -263,13 +272,12 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                     </p>
                   </td>
                 </tr>
-
               </table>
             </td>
           </tr>
         </table>`,
-      });
-    }
+    });
+    // --- End of Corrected Email Block ---
   }
 
   // 🕓 3. CHECKOUT CANCELED / EXPIRED
@@ -322,6 +330,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
 // 🌐 MIDDLEWARE
 // ===================================================
 app.use(cors());
+// Note: express.json() for all *other* routes, but not the webhook
 app.use(express.json());
 app.use(express.static(__dirname));
 
@@ -350,11 +359,12 @@ app.post("/create-checkout-session", async (req, res) => {
 app.post("/api/send-test-email", async (req, res) => {
   try {
     const { to } = req.body;
-    await sendEmail(
-      to || "support@quickcoverletter.com",
-      "QuickCoverLetter — Test Email ✅",
-      `<h2>QuickCoverLetter</h2><p>Your Brevo email system is working perfectly!</p>`
-    );
+    await sendBrevoEmail({
+      toEmail: to || "support@quickcoverletter.com",
+      toName: "Test Recipient",
+      subject: "QuickCoverLetter — Test Email ✅",
+      html: `<h2>QuickCoverLetter</h2><p>Your Brevo email system is working perfectly!</p>`,
+    });
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Email send failed:", err.message);
@@ -364,11 +374,11 @@ app.post("/api/send-test-email", async (req, res) => {
 
 app.get("/api/test-email", async (req, res) => {
   try {
-    await brevoClient.sendTransacEmail({
-      sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
-      to: [{ email: "sforde08@gmail.com", name: "Stephen" }],
+    await sendBrevoEmail({
+      toEmail: "sforde08@gmail.com",
+      toName: "Stephen",
       subject: "Test: Cover Letter Ready!",
-      htmlContent: `<table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;"><tr><td align="center"><table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;"><tr><td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;"><img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png" alt="QuickCoverLetter" width="64" height="64" style="display:block;margin:auto;border-radius:50%;background:#fff;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1><p style="color:#eaf1ff;font-size:13px;margin:4px 0 0;">Professional Cover Letter Templates</p></td></tr><tr><td style="padding:30px 40px;text-align:left;"><p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>Stephen</strong> 👋,</p><p style="font-size:16px;color:#333;margin:0 0 15px;">This is a <strong>test email</strong> confirming your setup is complete.</p><p style="font-size:16px;color:#333;margin:0 0 25px;">Payment: <strong>€1.99</strong></p><div style="text-align:center;margin:30px 0;"><a href="${process.env.DOMAIN}" style="background:#0070f3;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Go to QuickCoverLetter</a></div><p style="font-size:14px;color:#666;text-align:center;">Thanks for choosing <strong>QuickCoverLetter</strong> 💙</p></td></tr></table></td></tr></table>`,
+      html: `<table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;"><tr><td align="center"><table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;"><tr><td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;"><img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png" alt="QuickCoverLetter" width="64" height="64" style="display:block;margin:auto;border-radius:50%;background:#fff;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1><p style="color:#eaf1ff;font-size:13px;margin:4px 0 0;">Professional Cover Letter Templates</p></td></tr><tr><td style="padding:30px 40px;text-align:left;"><p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>Stephen</strong> 👋,</p><p style="font-size:16px;color:#333;margin:0 0 15px;">This is a <strong>test email</strong> confirming your setup is complete.</p><p style="font-size:16px;color:#333;margin:0 0 25px;">Payment: <strong>€1.99</strong></p><div style="text-align:center;margin:30px 0;"><a href="${process.env.DOMAIN}" style="background:#0070f3;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Go to QuickCoverLetter</a></div><p style="font-size:14px;color:#666;text-align:center;">Thanks for choosing <strong>QuickCoverLetter</strong> 💙</p></td></tr></table></td></tr></table>`,
     });
     res.send("✅ TEST EMAIL SENT!");
   } catch (err) {
