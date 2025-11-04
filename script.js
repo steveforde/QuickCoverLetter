@@ -53,27 +53,38 @@ document.addEventListener("DOMContentLoaded", () => {
   // const justReturnedFromPayment = urlParams.has("session_id"); // No longer needed
 
   // -------------------------------------------------------
-  // 2) restore form from sessionStorage
+  // 2) RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag
   // -------------------------------------------------------
-  // 🧩 Restore form data from sessionStorage after returning from Stripe
+  const FORM_DATA_KEY = "quickCL_formData";
+  const FORM_RESTORED_KEY = "quickCL_formRestored";
+
   setTimeout(() => {
-    const saved = JSON.parse(sessionStorage.getItem("userData") || "{}");
+    // Only restore if we haven't already (prevents repeat fills)
+    if (localStorage.getItem(FORM_RESTORED_KEY)) {
+      console.log("ℹ️ Form already restored this session — skipping.");
+      localStorage.removeItem(FORM_DATA_KEY); // cleanup
+      return;
+    }
+
+    const saved = JSON.parse(localStorage.getItem(FORM_DATA_KEY) || "{}");
 
     if (Object.keys(saved).length > 0) {
-      if (saved.job) jobField.value = saved.job;
-      if (saved.company) companyField.value = saved.company;
-      if (saved.name) nameField.value = saved.name;
-      if (saved.email) emailField.value = saved.email;
+      jobField.value = saved.job || "";
+      companyField.value = saved.company || "";
+      nameField.value = saved.name || "";
+      emailField.value = saved.email || "";
 
-      console.log("✅ Restored form data from sessionStorage:", saved);
+      console.log("✅ Form restored from localStorage:", saved);
+
+      // Mark as restored + clean up
+      localStorage.setItem(FORM_RESTORED_KEY, "true");
+      localStorage.removeItem(FORM_DATA_KEY);
+
+      showToast("Form restored — select a template!", "success");
     } else {
-      console.log("ℹ️ No saved form data found — new session.");
+      console.log("ℹ️ No saved form data.");
     }
-  }, 300); // small delay lets sessionStorage load fully
-
-  // 🛠️ FIX: Immediately clear the temporary form data.
-  // This ensures the form is blank on the next fresh load or tab open.
-  //sessionStorage.removeItem("userData");
+  }, 300);
 
   // -------------------------------------------------------
   // 3) toasts
@@ -222,7 +233,7 @@ ${name}`,
   }
 
   // -------------------------------------------------------
-  // 7) pay button
+  // 7) PAY BUTTON — save form + start Stripe checkout
   // -------------------------------------------------------
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
@@ -235,18 +246,18 @@ ${name}`,
       return;
     }
 
-    // save for after redirect
-    // 🛠️ FIX: Use sessionStorage for form data
-    sessionStorage.setItem("userData", JSON.stringify({ job, company, name, email }));
+    // 🧠 SAVE TO localStorage — survives Stripe redirect
+    localStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
+    localStorage.removeItem("quickCL_formRestored"); // ✅ allow one-time restore when returning
 
     try {
-      // 🛠️ CRITICAL FIX: Use the full URL for the Render backend
       const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
+
       if (data.url) {
         window.location.href = data.url;
       } else {
