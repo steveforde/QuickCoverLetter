@@ -53,14 +53,23 @@ document.addEventListener("DOMContentLoaded", () => {
   // const justReturnedFromPayment = urlParams.has("session_id"); // No longer needed
 
   // -------------------------------------------------------
-  // 2) restore form from sessionStorage (for payment roundtrip only)
+  // 2) restore form from sessionStorage
   // -------------------------------------------------------
-  // 🛠️ FIX: Now uses sessionStorage instead of localStorage
-  const saved = JSON.parse(sessionStorage.getItem("userData") || "{}");
-  if (saved.job) jobField.value = saved.job;
-  if (saved.company) companyField.value = saved.company;
-  if (saved.name) nameField.value = saved.name;
-  if (saved.email) emailField.value = saved.email;
+  // 🧩 Restore form data from sessionStorage after returning from Stripe
+  setTimeout(() => {
+    const saved = JSON.parse(sessionStorage.getItem("userData") || "{}");
+
+    if (Object.keys(saved).length > 0) {
+      if (saved.job) jobField.value = saved.job;
+      if (saved.company) companyField.value = saved.company;
+      if (saved.name) nameField.value = saved.name;
+      if (saved.email) emailField.value = saved.email;
+
+      console.log("✅ Restored form data from sessionStorage:", saved);
+    } else {
+      console.log("ℹ️ No saved form data found — new session.");
+    }
+  }, 300); // small delay lets sessionStorage load fully
 
   // 🛠️ FIX: Immediately clear the temporary form data.
   // This ensures the form is blank on the next fresh load or tab open.
