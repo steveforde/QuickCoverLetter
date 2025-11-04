@@ -55,8 +55,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------
   // 2) RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag
   // -------------------------------------------------------
-  const FORM_DATA_KEY = "quickCL_formData";
-  const FORM_RESTORED_KEY = "quickCL_formRestored";
 
   setTimeout(() => {
     // Only restore if we haven't already (prevents repeat fills)
@@ -232,9 +230,11 @@ ${name}`,
     sessionStorage.removeItem("showSuccessToast");
   }
 
-  // -------------------------------------------------------
-  // 7) PAY BUTTON — save form + start Stripe checkout
-  // -------------------------------------------------------
+  // ====== CONSTANTS ======
+  const FORM_DATA_KEY = "quickCL_formData";
+  const FORM_RESTORED_KEY = "quickCL_formRestored";
+
+  // ====== SAVE (runs on Pay click) ======
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
     const company = companyField.value.trim();
@@ -246,10 +246,18 @@ ${name}`,
       return;
     }
 
-    // 🧠 SAVE TO localStorage — survives Stripe redirect
-    localStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
-    localStorage.removeItem("quickCL_formRestored"); // ✅ allow one-time restore when returning
+    // 1) SAVE FIRST (sync + guaranteed)
+    const payload = { job, company, name, email };
+    try {
+      localStorage.setItem(FORM_DATA_KEY, JSON.stringify(payload));
+      localStorage.removeItem(FORM_RESTORED_KEY); // allow one-time restore on return
+      console.log("💾 Saved to localStorage:", payload);
+    } catch (e) {
+      console.warn("⚠️ localStorage save failed, falling back to sessionStorage:", e?.message);
+      sessionStorage.setItem("userData", JSON.stringify(payload));
+    }
 
+    // 2) START CHECKOUT
     try {
       const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
         method: "POST",
@@ -257,17 +265,69 @@ ${name}`,
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-
+      console.log("🔁 Stripe create session response:", data);
       if (data.url) {
         window.location.href = data.url;
       } else {
         showToast("Could not start payment. Check server logs.", "error");
       }
     } catch (err) {
-      console.error("Fetch Error:", err);
+      console.error("❌ Fetch Error:", err);
       showToast("Payment failed. Try again.", "error");
     }
   });
+
+  // ====== RESTORE (runs on load) ======
+  setTimeout(() => {
+    // don’t restore twice
+    if (localStorage.getItem(FORM_RESTORED_KEY)) {
+      console.log("ℹ️ Form already restored this session — skipping further restore.");
+      localStorage.removeItem(FORM_DATA_KEY); // cleanup any leftovers
+      return;
+    }
+
+    let saved = null;
+
+    // PRIMARY: localStorage
+    try {
+      saved = JSON.parse(localStorage.getItem(FORM_DATA_KEY) || "null");
+      if (saved) console.log("📥 Found in localStorage:", saved);
+    } catch (e) {
+      console.warn("⚠️ localStorage parse failed:", e?.message);
+    }
+
+    // FALLBACK: sessionStorage (older flow / Safari issues)
+    if (!saved) {
+      try {
+        saved = JSON.parse(sessionStorage.getItem("userData") || "null");
+        if (saved) console.log("📥 Fallback from sessionStorage:", saved);
+      } catch (e) {
+        console.warn("⚠️ sessionStorage parse failed:", e?.message);
+      }
+    }
+
+    if (saved && typeof saved === "object") {
+      jobField.value = saved.job || "";
+      companyField.value = saved.company || "";
+      nameField.value = saved.name || "";
+      emailField.value = saved.email || "";
+
+      // one-time mark + cleanup
+      localStorage.setItem(FORM_RESTORED_KEY, "true");
+      localStorage.removeItem(FORM_DATA_KEY);
+      sessionStorage.removeItem("userData");
+
+      console.log("✅ Form restored:", {
+        job: jobField.value,
+        company: companyField.value,
+        name: nameField.value,
+        email: emailField.value,
+      });
+      showToast("Form restored — select a template!", "success");
+    } else {
+      console.log("ℹ️ No saved form data found.");
+    }
+  }, 300);
 
   // -------------------------------------------------------
   // 8) template clicks
