@@ -13,7 +13,7 @@ import { fileURLToPath } from "url";
 
 // ===================================================
 // 📁 Path setup (ESM-friendly)
-// ===================================================
+// =================================================
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
