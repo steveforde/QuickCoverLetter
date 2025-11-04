@@ -65,6 +65,20 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  // 🧩 Prevent duplicate processing for the same payment
+  if (supabase && event.id) {
+    const { data: existing } = await supabase
+      .from("transactions")
+      .select("id")
+      .eq("payment_intent", event.data.object.id)
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      console.log("⚠️ Duplicate webhook event ignored:", event.id);
+      return res.json({ received: true });
+    }
+  }
+
   // Common Brevo helper
   const sendBrevoEmail = async ({ toEmail, toName, subject, html }) => {
     try {
