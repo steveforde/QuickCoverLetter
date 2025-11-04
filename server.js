@@ -189,12 +189,19 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
   // ❌ 2. PAYMENT FAILED (Updated Clean Version)
   if (event.type === "payment_intent.payment_failed") {
     const obj = event.data.object;
-    const email =
-      obj?.charges?.data?.[0]?.billing_details?.email || obj?.customer_details?.email || null;
-    const name =
-      obj?.charges?.data?.[0]?.billing_details?.name || obj?.customer_details?.name || "Customer";
 
-    console.log("⚠️ Payment failed for:", email);
+    // 🧠 Stripe sometimes nests customer email differently — cover all cases
+    const email =
+      obj?.receipt_email ||
+      obj?.customer_email ||
+      obj?.charges?.data?.[0]?.billing_details?.email ||
+      obj?.last_payment_error?.payment_method?.billing_details?.email ||
+      null;
+
+    const name =
+      obj?.charges?.data?.[0]?.billing_details?.name ||
+      obj?.last_payment_error?.payment_method?.billing_details?.name ||
+      "Customer";
 
     if (email) {
       await sendBrevoEmail({
