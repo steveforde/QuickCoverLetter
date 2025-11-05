@@ -269,10 +269,10 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                   <td style="padding:35px 45px;text-align:left;">
                     <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
                     <p style="font-size:16px;color:#333;margin:0 0 18px;">
-                      Unfortunately, your payment for <strong>€1.99</strong> didn’t go through.
+                      Unfortunately, your payment for <strong>€1.99</strong> didn't go through.
                     </p>
                     <p style="font-size:16px;color:#333;margin:0 0 25px;">
-                      Don’t worry — you haven’t been charged. This usually happens if your card was declined or the session expired.
+                      Don't worry — you haven't been charged. This usually happens if your card was declined or the session expired.
                     </p>
                     <div style="text-align:center;margin:35px 0;">
                       <a href="https://quickcoverletter.onrender.com"
@@ -282,7 +282,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                       </a>
                     </div>
                     <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
-                      If this keeps happening, reply to this email — we’ll help you out. 💬
+                      If this keeps happening, reply to this email — we'll help you out. 💬
                     </p>
                   </td>
                 </tr>
@@ -314,7 +314,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
       await sendBrevoEmail({
         toEmail: email,
         toName: name,
-        subject: "⏳ You didn’t finish your €1.99 cover letter",
+        subject: "⏳ You didn't finish your €1.99 cover letter",
         html: `
           <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
             <tr>
@@ -329,7 +329,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                   <tr>
                     <td style="padding:30px 40px;text-align:left;">
                       <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>${name}</strong>,</p>
-                      <p style="font-size:15px;color:#333;margin:0 0 15px;">You started buying your cover letter for <strong>€1.99</strong> but didn’t finish.</p>
+                      <p style="font-size:15px;color:#333;margin:0 0 15px;">You started buying your cover letter for <strong>€1.99</strong> but didn't finish.</p>
                       <p style="font-size:14px;color:#555;margin:0 0 25px;">No stress — just click below and you can complete it in seconds.</p>
                       <div style="text-align:center;margin:30px 0;">
                         <a href="https://quickcoverletter.onrender.com" style="background:#0f172a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Continue Your Cover Letter</a>
@@ -414,7 +414,7 @@ app.post("/api/send-test-email", async (req, res) => {
   try {
     const { to } = req.body;
     await sendBrevoEmail({
-      toEmail: to || "support@quickcoverletter.com",
+      toEmail: to || "support@support@quickcoverletter.com",
       toName: "Test Recipient",
       subject: "QuickCoverLetter — Test Email ✅",
       html: `<h2>QuickCoverLetter</h2><p>Your Brevo email system is working perfectly!</p>`,
