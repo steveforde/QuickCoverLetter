@@ -265,10 +265,10 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                       Don’t worry — you haven’t been charged. This usually happens if your card was declined or the session expired.
                     </p>
                     <div style="text-align:center;margin:35px 0;">
-                      <a href="${process.env.DOMAIN}"
-                        style="background:#1e3a8a;color:#fff;padding:14px 28px;border-radius:8px;
-                               text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
-                        Try Again
+                      <a href="https://quickcoverletter.onrender.com"
+                      style="background:#1e3a8a;color:#fff;padding:14px 28px;border-radius:8px;
+                      text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
+                      Try Again
                       </a>
                     </div>
                     <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
@@ -322,7 +322,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                       <p style="font-size:15px;color:#333;margin:0 0 15px;">You started buying your cover letter for <strong>€1.99</strong> but didn’t finish.</p>
                       <p style="font-size:14px;color:#555;margin:0 0 25px;">No stress — just click below and you can complete it in seconds.</p>
                       <div style="text-align:center;margin:30px 0;">
-                        <a href="${process.env.DOMAIN}" style="background:#0f172a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Continue Your Cover Letter</a>
+                        <a href="https://quickcoverletter.onrender.com" style="background:#0f172a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Continue Your Cover Letter</a>
                       </div>
                       <p style="font-size:13px;color:#888;text-align:center;">You will only ever be charged once. No subscriptions. ✅</p>
                     </td>
