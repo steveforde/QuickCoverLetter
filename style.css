@@ -313,15 +313,67 @@ body.dark .form-box textarea {
    - 2 in tablet
    - 1 in mobile
    --------------------------------------------------------- */
+/* === TEMPLATE GRID — 5 COLUMNS, CENTERED, FIXED SIZE === */
 .template-buttons {
   display: grid;
-  grid-template-columns: repeat(5, minmax(160px, 1fr)); /* now 5 columns */
-  gap: 22px 24px; /* slightly increased from 18x20 to 22x24 */
-  align-items: stretch;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 18px;
+  max-width: 1000px;
+  margin: 30px auto 20px;
+  padding: 0 16px;
   justify-items: center;
-  width: 100%;
-  max-width: 980px; /* tiny bump for balance */
-  margin: 0 auto 20px auto; /* small bottom margin for air below buttons */
+}
+
+/* All buttons same size */
+.template-btn {
+  width: 170px;
+  height: 52px;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  border-radius: 12px;
+  background: #0070f3;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.template-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 112, 243, 0.4);
+}
+
+.template-btn:disabled {
+  background: rgba(0, 112, 243, 0.1);
+  color: rgba(0, 112, 243, 0.7);
+  border: 1px dashed rgba(0, 112, 243, 0.4);
+  cursor: not-allowed;
+}
+
+/* Responsive: 2 columns on tablet */
+@media (max-width: 900px) {
+  .template-buttons {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 600px;
+  }
+  .template-btn {
+    width: 100%;
+    max-width: 260px;
+  }
+}
+
+/* Mobile: 1 column */
+@media (max-width: 500px) {
+  .template-buttons {
+    grid-template-columns: 1fr;
+    max-width: 340px;
+  }
 }
 
 /* Support 5 templates gracefully */
