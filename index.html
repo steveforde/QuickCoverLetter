@@ -3,146 +3,158 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QuickCoverLetter</title>
+    <title>QuickCoverLetter – €1.99 Cover Letter in 10 Seconds</title>
+    <meta
+      name="description"
+      content="Instant, professional cover letters. No subscriptions. Pay once, get your PDF. Works on any device."
+    />
 
-    <!-- ✅ Core Styles -->
-    <link rel="stylesheet" href="style.css" />
-
-    <!-- ✅ App Branding -->
+    <!-- PWA Essentials -->
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
-
-    <!-- ✅ Splash Screen + Theme -->
-    <link rel="apple-touch-startup-image" href="/splash.png" />
-    <meta name="theme-color" content="#0070f3" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="theme-color" content="#0070f3" />
+
+    <!-- Core Styles -->
+    <link rel="stylesheet" href="style.css" />
   </head>
 
   <body>
-    <!-- Staging test build v1.0.1 -->
-    <!-- 🔹 HERO / APP HEADER -->
+    <!-- HERO HEADER -->
     <header class="hero">
       <div class="hero-content">
-        <h1>🚀 QuickCoverLetter</h1>
-        <p>Create clean, personalized cover letters in seconds.</p>
+        <h1>QuickCoverLetter</h1>
+        <p>Professional cover letters in <strong>10 seconds</strong>. Pay once. Done.</p>
       </div>
-
-      <!-- 🌙 / ☀️ THEME TOGGLE -->
-      <button id="themeToggle" class="theme-btn">🌙</button>
+      <button id="themeToggle" class="theme-btn" aria-label="Toggle dark mode">Dark Mode</button>
     </header>
 
-    <!-- 🔔 TOAST AREA (used for all notifications) -->
-    <div id="toast" class="toast hidden"></div>
+    <!-- TOAST NOTIFICATIONS -->
+    <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
 
-    <!-- 🧾 MAIN FORM -->
+    <!-- MAIN FORM -->
     <main>
-      <form id="form" class="form-box">
-        <!-- Job Title -->
-        <label for="jobTitle">Job Title</label>
+      <form id="form" class="form-box" novalidate>
+        <label for="jobTitle">Job Title <span class="required">*</span></label>
         <input type="text" id="jobTitle" placeholder="e.g. Customer Service Advisor" required />
 
-        <!-- Company Name -->
-        <label for="companyName">Company Name</label>
+        <label for="companyName">Company Name <span class="required">*</span></label>
         <input type="text" id="companyName" placeholder="e.g. Fexco" required />
 
-        <!-- User Name -->
-        <label for="userName">Your Name</label>
+        <label for="userName">Your Name <span class="required">*</span></label>
         <input type="text" id="userName" placeholder="e.g. John Smith" required />
 
-        <!-- Email -->
-        <label for="userEmail">Your Email</label>
+        <label for="userEmail">Your Email <span class="required">*</span></label>
         <input type="email" id="userEmail" placeholder="e.g. jsmith08@gmail.com" required />
 
-        <!-- 💳 Stripe Pay Button -->
-        <button id="payButton" type="button" class="pay-btn">💳 Pay €1.99 to Unlock</button>
+        <button id="payButton" type="button" class="pay-btn">Pay €1.99 to Unlock</button>
       </form>
 
-      <!-- 🧩 TEMPLATE SELECTION -->
-      <h2 class="template-heading">Select Your Template Option Now !!</h2>
-      <div class="template-buttons">
-        <div class="template-option">
-          <button class="template-btn" data-type="professional">Professional</button>
-          <small>Clean and confident — ideal for corporate, tech, or government roles.</small>
-        </div>
+      <!-- TEMPLATE SELECTION -->
+      <section class="template-section" aria-labelledby="template-heading">
+        <h2 id="template-heading">Choose Your Template</h2>
+        <div class="template-buttons">
+          <div class="template-option">
+            <button
+              class="template-btn"
+              data-type="professional"
+              aria-describedby="desc-professional"
+            >
+              Professional
+            </button>
+            <p id="desc-professional" class="template-desc">
+              Clean and confident — ideal for corporate, tech, or government roles.
+            </p>
+          </div>
 
-        <div class="template-option">
-          <button class="template-btn" data-type="formal">Formal</button>
-          <small>Traditional and respectful — great for finance, senior, or legal positions.</small>
-        </div>
+          <div class="template-option">
+            <button class="template-btn" data-type="formal" aria-describedby="desc-formal">
+              Formal
+            </button>
+            <p id="desc-formal" class="template-desc">
+              Traditional and respectful — great for finance, senior, or legal positions.
+            </p>
+          </div>
 
-        <div class="template-option">
-          <button class="template-btn" data-type="friendly">Friendly</button>
-          <small>Warm and approachable — suited to customer support or public-facing roles.</small>
-        </div>
+          <div class="template-option">
+            <button class="template-btn" data-type="friendly" aria-describedby="desc-friendly">
+              Friendly
+            </button>
+            <p id="desc-friendly" class="template-desc">
+              Warm and approachable — suited to customer support or public-facing roles.
+            </p>
+          </div>
 
-        <div class="template-option">
-          <button class="template-btn" data-type="artistic">Artistic</button>
-          <small>Creative and expressive — perfect for design, media, or marketing roles.</small>
-        </div>
+          <div class="template-option">
+            <button class="template-btn" data-type="artistic" aria-describedby="desc-artistic">
+              Artistic
+            </button>
+            <p id="desc-artistic" class="template-desc">
+              Creative and expressive — perfect for design, media, or marketing roles.
+            </p>
+          </div>
 
-        <div class="template-option">
-          <button class="template-btn" data-type="graduate">Graduate</button>
-          <small
-            >Fresh and ambitious — ideal for recent graduates and first-job applications.</small
-          >
+          <div class="template-option">
+            <button class="template-btn" data-type="graduate" aria-describedby="desc-graduate">
+              Graduate
+            </button>
+            <p id="desc-graduate" class="template-desc">
+              Fresh and ambitious — ideal for recent graduates and first-job applications.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <!-- ⏳ SPINNER (for loading state) -->
-      <div id="spinner" class="hidden">
+      <!-- LOADING SPINNER -->
+      <div id="spinner" class="spinner hidden" aria-live="polite">
         <div class="spin"></div>
         <span>Generating your letter...</span>
       </div>
 
-      <!-- 📄 RESULT BOX (generated letter + buttons) -->
-      <div id="resultBox" class="hidden">
-        <h2>Your Cover Letter</h2>
-        <textarea id="coverLetter" readonly></textarea>
+      <!-- RESULT OUTPUT -->
+      <section id="resultBox" class="result-box hidden" aria-labelledby="result-heading">
+        <h2 id="result-heading">Your Cover Letter</h2>
+        <textarea id="coverLetter" readonly aria-label="Generated cover letter"></textarea>
 
-        <!-- Action buttons -->
         <div class="result-buttons">
-          <button id="copyBtn">Copy</button>
-          <button id="clearBtn">Clear</button>
-          <button id="downloadBtn" class="pay-btn">
-            <span class="btn-text">Download PDF</span>
+          <button id="copyBtn" aria-label="Copy to clipboard">Copy</button>
+          <button id="clearBtn" aria-label="Clear and start over">Clear</button>
+          <button id="downloadBtn" class="pay-btn" aria-label="Download as PDF">
+            Download PDF
           </button>
         </div>
-      </div>
+      </section>
     </main>
 
-    <!-- 📄 PDF GENERATION LIBRARY -->
+    <!-- PDF LIBRARY -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- 🧠 Supabase Credentials (Public Only) -->
+    <!-- SUPABASE (Public) -->
     <script>
       window.__SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
       window.__SUPABASE_ANON_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
     </script>
 
-    <!-- 🧩 MAIN LOGIC -->
+    <!-- MAIN LOGIC -->
     <script type="module" src="script.js"></script>
 
-    <!-- 🌍 FOOTER -->
+    <!-- BACKEND KEEP-ALIVE -->
+    <script>
+      const keepAlive = () =>
+        fetch("https://quickcoverletter-backend.onrender.com/api/status").catch(() => {});
+      keepAlive();
+      setInterval(keepAlive, 10 * 60 * 1000);
+    </script>
+
+    <!-- FOOTER -->
     <footer>
       <p>
-        © 2025 <strong>QuickCoverLetter</strong> — Crafted in Ireland 🇮🇪 |
-        <a href="mailto:support@quickcoverletter.com">Contact Support</a>
+        © 2025 <strong>QuickCoverLetter</strong> — Made in Ireland |
+        <a href="mailto:support@quickcoverletter.com">Support</a>
       </p>
     </footer>
-    <!-- KEEP BACKEND AWAKE (every 10 min) -->
-    <script>
-      // Wake on load
-      fetch("https://quickcoverletter-backend.onrender.com/api/status").catch(() => {});
-
-      // Keep alive every 10 minutes
-      setInterval(
-        () => {
-          fetch("https://quickcoverletter-backend.onrender.com/api/status").catch(() => {});
-        },
-        10 * 60 * 1000
-      );
-    </script>
   </body>
 </html>

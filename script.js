@@ -16,12 +16,12 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// ✅ your Supabase (still used for safety read, but NOT required to unlock)
+// your Supabase (still used for safety read, but NOT required to unlock)
 const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
 
-// ✅ your backend on Render
+// your backend on Render
 const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
 
 // Initialize Supabase (optional, but good practice)
@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setTimeout(() => {
     if (localStorage.getItem(FORM_RESTORED_KEY)) {
-      console.log("ℹ️ Form already restored this session — skipping.");
+      console.log("Form already restored this session — skipping.");
       localStorage.removeItem(FORM_DATA_KEY);
       return;
     }
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
       nameField.value = saved.name || "";
       emailField.value = saved.email || "";
 
-      console.log("✅ Form restored from localStorage:", saved);
+      console.log("Form restored from localStorage:", saved);
 
       localStorage.setItem(FORM_RESTORED_KEY, "true");
       localStorage.removeItem(FORM_DATA_KEY);
@@ -123,7 +123,7 @@ Throughout my career I have been recognised for reliability, consistency, and th
 
 I would welcome the opportunity to bring this experience to ${company} and support your goals.
 
-Thank thank you for your time and consideration.
+Thank you for your time and consideration.
 
 Sincerely,
 ${name}`,
@@ -209,7 +209,7 @@ ${name}`,
         if (!lock) {
           lock = document.createElement("span");
           lock.className = "lock-icon";
-          lock.textContent = " 🔒";
+          lock.textContent = " Locked";
           lock.style.marginLeft = "6px";
           lock.style.color = "#ff6b6b";
           lock.style.fontWeight = "bold";
@@ -395,15 +395,15 @@ ${name}`,
   const savedTheme = localStorage.getItem("theme");
   if (savedTheme === "dark") {
     document.body.classList.add("dark");
-    if (themeToggle) themeToggle.textContent = "☀️";
+    if (themeToggle) themeToggle.textContent = "Sun";
   } else {
-    if (themeToggle) themeToggle.textContent = "🌙";
+    if (themeToggle) themeToggle.textContent = "Moon";
   }
 
   themeToggle?.addEventListener("click", () => {
     document.body.classList.toggle("dark");
     const dark = document.body.classList.contains("dark");
-    themeToggle.textContent = dark ? "☀️" : "🌙";
+    themeToggle.textContent = dark ? "Sun" : "Moon";
     localStorage.setItem("theme", dark ? "dark" : "light");
   });
 
