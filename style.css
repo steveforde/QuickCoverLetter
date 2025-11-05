@@ -387,10 +387,13 @@ body.dark .form-box textarea {
   text-align: center;
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--text-primary, #fff);
-  margin: 25px 0 15px 0; /* reduced top and bottom spacing */
-  letter-spacing: 0.5px;
+  color: #fff;
+  margin: 35px 0 20px 0;
+  letter-spacing: 0.6px;
   background: linear-gradient(90deg, #0070f3, #3898ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .template-option {
