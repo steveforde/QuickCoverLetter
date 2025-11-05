@@ -1,0 +1,24 @@
+{
+  "name": "QuickCoverLetter",
+  "short_name": "QCL",
+  "description": "€1.99 cover letter in 10 seconds. No signup. No fluff.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0070f3",
+  "theme_color": "#0070f3",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192xx192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ]
+}
