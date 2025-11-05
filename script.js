@@ -47,10 +47,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // ===== INIT: unlock state from either store =====
-  let isProUser =
-    sessionStorage.getItem("isProUser") === "true" ||
-    localStorage.getItem("quickCL_isProUser") === "true";
+  // ===================================================
+  // UNLOCK STATE: Declare once, check session_id first
+  // ===================================================
+  let isProUser = false;
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionId = urlParams.get("session_id");
+
+  if (sessionId) {
+    isProUser = true;
+    localStorage.setItem("quickCL_isProUser", "true");
+    showToast("Payment successful! Choose a letter type.", "success");
+    window.history.replaceState({}, "", "/");
+  }
+
+  // Restore from localStorage if no session_id
+  if (!isProUser && localStorage.getItem("quickCL_isProUser") === "true") {
+    isProUser = true;
+  }
 
   // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
   const FORM_DATA_KEY = "quickCL_formData";
@@ -77,14 +92,6 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.removeItem(FORM_DATA_KEY);
     }
   }, 300);
-
-  // ===== ONE-TIME SUCCESS TOAST =====
-  const shouldShowSuccess = localStorage.getItem("quickCL_showSuccess") === "true";
-  if (shouldShowSuccess) {
-    isProUser = true;
-    localStorage.removeItem("quickCL_showSuccess");
-    showToast("✅ Payment successful! Choose a letter type.", "success");
-  }
 
   // -------------------------------------------------------
   // 3) toasts
@@ -260,7 +267,6 @@ ${name}`,
   });
 
   // ===== HANDLE STRIPE CANCEL RETURN =====
-  const urlParams = new URLSearchParams(window.location.search);
   const status = urlParams.get("status");
   const cancelEmail = urlParams.get("email");
 

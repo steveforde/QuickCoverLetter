@@ -131,5 +131,18 @@
         <a href="mailto:support@quickcoverletter.com">Contact Support</a>
       </p>
     </footer>
+    <!-- KEEP BACKEND AWAKE (every 10 min) -->
+    <script>
+      // Wake on load
+      fetch("https://quickcoverletter-backend.onrender.com/api/status").catch(() => {});
+
+      // Keep alive every 10 minutes
+      setInterval(
+        () => {
+          fetch("https://quickcoverletter-backend.onrender.com/api/status").catch(() => {});
+        },
+        10 * 60 * 1000
+      );
+    </script>
   </body>
 </html>
