@@ -54,8 +54,26 @@
 
       <!-- TEMPLATE SELECTION -->
       <section class="template-section" aria-labelledby="template-heading">
-        <h2 id="template-heading">Choose Your Template</h2>
+        <!-- Heading moved INSIDE grid, spans all columns -->
         <div class="template-buttons">
+          <h2
+            id="template-heading"
+            style="
+              grid-column: 1 / -1;
+              text-align: center;
+              margin: 0 0 20px 0;
+              font-size: 1.4rem;
+              font-weight: 700;
+              background: linear-gradient(90deg, #0070f3, #3898ff);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              line-height: 1.2;
+            "
+          >
+            Choose Your Template
+          </h2>
+
           <div class="template-option">
             <button
               class="template-btn"
@@ -104,26 +122,6 @@
               Fresh and ambitious — ideal for recent graduates and first-job applications.
             </p>
           </div>
-        </div>
-      </section>
-
-      <!-- LOADING SPINNER -->
-      <div id="spinner" class="spinner hidden" aria-live="polite">
-        <div class="spin"></div>
-        <span>Generating your letter...</span>
-      </div>
-
-      <!-- RESULT OUTPUT -->
-      <section id="resultBox" class="result-box hidden" aria-labelledby="result-heading">
-        <h2 id="result-heading">Your Cover Letter</h2>
-        <textarea id="coverLetter" readonly aria-label="Generated cover letter"></textarea>
-
-        <div class="result-buttons">
-          <button id="copyBtn" aria-label="Copy to clipboard">Copy</button>
-          <button id="clearBtn" aria-label="Clear and start over">Clear</button>
-          <button id="downloadBtn" class="pay-btn" aria-label="Download as PDF">
-            Download PDF
-          </button>
         </div>
       </section>
     </main>
