@@ -339,6 +339,45 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
 });
 
 // ===================================================
+// 🕊️ Immediate Cancel Email (User clicked cancel)
+// ===================================================
+app.post("/send-cancel-email", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "No email provided" });
+
+    await sendBrevoEmail({
+      toEmail: email,
+      toName: "there",
+      subject: "Your cover letter is still here",
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <h2 style="font-weight: 500; margin-bottom: 12px;">Your cover letter is still here.</h2>
+
+          <p>Just letting you know — you stepped away before finishing the payment, and that's completely okay.</p>
+
+          <p>Your details are still on your device and you can pick up anytime.</p>
+
+          <a href="https://quickcoverletter.onrender.com"
+            style="display:inline-block; margin: 18px 0; padding: 10px 18px; background:#0078ff; color:white; text-decoration:none; border-radius:6px;">
+            Resume your letter
+          </a>
+
+          <p style="margin-top:16px;">No pressure — resume whenever you're ready.</p>
+
+          <p style="font-size: 14px; color:#555;">If you need help, just reply to this email.</p>
+        </div>
+      `,
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Cancel email send failed:", err);
+    res.status(500).json({ error: "Cancel email failed" });
+  }
+});
+
+// ===================================================
 // 🌐 MIDDLEWARE
 // ===================================================
 app.use(cors());
