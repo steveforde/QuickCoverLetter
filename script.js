@@ -259,6 +259,28 @@ ${name}`,
     }
   });
 
+  // ===== HANDLE STRIPE CANCEL RETURN =====
+  const urlParams = new URLSearchParams(window.location.search);
+  const status = urlParams.get("status");
+  const cancelEmail = urlParams.get("email");
+
+  if (status === "cancelled" && cancelEmail) {
+    // Remove ?status=cancelled&email=... from URL
+    window.history.replaceState({}, "", window.location.pathname);
+
+    // Show toast
+    showToast("Payment cancelled. Try again anytime.", "info");
+
+    // Tell backend to send email
+    fetch(`${BACKEND_URL}/send-cancel-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: cancelEmail }),
+    }).catch(() => {
+      // Don't show error if email fails
+    });
+  }
+
   // -------------------------------------------------------
   // 8) template clicks
   // -------------------------------------------------------
