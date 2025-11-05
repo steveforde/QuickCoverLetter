@@ -113,17 +113,17 @@
 
     <!-- 🛠️ CRITICAL FIX: Sets the two necessary session flags for app unlock and toast -->
     <script>
-      // 1. Set the unlock flag in SESSION STORAGE
+      // Unlock + one-time toast flags (use localStorage → survives redirect)
+      localStorage.setItem("quickCL_isProUser", "true");
+      localStorage.setItem("quickCL_showSuccess", "true");
+
+      // (Optional) keep sessionStorage too (won’t hurt)
       sessionStorage.setItem("isProUser", "true");
 
-      // 2. NEW: Set the one-time flag to show the toast on the main page
-      sessionStorage.setItem("showSuccessToast", "true");
-
-      // Redirect back after short delay (using '/' for absolute path fix)
+      // Redirect back to your root
       setTimeout(() => {
-        // Redirect to the root path, where the main app will load and show the toast
         window.location.href = "/";
-      }, 1500);
+      }, 1200);
     </script>
   </body>
 </html>

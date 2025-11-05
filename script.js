@@ -47,20 +47,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // single source of truth - Initialize by checking session storage
-  let isProUser = sessionStorage.getItem("isProUser") === "true";
-  // const urlParams = new URLSearchParams(window.location.search); // No longer needed
-  // const justReturnedFromPayment = urlParams.has("session_id"); // No longer needed
+  // ===== INIT: unlock state from either store =====
+  let isProUser =
+    sessionStorage.getItem("isProUser") === "true" ||
+    localStorage.getItem("quickCL_isProUser") === "true";
 
-  // -------------------------------------------------------
-  // 2) RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag
-  // -------------------------------------------------------
+  // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
+  const FORM_DATA_KEY = "quickCL_formData";
+  const FORM_RESTORED_KEY = "quickCL_formRestored";
 
   setTimeout(() => {
-    // Only restore if we haven't already (prevents repeat fills)
     if (localStorage.getItem(FORM_RESTORED_KEY)) {
       console.log("ℹ️ Form already restored this session — skipping.");
-      localStorage.removeItem(FORM_DATA_KEY); // cleanup
+      localStorage.removeItem(FORM_DATA_KEY);
       return;
     }
 
@@ -74,15 +73,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       console.log("✅ Form restored from localStorage:", saved);
 
-      // Mark as restored + clean up
       localStorage.setItem(FORM_RESTORED_KEY, "true");
       localStorage.removeItem(FORM_DATA_KEY);
-
-      showToast("Form restored — select a template!", "success");
-    } else {
-      console.log("ℹ️ No saved form data.");
     }
   }, 300);
+
+  // ===== ONE-TIME SUCCESS TOAST =====
+  const shouldShowSuccess = localStorage.getItem("quickCL_showSuccess") === "true";
+  if (shouldShowSuccess) {
+    isProUser = true;
+    localStorage.removeItem("quickCL_showSuccess");
+    showToast("✅ Payment successful! Choose a letter type.", "success");
+  }
 
   // -------------------------------------------------------
   // 3) toasts
@@ -217,24 +219,7 @@ ${name}`,
   // 6) handle Stripe return / Show Success Toast
   // -------------------------------------------------------
 
-  // 💡 CRITICAL FIX: The previous URL check failed.
-  // We now check for a one-time session flag set by the success page.
-  const shouldShowToast = sessionStorage.getItem("showSuccessToast") === "true";
-
-  if (shouldShowToast) {
-    // Note: isProUser is already set to true via the initial check on load.
-    // 1. Show the required green toast IMMEDIATELY
-    showToast("✅ Payment successful! Choose a letter type.", "success");
-
-    // 2. Consume the flag so the toast only shows once.
-    sessionStorage.removeItem("showSuccessToast");
-  }
-
-  // ====== CONSTANTS ======
-  const FORM_DATA_KEY = "quickCL_formData";
-  const FORM_RESTORED_KEY = "quickCL_formRestored";
-
-  // ====== SAVE (runs on Pay click) ======
+  // === STEP 2: PAY BUTTON — save to localStorage + start Stripe
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
     const company = companyField.value.trim();
@@ -246,18 +231,13 @@ ${name}`,
       return;
     }
 
-    // 1) SAVE FIRST (sync + guaranteed)
-    const payload = { job, company, name, email };
-    try {
-      localStorage.setItem(FORM_DATA_KEY, JSON.stringify(payload));
-      localStorage.removeItem(FORM_RESTORED_KEY); // allow one-time restore on return
-      console.log("💾 Saved to localStorage:", payload);
-    } catch (e) {
-      console.warn("⚠️ localStorage save failed, falling back to sessionStorage:", e?.message);
-      sessionStorage.setItem("userData", JSON.stringify(payload));
-    }
+    // Save form for restore after Stripe redirect (one-time)
+    localStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
+    localStorage.removeItem("quickCL_formRestored"); // allow a fresh restore on return
 
-    // 2) START CHECKOUT
+    // Optional: guard against double-clicks
+    payButton.disabled = true;
+
     try {
       const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
         method: "POST",
@@ -265,69 +245,19 @@ ${name}`,
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      console.log("🔁 Stripe create session response:", data);
-      if (data.url) {
+
+      if (data?.url) {
         window.location.href = data.url;
       } else {
-        showToast("Could not start payment. Check server logs.", "error");
+        showToast("Could not start payment. Check server.", "error");
+        payButton.disabled = false;
       }
     } catch (err) {
-      console.error("❌ Fetch Error:", err);
+      console.error("Fetch Error:", err);
       showToast("Payment failed. Try again.", "error");
+      payButton.disabled = false;
     }
   });
-
-  // ====== RESTORE (runs on load) ======
-  setTimeout(() => {
-    // don’t restore twice
-    if (localStorage.getItem(FORM_RESTORED_KEY)) {
-      console.log("ℹ️ Form already restored this session — skipping further restore.");
-      localStorage.removeItem(FORM_DATA_KEY); // cleanup any leftovers
-      return;
-    }
-
-    let saved = null;
-
-    // PRIMARY: localStorage
-    try {
-      saved = JSON.parse(localStorage.getItem(FORM_DATA_KEY) || "null");
-      if (saved) console.log("📥 Found in localStorage:", saved);
-    } catch (e) {
-      console.warn("⚠️ localStorage parse failed:", e?.message);
-    }
-
-    // FALLBACK: sessionStorage (older flow / Safari issues)
-    if (!saved) {
-      try {
-        saved = JSON.parse(sessionStorage.getItem("userData") || "null");
-        if (saved) console.log("📥 Fallback from sessionStorage:", saved);
-      } catch (e) {
-        console.warn("⚠️ sessionStorage parse failed:", e?.message);
-      }
-    }
-
-    if (saved && typeof saved === "object") {
-      jobField.value = saved.job || "";
-      companyField.value = saved.company || "";
-      nameField.value = saved.name || "";
-      emailField.value = saved.email || "";
-
-      // one-time mark + cleanup
-      localStorage.setItem(FORM_RESTORED_KEY, "true");
-      localStorage.removeItem(FORM_DATA_KEY);
-      sessionStorage.removeItem("userData");
-
-      console.log("✅ Form restored:", {
-        job: jobField.value,
-        company: companyField.value,
-        name: nameField.value,
-        email: emailField.value,
-      });
-      showToast("Form restored — select a template!", "success");
-    } else {
-      console.log("ℹ️ No saved form data found.");
-    }
-  }, 300);
 
   // -------------------------------------------------------
   // 8) template clicks
@@ -407,20 +337,27 @@ ${name}`,
   });
 
   // -------------------------------------------------------
-  // 10) CLEAR — Resets the single-use license
+  // 10) CLEAR — Resets everything + relocks
   // -------------------------------------------------------
   clearBtn?.addEventListener("click", () => {
+    // Reset UI fields
     form.reset();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
 
-    // Clear the session storage flag for the license
+    // Remove unlock state (from BOTH stores)
     sessionStorage.removeItem("isProUser");
+    localStorage.removeItem("quickCL_isProUser");
 
-    // userData is no longer in localStorage, so no need to clear it here.
+    // Remove saved form (from BOTH stores)
+    localStorage.removeItem("quickCL_formData");
+    localStorage.removeItem("quickCL_formRestored");
+    sessionStorage.removeItem("userData"); // fallback wipe
 
+    // Lock again
     isProUser = false;
     updateLockState();
+
     showToast("All cleared — pay again to start a new letter.", "info");
   });
 

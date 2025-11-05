@@ -400,6 +400,13 @@ app.get("/api/test-email", async (req, res) => {
 });
 
 // ===================================================
+// ✅ Unlock check endpoint (for frontend sanity check)
+// ===================================================
+app.get("/api/unlock-status", (req, res) => {
+  res.json({ ok: true });
+});
+
+// ===================================================
 // 🔍 STATUS CHECK
 // ===================================================
 app.get("/api/status", (req, res) => {
