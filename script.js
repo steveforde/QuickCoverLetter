@@ -47,11 +47,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
+  // === UNIFIED STATE: Remove isPaid, use only isProUser ===
+  let isProUser = localStorage.getItem("quickCL_isProUser") === "true";
+
+  // Update UI on load — UNLOCK IF PAID
+  if (isProUser) {
+    templateButtons.forEach((btn) => {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.type.charAt(0).toUpperCase() + btn.dataset.type.slice(1);
+    });
+    showToast("Pro Unlocked! Choose a template.", "success");
+  }
+
   // ===================================================
   // UNLOCK STATE: Declare once, check session_id first
   // ===================================================
-  let isProUser = false;
-
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get("session_id");
 
@@ -153,7 +163,7 @@ Dear Hiring Manager,
 
 I am excited to apply for the ${job} position at ${company}. I enjoy working with people, solving problems in a calm and practical way, and creating a positive experience for customers and colleagues.
 
-I am known for being approachable, dependable, and easy to work with. I bring good communication skills, patience, and a genuine interest in helping others — which I believe would be a good fit for ${company}.
+I am known for being approachable, dependable, and easy to work with. I bring good communication skills, patience, and a genuine interest in helping others — which I believe would be a a good fit for ${company}.
 
 Thank you for considering my application. I would be happy to speak further about how I can contribute to your team.
 
