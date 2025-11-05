@@ -36,15 +36,17 @@ brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
  */
 const sendBrevoEmail = async ({ toEmail, toName, subject, html }) => {
   try {
-    await brevoClient.sendTransacEmail({
+    const result = await brevoClient.sendTransacEmail({
       sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
       to: [{ email: toEmail, name: toName }],
       subject,
       htmlContent: html,
     });
-    console.log("✅ Email sent:", subject, "->", toEmail);
+    console.log("Email sent:", subject, "->", toEmail);
+    return result;
   } catch (err) {
-    console.error("❌ Brevo send error:", err.response?.body || err.message);
+    console.error("BREVO FAILED:", err.response?.body || err.message);
+    throw err; // RE-THROW SO WE SEE IT
   }
 };
 
@@ -338,42 +340,38 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
   res.json({ received: true });
 });
 
-// ===================================================
-// 🕊️ Immediate Cancel Email (User clicked cancel)
-// ===================================================
+// Immediate Cancel Email (User clicked cancel)
 app.post("/send-cancel-email", async (req, res) => {
   try {
     const { email } = req.body;
+    console.log("CANCEL EMAIL REQUEST:", email); // LOG
+
     if (!email) return res.status(400).json({ error: "No email provided" });
 
     await sendBrevoEmail({
       toEmail: email,
-      toName: "there",
+      toName: "User",
       subject: "Your cover letter is still here",
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
           <h2 style="font-weight: 500; margin-bottom: 12px;">Your cover letter is still here.</h2>
-
           <p>Just letting you know — you stepped away before finishing the payment, and that's completely okay.</p>
-
           <p>Your details are still on your device and you can pick up anytime.</p>
-
           <a href="https://quickcoverletter.onrender.com"
             style="display:inline-block; margin: 18px 0; padding: 10px 18px; background:#0078ff; color:white; text-decoration:none; border-radius:6px;">
             Resume your letter
           </a>
-
           <p style="margin-top:16px;">No pressure — resume whenever you're ready.</p>
-
           <p style="font-size: 14px; color:#555;">If you need help, just reply to this email.</p>
         </div>
       `,
     });
 
+    console.log("CANCEL EMAIL SENT TO:", email); // LOG
     res.json({ success: true });
   } catch (err) {
-    console.error("Cancel email send failed:", err);
-    res.status(500).json({ error: "Cancel email failed" });
+    console.error("BREVO ERROR:", err.response?.body || err.message); // FULL ERROR
+    res.status(500).json({ error: "Cancel email failed", details: err.message });
   }
 });
 
