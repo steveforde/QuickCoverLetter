@@ -68,6 +68,14 @@ try {
 }
 
 // ===================================================
+// 🌐 MIDDLEWARE
+// ===================================================
+app.use(cors());
+// Note: express.json() for all *other* routes, but not the webhook
+app.use(express.json());
+app.use(express.static(__dirname));
+
+// ===================================================
 // 🪝 STRIPE WEBHOOK (Success, Failed, Canceled)
 // NOTE: bodyParser.raw() must be used here instead of express.json()
 // ===================================================
@@ -374,14 +382,6 @@ app.post("/send-cancel-email", async (req, res) => {
     res.status(500).json({ error: "Cancel email failed", details: err.message });
   }
 });
-
-// ===================================================
-// 🌐 MIDDLEWARE
-// ===================================================
-app.use(cors());
-// Note: express.json() for all *other* routes, but not the webhook
-app.use(express.json());
-app.use(express.static(__dirname));
 
 // ===================================================
 // 💳 STRIPE CHECKOUT SESSION
