@@ -394,7 +394,7 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       line_items: [{ price: process.env.PRICE_ID, quantity: 1 }],
       success_url: `${process.env.DOMAIN}/success.html?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.DOMAIN}/?status=cancelled&email=${encodeURIComponent(req.body.email)}`,
+      cancel_url: `${process.env.DOMAIN}/cancel.html`,
       customer_email: req.body.email || undefined,
     });
     res.json({ url: session.url });
