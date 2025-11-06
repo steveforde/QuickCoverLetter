@@ -47,23 +47,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // ✅ Start locked by default, but restore unlock if session active
+  // ✅ Start locked, but restore unlock from sessionStorage (not localStorage)
   let isProUser = sessionStorage.getItem("isProUser") === "true";
 
-  // ===================================================
-  // UNLOCK STATE: Check Stripe return (?session_id)
-  // ===================================================
+  // Check Stripe success return
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get("session_id");
 
   if (sessionId) {
+    sessionStorage.setItem("isProUser", "true");
     isProUser = true;
-    sessionStorage.setItem("isProUser", "true"); // store unlock only for this session
-    localStorage.setItem("quickCL_showSuccess", "true"); // one-time toast trigger
-    window.location.href = "/"; // reload clean URL
-    return;
+
+    // one-time toast trigger
+    localStorage.setItem("quickCL_showSuccess", "true");
+
+    // Clean redirect WITHOUT losing restore state
+    window.location.replace(window.location.origin + "/");
   }
 
+  // Apply lock state NOW
   updateLockState();
 
   // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
