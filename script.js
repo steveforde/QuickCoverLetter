@@ -50,15 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // === UNIFIED STATE: Remove isPaid, use only isProUser ===
   let isProUser = localStorage.getItem("quickCL_isProUser") === "true";
 
-  // Update UI on load — UNLOCK IF PAID
-  if (isProUser) {
-    templateButtons.forEach((btn) => {
-      btn.disabled = false;
-      btn.textContent = btn.dataset.type.charAt(0).toUpperCase() + btn.dataset.type.slice(1);
-    });
-    showToast("Pro Unlocked! Choose a template.", "success");
-  }
-
   // ===================================================
   // UNLOCK STATE: Declare once, check session_id first
   // ===================================================
