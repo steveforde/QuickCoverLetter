@@ -67,7 +67,13 @@ try {
   console.error("❌ Supabase init failed:", e.message);
 }
 
-app.use(cors());
+app.use(
+  cors({
+    origin: ["https://quickcoverletter.app", "https://quickcoverletter.onrender.com"],
+    methods: ["GET", "POST"],
+    credentials: false,
+  })
+);
 
 // ===================================================
 // 🪝 STRIPE WEBHOOK (Success, Failed, Canceled)
