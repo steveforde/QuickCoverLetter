@@ -47,12 +47,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // === UNIFIED STATE: use only isProUser ===
-  // 1) Load persisted unlock state
-  let isProUser = localStorage.getItem("quickCL_isProUser") === "true";
+  // ✅ Start locked by default
+  let isProUser = false;
 
-  // Apply lock/unlock immediately
-  updateLockState();
+  // ✅ Load stored unlock only *after* page is ready
+  if (localStorage.getItem("quickCL_isProUser") === "true") {
+    isProUser = true;
+  }
+
+  // ✅ Do NOT call updateLockState yet — wait until after we check URL params
 
   // ===================================================
   // UNLOCK STATE: Check Stripe return (?session_id)
@@ -61,16 +64,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const sessionId = urlParams.get("session_id");
 
   if (sessionId) {
+    // ✅ Mark user as paid
     isProUser = true;
     localStorage.setItem("quickCL_isProUser", "true");
 
-    showToast("Payment successful! Choose a letter type.", "success");
+    // ✅ Show one-time success toast
+    localStorage.setItem("quickCL_showSuccess", "true");
 
-    // Remove ?session_id from the URL
-    window.history.replaceState({}, "", "/");
-
-    updateLockState();
+    // ✅ Clean URL (remove session_id)
+    window.history.replaceState({}, "", window.location.pathname);
   }
+
+  updateLockState();
 
   // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
   const FORM_DATA_KEY = "quickCL_formData";
