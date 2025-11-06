@@ -69,7 +69,11 @@ try {
 
 app.use(
   cors({
-    origin: ["https://quickcoverletter.app", "https://quickcoverletter.onrender.com"],
+    origin: [
+      "https://www.quickcoverletter.app",
+      "https://quickcoverletter.app",
+      "https://quickcoverletter.onrender.com",
+    ],
     methods: ["GET", "POST"],
     credentials: false,
   })
