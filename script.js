@@ -72,11 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
     window.history.replaceState({}, "", "/");
   }
 
-  // Restore from localStorage if no session_id
-  if (!isProUser && localStorage.getItem("quickCL_isProUser") === "true") {
-    isProUser = true;
-  }
-
   // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
   const FORM_DATA_KEY = "quickCL_formData";
   const FORM_RESTORED_KEY = "quickCL_formRestored";
