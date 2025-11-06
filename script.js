@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === UNIFIED STATE: Remove isPaid, use only isProUser ===
   let isProUser = localStorage.getItem("quickCL_isProUser") === "true";
-
+  updateLockState();
   // ===================================================
   // UNLOCK STATE: Declare once, check session_id first
   // ===================================================
