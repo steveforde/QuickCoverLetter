@@ -67,13 +67,7 @@ try {
   console.error("❌ Supabase init failed:", e.message);
 }
 
-// ===================================================
-// 🌐 MIDDLEWARE
-// ===================================================
 app.use(cors());
-// Note: express.json() for all *other* routes, but not the webhook
-app.use(express.json());
-app.use(express.static(__dirname));
 
 // ===================================================
 // 🪝 STRIPE WEBHOOK (Success, Failed, Canceled)
@@ -213,93 +207,74 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     });
   }
 
-  // ❌ 2. PAYMENT FAILED (Final Fix)
-  if (event.type === "payment_intent.payment_failed") {
-    const obj = event.data.object;
+  // ❌ PAYMENT FAILED (Friendly, non-pushy, correct event type)
+  if (event.type === "charge.failed") {
+    const charge = event.data.object;
 
-    // ✅ Try every possible Stripe field where an email can appear
     const email =
-      obj?.receipt_email ||
-      obj?.customer_email ||
-      obj?.billing_details?.email ||
-      obj?.last_payment_error?.payment_method?.billing_details?.email ||
-      obj?.charges?.data?.[0]?.billing_details?.email ||
-      (obj?.customer && obj?.customer.email) ||
-      null;
+      charge?.billing_details?.email || charge?.receipt_email || charge?.customer_email || null;
 
-    const name =
-      obj?.billing_details?.name ||
-      obj?.last_payment_error?.payment_method?.billing_details?.name ||
-      obj?.charges?.data?.[0]?.billing_details?.name ||
-      "Customer";
+    const name = charge?.billing_details?.name || "there";
 
     console.log("⚠️ Payment failed for:", email);
 
     if (!email) {
-      console.log("⚠️ No email found in failed payment payload. Skipping email send.");
+      console.log("⚠️ No email found — skipping failed payment email.");
       return res.json({ received: true });
     }
 
-    // --- Start of Corrected Email Block ---
-    // The duplicated email sending block below this section in the original code
-    // has been removed for cleanup and to prevent scoping errors.
     await sendBrevoEmail({
       toEmail: email,
       toName: name,
-      subject: "⚠️ Payment Failed – Please Try Again",
+      subject: "Your Cover Letter Payment Didn’t Go Through",
       html: `
-        <table width="100%" cellspacing="0" cellpadding="0" border="0"
-          style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
-          <tr>
-            <td align="center">
-              <table width="600" cellspacing="0" cellpadding="0" border="0"
-                style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
-                <tr>
-                  <td align="center" style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);padding:25px;">
-                    <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
-                      alt="QuickCoverLetter"
-                      width="70" height="70"
-                      style="display:block;margin:auto;border-radius:50%;background:#fff;
-                             padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-                    <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
-                    <p style="color:#dbeafe;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:35px 45px;text-align:left;">
-                    <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
-                    <p style="font-size:16px;color:#333;margin:0 0 18px;">
-                      Unfortunately, your payment for <strong>€1.99</strong> didn't go through.
-                    </p>
-                    <p style="font-size:16px;color:#333;margin:0 0 25px;">
-                      Don't worry — you haven't been charged. This usually happens if your card was declined or the session expired.
-                    </p>
-                    <div style="text-align:center;margin:35px 0;">
-                      <a href="https://quickcoverletter.onrender.com"
-                      style="background:#1e3a8a;color:#fff;padding:14px 28px;border-radius:8px;
-                      text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
-                      Try Again
-                      </a>
-                    </div>
-                    <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
-                      If this keeps happening, reply to this email — we'll help you out. 💬
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
-                    <p style="font-size:13px;color:#777;margin:0;">
-                      Made with 💙 in Ireland<br>
-                      <span style="color:#999;">QuickCoverLetter · quickprocv.com</span>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>`,
+      <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+        <tr>
+          <td align="center">
+            <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.08);overflow:hidden;">
+              
+              <!-- HEADER -->
+              <tr>
+                <td align="center" style="background:#0070f3;padding:26px;">
+                  <h1 style="color:#ffffff;font-size:22px;margin:0;">QuickCoverLetter</h1>
+                  <p style="color:#dbeafe;font-size:13px;margin:4px 0 0;">Professional Cover Letter Templates</p>
+                </td>
+              </tr>
+
+              <!-- BODY -->
+              <tr>
+                <td style="padding:34px 42px;text-align:left;">
+                  <p style="font-size:17px;color:#333;margin:0 0 18px;">Hi ${name},</p>
+
+                  <p style="font-size:16px;color:#333;margin:0 0 16px;">
+                    It looks like your €1.99 payment didn’t go through this time.
+                  </p>
+
+                  <p style="font-size:16px;color:#333;margin:0 0 25px;">
+                    No worries — <strong>you haven’t been charged.</strong> This can happen if the card was declined or the session expired.
+                  </p>
+
+                  <div style="text-align:center;margin:35px 0;">
+                    <a href="${process.env.DOMAIN}"
+                      style="background:#0070f3;color:#fff;padding:14px 26px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">
+                      Resume My Cover Letter
+                    </a>
+                  </div>
+
+                  <p style="font-size:14px;color:#666;margin:30px 0 0;text-align:center;">
+                    Made with care in Ireland 💙
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    `,
     });
-    // --- End of Corrected Email Block ---
+
+    return res.json({ received: true });
   }
 
   // 🕓 3. CHECKOUT CANCELED / EXPIRED
@@ -382,6 +357,13 @@ app.post("/send-cancel-email", async (req, res) => {
     res.status(500).json({ error: "Cancel email failed", details: err.message });
   }
 });
+
+app.use(express.json());
+// ===================================================
+// 🌐 MIDDLEWARE
+// ===================================================
+
+app.use(express.static(__dirname));
 
 // ===================================================
 // 💳 STRIPE CHECKOUT SESSION
