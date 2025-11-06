@@ -47,15 +47,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // ✅ Start locked by default
-  let isProUser = false;
-
-  // ✅ Load stored unlock only *after* page is ready
-  if (localStorage.getItem("quickCL_isProUser") === "true") {
-    isProUser = true;
-  }
-
-  // ✅ Do NOT call updateLockState yet — wait until after we check URL params
+  // ✅ Start locked by default, but restore unlock if session active
+  let isProUser = sessionStorage.getItem("isProUser") === "true";
 
   // ===================================================
   // UNLOCK STATE: Check Stripe return (?session_id)
@@ -64,15 +57,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const sessionId = urlParams.get("session_id");
 
   if (sessionId) {
-    // ✅ Mark user as paid
     isProUser = true;
-    localStorage.setItem("quickCL_isProUser", "true");
-
-    // ✅ Show one-time success toast
-    localStorage.setItem("quickCL_showSuccess", "true");
-
-    // ✅ Clean URL (remove session_id)
-    window.history.replaceState({}, "", window.location.pathname);
+    sessionStorage.setItem("isProUser", "true"); // store unlock only for this session
+    localStorage.setItem("quickCL_showSuccess", "true"); // one-time toast trigger
+    window.location.href = "/"; // reload clean URL
+    return;
   }
 
   updateLockState();
@@ -106,6 +95,15 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------
   // 3) toasts
   // -------------------------------------------------------
+
+  const shouldShowSuccess = localStorage.getItem("quickCL_showSuccess") === "true";
+  if (shouldShowSuccess) {
+    isProUser = true;
+    sessionStorage.setItem("isProUser", "true");
+    localStorage.removeItem("quickCL_showSuccess");
+    showToast("✅ Payment successful! Choose a letter type.", "success");
+  }
+
   function showToast(msg, type = "info") {
     if (!toast) return;
     toast.textContent = msg;
@@ -383,16 +381,17 @@ ${name}`,
     coverLetter.value = "";
     resultBox.classList.add("hidden");
 
-    // Remove unlock state (from BOTH stores)
+    // Remove unlock state (session only — this is the new system)
     sessionStorage.removeItem("isProUser");
-    localStorage.removeItem("quickCL_isProUser");
 
-    // Remove saved form (from BOTH stores)
+    // Clean up any old leftover values from previous bug versions
+    localStorage.removeItem("quickCL_isProUser");
+    localStorage.removeItem("quickCL_showSuccess"); // one-time toast flag
     localStorage.removeItem("quickCL_formData");
     localStorage.removeItem("quickCL_formRestored");
-    sessionStorage.removeItem("userData"); // fallback wipe
+    sessionStorage.removeItem("userData");
 
-    // Lock again
+    // Relock UI
     isProUser = false;
     updateLockState();
 
@@ -416,6 +415,10 @@ ${name}`,
     themeToggle.textContent = dark ? "Sun" : "Moon";
     localStorage.setItem("theme", dark ? "dark" : "light");
   });
+
+  if (sessionStorage.getItem("isProUser") === "true") {
+    isProUser = true;
+  }
 
   // -------------------------------------------------------
   // 12) init: start LOCKED (or unlocked if flag exists)
