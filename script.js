@@ -47,10 +47,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // ===== INIT: unlock state from either store =====
-  let isProUser =
-    sessionStorage.getItem("isProUser") === "true" ||
-    localStorage.getItem("quickCL_isProUser") === "true";
+  // ===== INIT: unlock state from persistent flag only =====
+  let isProUser = localStorage.getItem("quickCL_isProUser") === "true";
+
+  // Apply lock/unlock immediately
+  updateLockState();
 
   // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
   const FORM_DATA_KEY = "quickCL_formData";
