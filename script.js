@@ -98,13 +98,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // 3) toasts
   // -------------------------------------------------------
 
-  const shouldShowSuccess = localStorage.getItem("quickCL_showSuccess") === "true";
-  if (shouldShowSuccess) {
-    isProUser = true;
-    sessionStorage.setItem("isProUser", "true");
-    localStorage.removeItem("quickCL_showSuccess");
-    showToast("✅ Payment successful! Choose a letter type.", "success");
-  }
+  // ✅ Show success toast AFTER layout is ready
+  setTimeout(() => {
+    const shouldShowSuccess = localStorage.getItem("quickCL_showSuccess") === "true";
+    if (shouldShowSuccess) {
+      isProUser = true;
+      sessionStorage.setItem("isProUser", "true");
+      localStorage.removeItem("quickCL_showSuccess");
+
+      updateLockState(); // re-apply unlocked state first
+
+      showToast("✅ Templates unlocked! Choose a letter style.", "success");
+    }
+  }, 600);
 
   function showToast(msg, type = "info") {
     if (!toast) return;
