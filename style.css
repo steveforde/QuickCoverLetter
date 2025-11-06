@@ -644,6 +644,22 @@ body.dark #coverLetter {
   box-shadow: 0 6px 20px rgba(0, 112, 243, 0.22);
 }
 
+.result-box.hidden {
+  display: none;
+}
+.result-box {
+  margin-top: 30px;
+}
+textarea#coverLetter {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-size: 15px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
 /* specific colours */
 #copyBtn {
   background: var(--success);

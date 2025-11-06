@@ -108,12 +108,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function showToast(msg, type = "info") {
     if (!toast) return;
-    toast.textContent = msg;
-    toast.className = `toast ${type} show`;
-    clearTimeout(toast._hide);
-    toast._hide = setTimeout(() => {
-      toast.classList.remove("show");
-    }, 4000);
+    setTimeout(() => {
+      toast.textContent = msg;
+      toast.className = `toast ${type} show`;
+      clearTimeout(toast._hide);
+      toast._hide = setTimeout(() => {
+        toast.classList.remove("show");
+      }, 7000); // stay visible longer
+    }, 350); // let layout settle first
   }
 
   // -------------------------------------------------------
