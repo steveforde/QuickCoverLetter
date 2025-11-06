@@ -35,19 +35,27 @@ brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
  * Moved outside the webhook handler to be accessible by all routes.
  */
 const sendBrevoEmail = async ({ toEmail, toName, subject, html }) => {
-  return brevoClient.sendTransacEmail({
-    sender: {
-      name: process.env.EMAIL_FROM_NAME || "QuickCoverLetter",
-      email: process.env.EMAIL_FROM_ADDRESS || "support@quickcoverletter.app",
-    },
-    replyTo: {
-      name: process.env.REPLY_TO_NAME || "Stephen Forde",
-      email: process.env.REPLY_TO_ADDRESS || "sforde08@gmail.com",
-    },
-    to: [{ email: toEmail, name: toName }],
-    subject,
-    htmlContent: html,
-  });
+  try {
+    const result = await brevoClient.sendTransacEmail({
+      sender: {
+        name: "QuickCoverLetter",
+        email: "support@quickcoverletter.app",
+      },
+      replyTo: {
+        email: "sforde08@gmail.com",
+        name: "Stephen",
+      },
+      to: [{ email: toEmail, name: toName }],
+      subject,
+      htmlContent: html,
+    });
+
+    console.log("✅ Email sent:", result);
+    return result;
+  } catch (error) {
+    console.error("❌ Error sending email:", error);
+    throw error;
+  }
 };
 
 // ===================================================
@@ -410,7 +418,7 @@ app.post("/api/send-test-email", async (req, res) => {
   try {
     const { to } = req.body;
     await sendBrevoEmail({
-      toEmail: to || "support@support@quickcoverletter.com",
+      toEmail: to || "sforde08@gmail.com",
       toName: "Test Recipient",
       subject: "QuickCoverLetter — Test Email ✅",
       html: `<h2>QuickCoverLetter</h2><p>Your Brevo email system is working perfectly!</p>`,
