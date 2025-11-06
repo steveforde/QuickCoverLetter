@@ -48,7 +48,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const themeToggle = document.getElementById("themeToggle");
 
   // === UNIFIED STATE: Remove isPaid, use only isProUser ===
-  let isProUser = localStorage.getItem("quickCL_isProUser") === "true";
+  // AFTER
+  let isProUser = false;
   updateLockState();
   // ===================================================
   // UNLOCK STATE: Declare once, check session_id first
