@@ -132,13 +132,12 @@
     </div>
 
     <footer>
-      <span>Made in Ireland | QuickCoverLetter</span>
+      <span>Made in Ireland • https://www.quickcoverletter.app</span>
     </footer>
 
     <!-- UNLOCK + TOAST + REDIRECT -->
     <script>
       // CRITICAL: Unlock user + show one-time toast
-      localStorage.setItem("quickCL_isProUser", "true");
       localStorage.setItem("quickCL_showSuccess", "true");
 
       // Fallback sessionStorage (optional)
@@ -146,7 +145,7 @@
 
       // Smooth redirect after 1.2s
       setTimeout(() => {
-        window.location.replace("/");
+        window.location.replace("https://www.quickcoverletter.app");
       }, 1200);
     </script>
   </body>

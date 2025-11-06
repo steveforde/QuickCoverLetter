@@ -35,19 +35,19 @@ brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
  * Moved outside the webhook handler to be accessible by all routes.
  */
 const sendBrevoEmail = async ({ toEmail, toName, subject, html }) => {
-  try {
-    const result = await brevoClient.sendTransacEmail({
-      sender: { name: "QuickCoverLetter", email: "support@quickprocv.com" },
-      to: [{ email: toEmail, name: toName }],
-      subject,
-      htmlContent: html,
-    });
-    console.log("Email sent:", subject, "->", toEmail);
-    return result;
-  } catch (err) {
-    console.error("BREVO FAILED:", err.response?.body || err.message);
-    throw err; // RE-THROW SO WE SEE IT
-  }
+  return brevoClient.sendTransacEmail({
+    sender: {
+      name: process.env.EMAIL_FROM_NAME || "QuickCoverLetter",
+      email: process.env.EMAIL_FROM_ADDRESS || "support@quickcoverletter.app",
+    },
+    replyTo: {
+      name: process.env.REPLY_TO_NAME || "Stephen Forde",
+      email: process.env.REPLY_TO_ADDRESS || "sforde08@gmail.com",
+    },
+    to: [{ email: toEmail, name: toName }],
+    subject,
+    htmlContent: html,
+  });
 };
 
 // ===================================================
@@ -206,7 +206,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
             <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
               <p style="font-size:13px;color:#777;margin:0;">
                 Made with 💙 in Ireland<br>
-                <span style="color:#999;">QuickCoverLetter · quickprocv.com</span>
+                <span style="color:#999;">QuickCoverLetter · quickcoverletter.app</span>
               </p>
             </td>
           </tr>
