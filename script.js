@@ -47,12 +47,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // === UNIFIED STATE: Remove isPaid, use only isProUser ===
-  // AFTER
-  let isProUser = false;
+  // === UNIFIED STATE: use only isProUser ===
+  // 1) Load persisted unlock state
+  let isProUser = localStorage.getItem("quickCL_isProUser") === "true";
+
+  // Apply lock/unlock immediately
   updateLockState();
+
   // ===================================================
-  // UNLOCK STATE: Declare once, check session_id first
+  // UNLOCK STATE: Check Stripe return (?session_id)
   // ===================================================
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get("session_id");
@@ -60,8 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (sessionId) {
     isProUser = true;
     localStorage.setItem("quickCL_isProUser", "true");
+
     showToast("Payment successful! Choose a letter type.", "success");
+
+    // Remove ?session_id from the URL
     window.history.replaceState({}, "", "/");
+
+    updateLockState();
   }
 
   // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====

@@ -388,22 +388,26 @@ app.post("/send-cancel-email", async (req, res) => {
 // ===================================================
 app.post("/create-checkout-session", async (req, res) => {
   try {
+    const email = req.body.email;
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: process.env.PRICE_ID, quantity: 1 }],
 
-      // ✅ Keep session_id on success → form restore works
-      success_url: `${process.env.DOMAIN}/success.html?session_id={CHECKOUT_SESSION_ID}&restored=true`,
+      // ✅ Return to MAIN PAGE so unlock runs (no success.html)
+      success_url: `${process.env.DOMAIN}/?session_id={CHECKOUT_SESSION_ID}`,
 
-      // ✅ Return to main app + preserve email → instant cancel email + restore works
-      cancel_url: `${process.env.DOMAIN}/?status=cancelled&email=${encodeURIComponent(req.body.email)}`,
+      // ✅ Return to main + preserve email so cancel email works
+      cancel_url: `${process.env.DOMAIN}/?status=cancelled&email=${encodeURIComponent(email)}`,
 
-      customer_email: req.body.email || undefined,
+      customer_email: email || undefined,
+      metadata: { email },
     });
+
     res.json({ url: session.url });
   } catch (err) {
-    console.error("Stripe error:", err.message);
-    res.status(500).json({ error: err.message });
+    console.error("Stripe Error:", err);
+    return res.status(500).json({ error: "Failed to create checkout session" });
   }
 });
 
