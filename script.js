@@ -69,7 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ✅ Ensure UI remains locked after cancel
     isProUser = false;
-    sessionStorage.removeItem("isProUser");
     localStorage.removeItem("quickCL_isProUser");
     updateLockState();
 
@@ -236,8 +235,8 @@ ${name}`,
       return;
     }
 
-    // SAVE TO sessionStorage (survives redirect + refresh)
-    sessionStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
+    localStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
+    localStorage.setItem("quickCL_isProUser", "true"); // also save unlock
 
     payButton.disabled = true;
     payButton.textContent = "Redirecting...";
@@ -346,19 +345,14 @@ ${name}`,
   // 10) CLEAR — Resets everything + relocks
   // -------------------------------------------------------
   clearBtn?.addEventListener("click", () => {
-    // Reset UI fields
     form.reset();
     coverLetter.value = "";
     resultBox.classList.add("hidden");
 
-    // Remove unlock state (session only — this is the new system)
-    sessionStorage.removeItem("isProUser");
+    // CLEAR EVERYTHING
+    localStorage.removeItem("quickCL_formData");
+    localStorage.removeItem("quickCL_isProUser");
 
-    // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-    sessionStorage.removeItem("quickCL_formData");
-    // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
-
-    // Relock UI
     isProUser = false;
     updateLockState();
 
@@ -383,14 +377,10 @@ ${name}`,
     localStorage.setItem("theme", dark ? "dark" : "light");
   });
 
-  // FINAL INIT + FORM RESTORE (runs EVERY time page loads)
-  if (sessionStorage.getItem("isProUser") === "true") {
+  // RESTORE FROM localStorage ONLY
+  if (localStorage.getItem("quickCL_isProUser") === "true") {
     isProUser = true;
-  }
-
-  // RESTORE FORM IF UNLOCKED (sessionStorage = survives refresh)
-  if (isProUser) {
-    const saved = JSON.parse(sessionStorage.getItem("quickCL_formData") || "{}");
+    const saved = JSON.parse(localStorage.getItem("quickCL_formData") || "{}");
     if (saved.job) jobField.value = saved.job;
     if (saved.company) companyField.value = saved.company;
     if (saved.name) nameField.value = saved.name;
@@ -399,7 +389,6 @@ ${name}`,
 
   updateLockState();
 
-  // Show success toast ONLY on real Stripe redirect
   if (sessionId) {
     showToast("Templates unlocked! Choose a letter style.", "success");
   }
