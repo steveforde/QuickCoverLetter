@@ -1,389 +1,215 @@
-// =========================================================
-// QuickCoverLetter — FRONTEND LOGIC (FINAL PATCH)
-// ---------------------------------------------------------
-// WHAT THIS DOES:
-// 1. CRITICAL FIX: Initializes 'isProUser' by checking sessionStorage.
-// 2. CRITICAL FIX: Form data now uses sessionStorage and clears after read,
-//    ensuring a blank form on fresh load.
-// 3. CRITICAL FIX: Success toast now uses a one-time sessionStorage flag.
-// 4. Forces ALL 4 fields to be filled before allowing payment.
-// 5. Generates 4 letter types with your exact wording.
-// 6. Smooth scrolls to the textarea when letter is generated.
-// 7. Download → pdf name = job-company.pdf.
-// 8. Clear → wipes storage + locks again (user must pay again).
-// 9. Toasts auto-hide after 4 seconds.
-// =========================================================
-
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// your Supabase (still used for safety read, but NOT required to unlock)
-const SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
-
-// your backend on Render
 const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
 
-// Initialize Supabase (optional, but good practice)
-createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 document.addEventListener("DOMContentLoaded", () => {
-  // -------------------------------------------------------
-  // 1) grab DOM elements
-  // -------------------------------------------------------
   const form = document.getElementById("form");
-  const jobField = document.getElementById("jobTitle");
-  const companyField = document.getElementById("companyName");
-  const nameField = document.getElementById("userName");
-  const emailField = document.getElementById("userEmail");
+  const job = document.getElementById("jobTitle");
+  const company = document.getElementById("companyName");
+  const name = document.getElementById("userName");
+  const email = document.getElementById("userEmail");
   const payButton = document.getElementById("payButton");
   const templateButtons = document.querySelectorAll(".template-btn");
-  const coverLetter = document.getElementById("coverLetter");
   const resultBox = document.getElementById("resultBox");
+  const coverLetter = document.getElementById("coverLetter");
   const clearBtn = document.getElementById("clearBtn");
   const downloadBtn = document.getElementById("downloadBtn");
   const copyBtn = document.getElementById("copyBtn");
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // Start locked, but restore unlock from sessionStorage
-  let isProUser = sessionStorage.getItem("quickCL_isProUser") === "true";
+  let isPro = sessionStorage.getItem("pro") === "true";
 
-  // Check Stripe success return
-  const urlParams = new URLSearchParams(window.location.search);
-  const sessionId = urlParams.get("session_id");
+  const qs = new URLSearchParams(location.search);
+  const session_id = qs.get("session_id");
+  const cancelled = qs.get("status") === "cancelled";
 
-  // Handle Cancel Return (User clicked "Cancel" in Stripe Checkout)
-  if (urlParams.get("status") === "cancelled") {
-    const email = urlParams.get("email");
-
-    // Send friendly cancel email (only if email exists)
-    if (email) {
-      fetch(`${BACKEND_URL}/send-cancel-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      }).catch(() => {});
-    }
-
-    // Ensure UI remains locked after cancel
-    isProUser = false;
-    sessionStorage.removeItem("quickCL_isProUser");
-    sessionStorage.removeItem("quickCL_formData");
-    updateLockState();
-
-    showToast("Payment cancelled — no charge made.", "info");
-  }
-
-  if (sessionId) {
-    sessionStorage.setItem("quickCL_isProUser", "true");
-    isProUser = true;
-
-    // Clean redirect WITHOUT losing restore state
+  if (session_id) {
+    isPro = true;
+    sessionStorage.setItem("pro", "true");
     history.replaceState({}, "", "/");
   }
 
-  // Apply lock state NOW
-  updateLockState();
-
-  // -------------------------------------------------------
-  // 3) toasts
-  // -------------------------------------------------------
-  function showToast(msg, type = "info") {
-    if (!toast) return;
-    setTimeout(() => {
-      toast.textContent = msg;
-      toast.className = `toast ${type} show`;
-      clearTimeout(toast._hide);
-      toast._hide = setTimeout(() => {
-        toast.classList.remove("show");
-      }, 7000);
-    }, 350);
+  if (cancelled) {
+    sessionStorage.removeItem("pro");
+    isPro = false;
+    history.replaceState({}, "", "/");
   }
 
-  // -------------------------------------------------------
-  // 4) templates (your wording, unchanged)
-  // -------------------------------------------------------
-  const templates = {
-    professional: (name, job, company, date) => `${name}
+  function showToast(msg, type = "info") {
+    toast.textContent = msg;
+    toast.className = `toast ${type} show`;
+    setTimeout(() => toast.classList.remove("show"), 5000);
+  }
+
+  function lockState() {
+    templateButtons.forEach((btn) => {
+      btn.disabled = !isPro;
+      let lock = btn.querySelector(".lock-icon");
+      if (!isPro && !lock) {
+        lock = document.createElement("span");
+        lock.className = "lock-icon";
+        lock.textContent = " Locked";
+        lock.style.marginLeft = "6px";
+        lock.style.color = "#ff6b6b";
+        lock.style.fontWeight = "bold";
+        btn.appendChild(lock);
+      }
+      if (isPro && lock) lock.remove();
+    });
+  }
+  lockState();
+
+  const TEMPLATES = {
+    professional: (n, j, c, d) => `${n}
 [Your Address]
 [City, County]
-${date}
+${d}
 
 Dear Hiring Manager,
 
-I am writing to apply for the ${job} position at ${company}. With a proven track record of delivering high-quality work, strong attention to detail, and a professional approach to customers and colleagues, I am confident I can make a positive contribution to your team.
+I am writing to apply for the ${j} position at ${c}. With a proven track record of delivering high-quality work, strong attention to detail, and a professional approach to customers and colleagues, I am confident I can make a positive contribution to your team.
 
 Throughout my career I have been recognised for reliability, consistency, and the ability to follow process while still delivering excellent results. I work well both independently and as part of a team, and I am comfortable representing the company in a professional manner.
 
-I would welcome the opportunity to bring this experience to ${company} and support your goals.
+I would welcome the opportunity to bring this experience to ${c} and support your goals.
 
 Thank you for your time and consideration.
 
 Sincerely,
-${name}`,
-
-    formal: (name, job, company, date) => `${name}
+${n}`,
+    formal: (n, j, c, d) => `${n}
 [Your Address]
 [City, County]
-${date}
+${d}
 
 Dear Hiring Manager,
 
-I wish to formally express my interest in the ${job} role at ${company}. I have always maintained high professional standards in every position I have held, ensuring accuracy, clear communication, and respect for established procedures.
+I wish to formally express my interest in the ${j} role at ${c}. I have always maintained high professional standards in every position I have held, ensuring accuracy, clear communication, and respect for established procedures.
 
-In previous roles I have been trusted to manage tasks carefully, meet deadlines, and support both customers and internal teams. I believe these skills would transfer well to ${company}, particularly in a role that values professionalism and reliability.
+In previous roles I have been trusted to manage tasks carefully, meet deadlines, and support both customers and internal teams. I believe these skills would transfer well to ${c}, particularly in a role that values professionalism and reliability.
 
 I would appreciate the opportunity to discuss how my background aligns with your current requirements.
 
 Yours faithfully,
-${name}`,
-
-    friendly: (name, job, company, date) => `${name}
+${n}`,
+    friendly: (n, j, c, d) => `${n}
 [Your Address]
 [City, County]
-${date}
+${d}
 
 Dear Hiring Manager,
 
-I am excited to apply for the ${job} position at ${company}. I enjoy working with people, solving problems in a calm and practical way, and creating a positive experience for customers and colleagues.
+I am excited to apply for the ${j} position at ${c}. I enjoy working with people, solving problems in a calm and practical way, and creating a positive experience for customers and colleagues.
 
-I am known for being approachable, dependable, and easy to work with. I bring good communication skills, patience, and a genuine interest in helping others — which I believe would be a a good fit for ${company}.
+I am known for being approachable, dependable, and easy to work with. I bring good communication skills, patience, and a genuine interest in helping others — which I believe would be a good fit for ${c}.
 
 Thank you for considering my application. I would be happy to speak further about how I can contribute to your team.
 
 Kind regards,
-${name}`,
-
-    artistic: (name, job, company, date) => `${name}
+${n}`,
+    artistic: (n, j, c, d) => `${n}
 [Your Address]
 [City, County]
-${date}
+${d}
 
 Dear Hiring Manager,
 
-I am writing to express my interest in the ${job} role at ${company}. I take pride in producing work that is thoughtful, well-presented, and aligned with the organisation’s values. I balance creativity with structure, and I always aim to deliver work that looks professional and represents the company well.
+I am writing to express my interest in the ${j} role at ${c}. I take pride in producing work that is thoughtful, well-presented, and aligned with the organisation’s values. I balance creativity with structure, and I always aim to deliver work that looks professional and represents the company well.
 
-What interests me in ${company} is its focus on quality and forward thinking. I would welcome the chance to bring my ideas, attention to detail, and strong work ethic to your team.
+What interests me in ${c} is its focus on quality and forward thinking. I would welcome the chance to bring my ideas, attention to detail, and strong work ethic to your team.
 
 Thank you for your time and consideration.
 
 Warm regards,
-${name}`,
-
-    graduate: (name, job, company, date) => `${name}
+${n}`,
+    graduate: (n, j, c, d) => `${n}
 [Your Address]
 [City, County]
-${date}
+${d}
 
 Dear Hiring Manager,
 
-I am writing to express my keen interest in the ${job} position at ${company}. As a recent graduate, I am eager to apply the knowledge, skills, and determination I’ve developed through my studies to make a strong contribution to your team.
+I am writing to express my keen interest in the ${j} position at ${c}. As a recent graduate, I am eager to apply the knowledge, skills, and determination I’ve developed through my studies to make a strong contribution to your team.
 
 During my degree, I built a solid foundation in communication, problem-solving, and adaptability. I’m confident these strengths — combined with my enthusiasm for continuous learning — will allow me to quickly add value within a professional environment.
 
-I have followed ${company}'s work and admire its commitment to excellence and innovation. I would welcome the opportunity to bring my fresh perspective, energy, and drive to your organisation.
+I have followed ${c}'s work and admire its commitment to excellence and innovation. I would welcome the opportunity to bring my fresh perspective, energy, and drive to your organisation.
 
-Thank you for your time and consideration. I look forward to the possibility of contributing to ${company}’s success.
+Thank you for your time and consideration.
 
 Kind regards,
-${name}`,
+${n}`,
   };
 
-  // -------------------------------------------------------
-  // 5) lock / unlock
-  // -------------------------------------------------------
-  function updateLockState() {
-    payButton?.classList.remove("hidden");
-
-    templateButtons.forEach((btn) => {
-      let lock = btn.querySelector(".lock-icon");
-      if (!isProUser) {
-        btn.disabled = true;
-        if (!lock) {
-          lock = document.createElement("span");
-          lock.className = "lock-icon";
-          lock.textContent = " Locked";
-          lock.style.marginLeft = "6px";
-          lock.style.color = "#ff6b6b";
-          lock.style.fontWeight = "bold";
-          btn.appendChild(lock);
-        }
-      } else {
-        btn.disabled = false;
-        if (lock) lock.remove();
-      }
-    });
+  const saved = sessionStorage.getItem("form");
+  if (saved) {
+    const s = JSON.parse(saved);
+    job.value = s.j || "";
+    company.value = s.c || "";
+    name.value = s.n || "";
+    email.value = s.e || "";
   }
 
-  // -------------------------------------------------------
-  // PAY BUTTON — FINAL: sessionStorage ONLY
-  // -------------------------------------------------------
-  payButton?.addEventListener("click", async () => {
-    const job = jobField.value.trim();
-    const company = companyField.value.trim();
-    const name = nameField.value.trim();
-    const email = emailField.value.trim();
-
-    if (!job || !company || !name || !email) {
-      showToast("Fill in ALL details before paying €1.99.", "error");
-      return;
-    }
-
-    sessionStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
-    sessionStorage.setItem("quickCL_isProUser", "true");
-
-    payButton.disabled = true;
-    payButton.textContent = "Redirecting...";
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        showToast("Payment failed. Try again.", "error");
-        payButton.disabled = false;
-        payButton.textContent = "Pay €1.99";
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("Network error. Try again.", "error");
-      payButton.disabled = false;
-      payButton.textContent = "Pay €1.99";
-    }
+  form.addEventListener("input", () => {
+    sessionStorage.setItem(
+      "form",
+      JSON.stringify({
+        j: job.value,
+        c: company.value,
+        n: name.value,
+        e: email.value,
+      })
+    );
   });
 
-  // -------------------------------------------------------
-  // 8) template clicks
-  // -------------------------------------------------------
-  templateButtons.forEach((btn) => {
+  payButton.addEventListener("click", async () => {
+    if (!job.value || !company.value || !name.value || !email.value)
+      return showToast("Fill in details first", "error");
+    payButton.disabled = true;
+    const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email.value }),
+    });
+    const data = await res.json();
+    if (data.url) location.href = data.url;
+  });
+
+  templateButtons.forEach((btn) =>
     btn.addEventListener("click", () => {
-      if (!isProUser) {
-        showToast("Pay €1.99 to unlock templates.", "error");
-        return;
-      }
-
-      const name = nameField.value.trim();
-      const job = jobField.value.trim();
-      const company = companyField.value.trim();
-      if (!name || !job || !company) {
-        showToast("Fill name, job & company first.", "error");
-        return;
-      }
-
-      const date = new Date().toLocaleDateString("en-IE", {
+      if (!isPro) return showToast("Pay €1.99 to unlock", "error");
+      const t = btn.dataset.type;
+      const d = new Date().toLocaleDateString("en-IE", {
         day: "numeric",
         month: "long",
         year: "numeric",
       });
-
-      const type = btn.dataset.type;
-      coverLetter.value = templates[type](name, job, company, date);
+      coverLetter.value = TEMPLATES[t](name.value, job.value, company.value, d);
       resultBox.classList.remove("hidden");
-      showToast("Letter generated.", "success");
-      coverLetter.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  });
+    })
+  );
 
-  // -------------------------------------------------------
-  // 9) PDF + COPY
-  // -------------------------------------------------------
-  const { jsPDF } = window.jspdf;
-
-  function renderExact(pdf, text, x, y, maxW, lineH = 7) {
-    const pageH = pdf.internal.pageSize.getHeight();
-    const lines = text.split("\n");
-    for (const line of lines) {
-      const chunks = pdf.splitTextToSize(line, maxW);
-      for (const chunk of chunks) {
-        if (y > pageH - 20) {
-          pdf.addPage();
-          y = 20;
-        }
-        pdf.text(chunk, x, y);
-        y += lineH;
-      }
-    }
-  }
-
-  downloadBtn?.addEventListener("click", () => {
+  downloadBtn.addEventListener("click", () => {
     if (!coverLetter.value.trim()) return;
-    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
     pdf.setFont("times", "normal").setFontSize(12);
-    renderExact(pdf, coverLetter.value, 20, 20, 170);
-
-    const safeJob = jobField.value.trim().replace(/\s+/g, "_");
-    const safeCompany = companyField.value.trim().replace(/\s+/g, "_");
-    const fileName = safeJob && safeCompany ? `${safeJob}-${safeCompany}.pdf` : "CoverLetter.pdf";
-
-    pdf.save(fileName);
-    showToast("PDF downloaded.", "success");
+    pdf.text(coverLetter.value, 20, 20, { maxWidth: 170 });
+    pdf.save("CoverLetter.pdf");
   });
 
-  copyBtn?.addEventListener("click", () => {
-    if (!coverLetter.value.trim()) return;
-    navigator.clipboard
-      .writeText(coverLetter.value)
-      .then(() => showToast("Copied to clipboard.", "success"))
-      .catch(() => showToast("Copy failed.", "error"));
-  });
+  copyBtn.addEventListener("click", () =>
+    navigator.clipboard.writeText(coverLetter.value).then(() => showToast("Copied", "success"))
+  );
 
-  // -------------------------------------------------------
-  // 10) CLEAR — Resets everything + relocks
-  // -------------------------------------------------------
-  clearBtn?.addEventListener("click", () => {
+  clearBtn.addEventListener("click", () => {
     form.reset();
-    coverLetter.value = "";
     resultBox.classList.add("hidden");
-
-    sessionStorage.removeItem("quickCL_formData");
-    sessionStorage.removeItem("quickCL_isProUser");
-
-    isProUser = false;
-    updateLockState();
-
-    showToast("All cleared — pay again to start a new letter.", "info");
+    sessionStorage.clear();
+    isPro = false;
+    lockState();
+    showToast("Cleared", "info");
   });
 
-  // -------------------------------------------------------
-  // 11) theme toggle
-  // -------------------------------------------------------
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme === "dark") {
-    document.body.classList.add("dark");
-    if (themeToggle) themeToggle.textContent = "Sun";
-  } else {
-    if (themeToggle) themeToggle.textContent = "Moon";
-  }
-
-  themeToggle?.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-    const dark = document.body.classList.contains("dark");
-    themeToggle.textContent = dark ? "Sun" : "Moon";
-    localStorage.setItem("theme", dark ? "dark" : "light");
-  });
-
-  // -------------------------------------------------------
-  // RESTORE FROM sessionStorage ONLY
-  // -------------------------------------------------------
-  if (sessionStorage.getItem("quickCL_isProUser") === "true") {
-    isProUser = true;
-    const saved = JSON.parse(sessionStorage.getItem("quickCL_formData") || "{}");
-    if (saved.job) jobField.value = saved.job;
-    if (saved.company) companyField.value = saved.company;
-    if (saved.name) nameField.value = saved.name;
-    if (saved.email) emailField.value = saved.email;
-  }
-
-  updateLockState();
-
-  if (sessionId) {
-    showToast("Templates unlocked! Choose a letter style.", "success");
-  }
+  if (session_id) showToast("Unlocked. Choose a template.", "success");
 });
