@@ -453,7 +453,7 @@ app.use(express.json());
 
 app.use(express.static(__dirname));
 
-// ===================================================
+/// ===================================================
 // 💳 STRIPE CHECKOUT SESSION (FINAL, CORRECT DOMAIN)
 // ===================================================
 app.post("/create-checkout-session", async (req, res) => {
@@ -464,8 +464,11 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       line_items: [{ price: process.env.PRICE_ID, quantity: 1 }],
 
-      success_url: "https://quickcoverletter.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: `https://quickcoverletter.onrender.com/?status=cancelled&email=${encodeURIComponent(email)}`,
+      // ✅ SUCCESS carries session_id back to frontend
+      success_url: "https://quickcoverletter-static.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
+
+      // ✅ CANCEL carries *actual user email* back
+      cancel_url: `https://quickcoverletter-static.onrender.com/?status=cancelled&email=${encodeURIComponent(email)}`,
 
       customer_email: email || undefined,
       metadata: { email },
