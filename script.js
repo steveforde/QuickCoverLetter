@@ -2,10 +2,10 @@
 // QuickCoverLetter — FRONTEND LOGIC (FINAL PATCH)
 // ---------------------------------------------------------
 // WHAT THIS DOES:
-// 1. **CRITICAL FIX:** Initializes 'isProUser' by checking sessionStorage.
-// 2. **CRITICAL FIX:** Form data now uses sessionStorage and clears after read,
+// 1. CRITICAL FIX: Initializes 'isProUser' by checking sessionStorage.
+// 2. CRITICAL FIX: Form data now uses sessionStorage and clears after read,
 //    ensuring a blank form on fresh load.
-// 3. **CRITICAL FIX:** Success toast now uses a one-time sessionStorage flag.
+// 3. CRITICAL FIX: Success toast now uses a one-time sessionStorage flag.
 // 4. Forces ALL 4 fields to be filled before allowing payment.
 // 5. Generates 4 letter types with your exact wording.
 // 6. Smooth scrolls to the textarea when letter is generated.
@@ -25,7 +25,6 @@ const SUPABASE_ANON_KEY =
 const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
 
 // Initialize Supabase (optional, but good practice)
-// Note: We don't use the returned object, but this ensures the library is loaded.
 createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -47,14 +46,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
-  // ✅ Start locked, but restore unlock from sessionStorage (not localStorage)
-  let isProUser = sessionStorage.getItem("isProUser") === "true";
+  // Start locked, but restore unlock from sessionStorage
+  let isProUser = sessionStorage.getItem("quickCL_isProUser") === "true";
 
   // Check Stripe success return
   const urlParams = new URLSearchParams(window.location.search);
   const sessionId = urlParams.get("session_id");
 
-  // ✅ Handle Cancel Return (User clicked "Cancel" in Stripe Checkout)
+  // Handle Cancel Return (User clicked "Cancel" in Stripe Checkout)
   if (urlParams.get("status") === "cancelled") {
     const email = urlParams.get("email");
 
@@ -67,17 +66,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }).catch(() => {});
     }
 
-    // ✅ Ensure UI remains locked after cancel
+    // Ensure UI remains locked after cancel
     isProUser = false;
-    localStorage.removeItem("quickCL_isProUser");
+    sessionStorage.removeItem("quickCL_isProUser");
+    sessionStorage.removeItem("quickCL_formData");
     updateLockState();
 
-    // ✅ Toast so user knows what happened
     showToast("Payment cancelled — no charge made.", "info");
   }
 
   if (sessionId) {
-    sessionStorage.setItem("isProUser", "true");
+    sessionStorage.setItem("quickCL_isProUser", "true");
     isProUser = true;
 
     // Clean redirect WITHOUT losing restore state
@@ -90,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // -------------------------------------------------------
   // 3) toasts
   // -------------------------------------------------------
-
   function showToast(msg, type = "info") {
     if (!toast) return;
     setTimeout(() => {
@@ -99,8 +97,8 @@ document.addEventListener("DOMContentLoaded", () => {
       clearTimeout(toast._hide);
       toast._hide = setTimeout(() => {
         toast.classList.remove("show");
-      }, 7000); // stay visible longer
-    }, 350); // let layout settle first
+      }, 7000);
+    }, 350);
   }
 
   // -------------------------------------------------------
@@ -196,7 +194,6 @@ ${name}`,
   // 5) lock / unlock
   // -------------------------------------------------------
   function updateLockState() {
-    // pay button must NEVER hide
     payButton?.classList.remove("hidden");
 
     templateButtons.forEach((btn) => {
@@ -220,10 +217,8 @@ ${name}`,
   }
 
   // -------------------------------------------------------
-  // 6) handle Stripe return / Show Success Toast
+  // PAY BUTTON — FINAL: sessionStorage ONLY
   // -------------------------------------------------------
-
-  // PAY BUTTON — FIXED: Save to sessionStorage + NO localStorage junk
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
     const company = companyField.value.trim();
@@ -235,8 +230,8 @@ ${name}`,
       return;
     }
 
-    localStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
-    localStorage.setItem("quickCL_isProUser", "true"); // also save unlock
+    sessionStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
+    sessionStorage.setItem("quickCL_isProUser", "true");
 
     payButton.disabled = true;
     payButton.textContent = "Redirecting...";
@@ -292,8 +287,6 @@ ${name}`,
       coverLetter.value = templates[type](name, job, company, date);
       resultBox.classList.remove("hidden");
       showToast("Letter generated.", "success");
-
-      // scroll to output
       coverLetter.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
@@ -349,9 +342,8 @@ ${name}`,
     coverLetter.value = "";
     resultBox.classList.add("hidden");
 
-    // CLEAR EVERYTHING
-    localStorage.removeItem("quickCL_formData");
-    localStorage.removeItem("quickCL_isProUser");
+    sessionStorage.removeItem("quickCL_formData");
+    sessionStorage.removeItem("quickCL_isProUser");
 
     isProUser = false;
     updateLockState();
@@ -377,10 +369,12 @@ ${name}`,
     localStorage.setItem("theme", dark ? "dark" : "light");
   });
 
-  // RESTORE FROM localStorage ONLY
-  if (localStorage.getItem("quickCL_isProUser") === "true") {
+  // -------------------------------------------------------
+  // RESTORE FROM sessionStorage ONLY
+  // -------------------------------------------------------
+  if (sessionStorage.getItem("quickCL_isProUser") === "true") {
     isProUser = true;
-    const saved = JSON.parse(localStorage.getItem("quickCL_formData") || "{}");
+    const saved = JSON.parse(sessionStorage.getItem("quickCL_formData") || "{}");
     if (saved.job) jobField.value = saved.job;
     if (saved.company) companyField.value = saved.company;
     if (saved.name) nameField.value = saved.name;
