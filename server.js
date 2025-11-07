@@ -453,8 +453,8 @@ app.use(express.json());
 
 app.use(express.static(__dirname));
 
-/// ===================================================
-// 💳 STRIPE CHECKOUT SESSION (FINAL, CORRECT DOMAIN)
+// ===================================================
+// 💳 STRIPE CHECKOUT SESSION (FINAL, static domain)
 // ===================================================
 app.post("/create-checkout-session", async (req, res) => {
   try {
@@ -464,11 +464,9 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       line_items: [{ price: process.env.PRICE_ID, quantity: 1 }],
 
-      // ✅ SUCCESS carries session_id back to frontend
       success_url: "https://quickcoverletter-static.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
-
-      // ✅ CANCEL carries *actual user email* back
-      cancel_url: `https://quickcoverletter-static.onrender.com/?status=cancelled&email=${encodeURIComponent(email)}`,
+      cancel_url:
+        "https://quickcoverletter-static.onrender.com/?status=cancelled&email={CUSTOMER_EMAIL}",
 
       customer_email: email || undefined,
       metadata: { email },
@@ -477,7 +475,7 @@ app.post("/create-checkout-session", async (req, res) => {
     res.json({ url: session.url });
   } catch (err) {
     console.error("Stripe Error:", err);
-    res.status(500).json({ error: "Failed to create checkout session" });
+    return res.status(500).json({ error: "Failed to create checkout session" });
   }
 });
 
