@@ -285,7 +285,7 @@ ${name}`,
     }
 
     // Save form for restore after Stripe redirect (one-time)
-    localStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
+    sessionStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
     // mark that we EXPECT to restore after Stripe
     localStorage.setItem("quickCL_formRestored", "pending");
 
@@ -437,6 +437,16 @@ ${name}`,
   if (sessionStorage.getItem("isProUser") === "true") {
     isProUser = true;
   }
+
+  // 🔧 INSTANT FORM RESTORE FIX — ADD THIS EXACT BLOCK
+  if (isProUser) {
+    const saved = JSON.parse(sessionStorage.getItem("quickCL_formData") || "{}");
+    if (saved.job) jobField.value = saved.job;
+    if (saved.company) companyField.value = saved.company;
+    if (saved.name) nameField.value = saved.name;
+    if (saved.email) emailField.value = saved.email;
+  }
+  // 🔧 END FIX
 
   // -------------------------------------------------------
   // 12) init: start LOCKED (or unlocked if flag exists)
