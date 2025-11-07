@@ -81,9 +81,6 @@ document.addEventListener("DOMContentLoaded", () => {
     sessionStorage.setItem("isProUser", "true");
     isProUser = true;
 
-    // one-time toast trigger
-    localStorage.setItem("quickCL_showSuccess", "true");
-
     // Clean redirect WITHOUT losing restore state
     history.replaceState({}, "", "/");
   }
@@ -91,51 +88,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Apply lock state NOW
   updateLockState();
 
-  // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
-  // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
-  const FORM_DATA_KEY = "quickCL_formData";
-  const FORM_RESTORED_KEY = "quickCL_formRestored";
-  const FORM_STORAGE = sessionStorage; // <--- THIS IS THE FIX
-
-  setTimeout(() => {
-    const state = sessionStorage.getItem("quickCL_formRestored");
-
-    // If we've already restored once this session → do nothing
-    if (state === "done") {
-      console.log("Form already restored this session — skipping restore.");
-      return;
-    }
-
-    // If Stripe redirect happened → restore & lock it in
-    if (state === "pending") {
-      const saved = JSON.parse(sessionStorage.getItem("quickCL_formData") || "{}");
-
-      jobField.value = saved.job || "";
-      companyField.value = saved.company || "";
-      nameField.value = saved.name || "";
-      emailField.value = saved.email || "";
-
-      console.log("Form restored from Stripe return:", saved);
-    }
-  }, 300);
-
   // -------------------------------------------------------
   // 3) toasts
   // -------------------------------------------------------
-
-  // ✅ Show success toast AFTER layout is ready
-  setTimeout(() => {
-    const shouldShowSuccess = localStorage.getItem("quickCL_showSuccess") === "true";
-    if (shouldShowSuccess) {
-      isProUser = true;
-      sessionStorage.setItem("isProUser", "true");
-      localStorage.removeItem("quickCL_showSuccess");
-
-      updateLockState(); // re-apply unlocked state first
-
-      showToast("✅ Templates unlocked! Choose a letter style.", "success");
-    }
-  }, 600);
 
   function showToast(msg, type = "info") {
     if (!toast) return;
@@ -399,12 +354,9 @@ ${name}`,
     // Remove unlock state (session only — this is the new system)
     sessionStorage.removeItem("isProUser");
 
-    // Clean up any old leftover values from previous bug versions
-    localStorage.removeItem("quickCL_isProUser");
-    localStorage.removeItem("quickCL_showSuccess"); // one-time toast flag
-    localStorage.removeItem("quickCL_formData");
-    localStorage.removeItem("quickCL_formRestored");
-    sessionStorage.removeItem("userData");
+    // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
+    sessionStorage.removeItem("quickCL_formData");
+    // ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←
 
     // Relock UI
     isProUser = false;
