@@ -78,12 +78,13 @@ try {
 app.use(
   cors({
     origin: [
-      "https://www.quickcoverletter.app",
+      "https://quickcoverletter-static.onrender.com",
       "https://quickcoverletter.app",
-      "https://quickcoverletter.onrender.com",
+      "https://www.quickcoverletter.app",
+      "http://localhost:3000",
     ],
     methods: ["GET", "POST"],
-    credentials: false,
+    allowedHeaders: ["Content-Type"],
   })
 );
 
