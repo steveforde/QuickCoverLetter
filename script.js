@@ -272,7 +272,7 @@ ${name}`,
   // 6) handle Stripe return / Show Success Toast
   // -------------------------------------------------------
 
-  // === STEP 2: PAY BUTTON — save to localStorage + start Stripe
+  // PAY BUTTON — FIXED: Save to sessionStorage + NO localStorage junk
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
     const company = companyField.value.trim();
@@ -284,13 +284,11 @@ ${name}`,
       return;
     }
 
-    // Save form for restore after Stripe redirect (one-time)
+    // SAVE TO sessionStorage (survives redirect + refresh)
     sessionStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
-    // mark that we EXPECT to restore after Stripe
-    localStorage.setItem("quickCL_formRestored", "pending");
 
-    // Optional: guard against double-clicks
     payButton.disabled = true;
+    payButton.textContent = "Redirecting...";
 
     try {
       const res = await fetch(`${BACKEND_URL}/create-checkout-session`, {
@@ -303,13 +301,15 @@ ${name}`,
       if (data?.url) {
         window.location.href = data.url;
       } else {
-        showToast("Could not start payment. Check server.", "error");
+        showToast("Payment failed. Try again.", "error");
         payButton.disabled = false;
+        payButton.textContent = "Pay €1.99";
       }
     } catch (err) {
-      console.error("Fetch Error:", err);
-      showToast("Payment failed. Try again.", "error");
+      console.error(err);
+      showToast("Network error. Try again.", "error");
       payButton.disabled = false;
+      payButton.textContent = "Pay €1.99";
     }
   });
 
@@ -434,11 +434,12 @@ ${name}`,
     localStorage.setItem("theme", dark ? "dark" : "light");
   });
 
+  // FINAL INIT + FORM RESTORE (runs EVERY time page loads)
   if (sessionStorage.getItem("isProUser") === "true") {
     isProUser = true;
   }
 
-  // 🔧 INSTANT FORM RESTORE FIX — ADD THIS EXACT BLOCK
+  // RESTORE FORM IF UNLOCKED (sessionStorage = survives refresh)
   if (isProUser) {
     const saved = JSON.parse(sessionStorage.getItem("quickCL_formData") || "{}");
     if (saved.job) jobField.value = saved.job;
@@ -446,10 +447,11 @@ ${name}`,
     if (saved.name) nameField.value = saved.name;
     if (saved.email) emailField.value = saved.email;
   }
-  // 🔧 END FIX
 
-  // -------------------------------------------------------
-  // 12) init: start LOCKED (or unlocked if flag exists)
-  // -------------------------------------------------------
   updateLockState();
+
+  // Show success toast ONLY on real Stripe redirect
+  if (sessionId) {
+    showToast("Templates unlocked! Choose a letter style.", "success");
+  }
 });
