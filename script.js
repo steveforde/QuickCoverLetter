@@ -85,34 +85,39 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("quickCL_showSuccess", "true");
 
     // Clean redirect WITHOUT losing restore state
-    window.location.replace(window.location.origin + "/");
+    history.replaceState({}, "", "/");
   }
 
   // Apply lock state NOW
   updateLockState();
 
   // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
+  // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
   const FORM_DATA_KEY = "quickCL_formData";
   const FORM_RESTORED_KEY = "quickCL_formRestored";
 
   setTimeout(() => {
-    if (localStorage.getItem(FORM_RESTORED_KEY)) {
-      console.log("Form already restored this session — skipping.");
-      localStorage.removeItem(FORM_DATA_KEY);
+    const state = localStorage.getItem(FORM_RESTORED_KEY);
+
+    // If we've already restored once this session → do nothing
+    if (state === "done") {
+      console.log("Form already restored this session — skipping restore.");
       return;
     }
 
-    const saved = JSON.parse(localStorage.getItem(FORM_DATA_KEY) || "{}");
+    // If Stripe redirect happened → restore & lock it in
+    if (state === "pending") {
+      const saved = JSON.parse(localStorage.getItem(FORM_DATA_KEY) || "{}");
 
-    if (Object.keys(saved).length > 0) {
       jobField.value = saved.job || "";
       companyField.value = saved.company || "";
       nameField.value = saved.name || "";
       emailField.value = saved.email || "";
 
-      console.log("Form restored from localStorage:", saved);
+      console.log("Form restored from Stripe return:", saved);
 
-      localStorage.setItem(FORM_RESTORED_KEY, "true");
+      // Mark restore complete
+      localStorage.setItem(FORM_RESTORED_KEY, "done");
       localStorage.removeItem(FORM_DATA_KEY);
     }
   }, 300);
@@ -281,7 +286,8 @@ ${name}`,
 
     // Save form for restore after Stripe redirect (one-time)
     localStorage.setItem("quickCL_formData", JSON.stringify({ job, company, name, email }));
-    localStorage.removeItem("quickCL_formRestored"); // allow a fresh restore on return
+    // mark that we EXPECT to restore after Stripe
+    localStorage.setItem("quickCL_formRestored", "pending");
 
     // Optional: guard against double-clicks
     payButton.disabled = true;
