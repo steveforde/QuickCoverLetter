@@ -95,9 +95,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== RESTORE FORM AFTER STRIPE — USING localStorage + one-time flag =====
   const FORM_DATA_KEY = "quickCL_formData";
   const FORM_RESTORED_KEY = "quickCL_formRestored";
+  const FORM_STORAGE = sessionStorage; // <--- THIS IS THE FIX
 
   setTimeout(() => {
-    const state = localStorage.getItem(FORM_RESTORED_KEY);
+    const state = sessionStorage.getItem("quickCL_formRestored");
 
     // If we've already restored once this session → do nothing
     if (state === "done") {
@@ -107,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // If Stripe redirect happened → restore & lock it in
     if (state === "pending") {
-      const saved = JSON.parse(localStorage.getItem(FORM_DATA_KEY) || "{}");
+      const saved = JSON.parse(sessionStorage.getItem("quickCL_formData") || "{}");
 
       jobField.value = saved.job || "";
       companyField.value = saved.company || "";
@@ -115,10 +116,6 @@ document.addEventListener("DOMContentLoaded", () => {
       emailField.value = saved.email || "";
 
       console.log("Form restored from Stripe return:", saved);
-
-      // Mark restore complete
-      localStorage.setItem(FORM_RESTORED_KEY, "done");
-      localStorage.removeItem(FORM_DATA_KEY);
     }
   }, 300);
 
