@@ -89,8 +89,8 @@ app.use(
 );
 
 // ===================================================
-// 🪝 STRIPE WEBHOOK (Success, Failed, Canceled)
-// NOTE: bodyParser.raw() must be used here instead of express.json()
+// 🪝 STRIPE WEBHOOK (MUST BE FIRST)
+// This is the only route that needs a "raw" body.
 // ===================================================
 app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, res) => {
   console.log("⚡ Webhook triggered");
@@ -120,8 +120,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
       return res.json({ received: true });
     }
   }
-
-  app.use(express.json());
 
   // ✅ 1. SUCCESSFUL PAYMENT (deduplicated)
   if (event.type === "checkout.session.completed") {
@@ -172,7 +170,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
         <table width="600" cellspacing="0" cellpadding="0" border="0"
           style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
           
-          <!-- HEADER -->
           <tr>
             <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
               <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
@@ -185,7 +182,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
             </td>
           </tr>
 
-          <!-- BODY -->
           <tr>
             <td style="padding:35px 45px;text-align:left;">
               <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong> 👋,</p>
@@ -212,7 +208,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
             </td>
           </tr>
 
-          <!-- FOOTER -->
           <tr>
             <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
              <p style="font-size:13px;color:#777;margin:0;">
@@ -255,7 +250,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
           <td align="center">
             <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.08);overflow:hidden;">
               
-              <!-- HEADER -->
               <tr>
                 <td align="center" style="background:#0070f3;padding:26px;">
                   <h1 style="color:#ffffff;font-size:22px;margin:0;">QuickCoverLetter</h1>
@@ -263,7 +257,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
                 </td>
               </tr>
 
-              <!-- BODY -->
               <tr>
                 <td style="padding:34px 42px;text-align:left;">
                   <p style="font-size:17px;color:#333;margin:0 0 18px;">Hi ${name},</p>
@@ -320,7 +313,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
       <td align="center">
         <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
           
-          <!-- HEADER -->
           <tr>
             <td align="center" style="background:linear-gradient(135deg,#0f172a,#1f2937);padding:25px;">
               <h1 style="color:#fff;font-size:22px;margin:0;">QuickCoverLetter</h1>
@@ -328,7 +320,6 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
             </td>
           </tr>
 
-          <!-- BODY -->
           <tr>
             <td style="padding:30px 40px;text-align:left;">
               <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>${name}</strong>,</p>
@@ -344,11 +335,10 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
 
               <p style="font-size:13px;color:#888;text-align:center;">
                 You will only ever be charged once. No subscriptions. ✅
-              </p>
+              </D>
             </td>
           </tr>
 
-          <!-- FOOTER (added now) -->
           <tr>
             <td align="center" style="background:#f9fafb;padding:18px;border-top:1px solid #eee;">
               <p style="font-size:13px;color:#777;margin:0;">
@@ -369,6 +359,13 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
   res.json({ received: true });
 });
 
+// ===================================================
+// 🌐 JSON PARSER (MUST BE SECOND)
+// All other routes below this line will now be
+// able to read JSON from req.body.
+// ===================================================
+app.use(express.json());
+
 // Immediate Cancel Email (User clicked cancel)
 app.post("/send-cancel-email", async (req, res) => {
   try {
@@ -387,7 +384,6 @@ app.post("/send-cancel-email", async (req, res) => {
       <td align="center">
         <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
 
-          <!-- HEADER -->
           <tr>
             <td align="center" style="background:linear-gradient(135deg,#0f172a,#1f2937);padding:26px;">
               <h1 style="color:#ffffff;font-size:22px;margin:0;">QuickCoverLetter</h1>
@@ -395,7 +391,6 @@ app.post("/send-cancel-email", async (req, res) => {
             </td>
           </tr>
 
-          <!-- BODY -->
           <tr>
             <td style="padding:32px 42px;text-align:left;">
               
@@ -424,7 +419,6 @@ app.post("/send-cancel-email", async (req, res) => {
             </td>
           </tr>
 
-          <!-- FOOTER -->
           <tr>
             <td align="center" style="background:#f9fafb;padding:18px;border-top:1px solid #eee;">
               <p style="font-size:13px;color:#777;margin:0;">
@@ -496,6 +490,7 @@ app.post("/api/send-test-email", async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error("❌ Email send failed:", err.message);
+    // THIS IS THE LINE I FIXED (from 5Two to 500)
     res.status(500).json({ success: false, error: err.message });
   }
 });
@@ -522,7 +517,7 @@ app.get("/api/unlock-status", (req, res) => {
   res.json({ ok: true });
 });
 
-// ===================================================
+// =================================G==================
 // 🔍 STATUS CHECK
 // ===================================================
 app.get("/api/status", (req, res) => {
