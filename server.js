@@ -34,36 +34,26 @@ brevoClient.authentications["apiKey"].apiKey = process.env.BREVO_API_KEY;
  * Global helper function to send emails via Brevo.
  * Moved outside the webhook handler to be accessible by all routes.
  */
-const brevoApiInstance = new Brevo.TransactionalEmailsApi();
-if (process.env.BREVO_API_KEY) {
-  brevoApiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-  console.log("Brevo API key loaded");
-} else {
-  console.error("BREVO_API_KEY missing in .env");
-}
-
 const sendBrevoEmail = async ({ toEmail, toName, subject, html }) => {
-  if (!process.env.BREVO_API_KEY) {
-    throw new Error("Brevo API key missing");
-  }
-
-  const sendSmtpEmail = new Brevo.SendSmtpEmail();
-  sendSmtpEmail.sender = { name: "QuickCoverLetter", email: "support@quickcoverletter.app" };
-  sendSmtpEmail.replyTo = { email: "sforde08@gmail.com", name: "Stephen" };
-  sendSmtpEmail.to = [{ email: toEmail, name: toName || "Customer" }];
-  sendSmtpEmail.subject = subject;
-  sendSmtpEmail.htmlContent = html;
-
   try {
-    const data = await brevoApiInstance.sendTransacEmail(sendSmtpEmail);
-    console.log("Email sent, MessageId:", data.messageId);
-    return data;
+    const result = await brevoClient.sendTransacEmail({
+      sender: {
+        name: "QuickCoverLetter",
+        email: "support@quickcoverletter.app",
+      },
+      replyTo: {
+        email: "sforde08@gmail.com",
+        name: "Stephen",
+      },
+      to: [{ email: toEmail, name: toName }],
+      subject,
+      htmlContent: html,
+    });
+
+    console.log("✅ Email sent:", result);
+    return result;
   } catch (error) {
-    console.error("Brevo Error Status:", error?.response?.status);
-    console.error(
-      "Brevo Error Body:",
-      error?.response ? await error.response.text() : error.message
-    );
+    console.error("❌ Error sending email:", error);
     throw error;
   }
 };
