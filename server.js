@@ -363,7 +363,10 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
 app.get("/cancel/:sessionId", (req, res) => {
   const sessionId = req.params.sessionId;
   console.log("CANCEL REDIRECT → session ID:", sessionId); // LOG THIS!
-  res.redirect(`/?status=cancelled&session_id=${sessionId}`);
+  // Add the full frontend URL here
+  res.redirect(
+    `https://quickcoverletter-static.onrender.com/?status=cancelled&session_id=${sessionId}`
+  );
 });
 
 // ===================================================
@@ -479,7 +482,7 @@ app.post("/create-checkout-session", async (req, res) => {
 
       success_url: "https://quickcoverletter-static.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
       // In /create-checkout-session route
-      cancel_url: "https://quickcoverletter-static.onrender.com/cancel/{CHECKOUT_SESSION_ID}",
+      cancel_url: "https://quickcoverletter-backend.onrender.com/cancel/{CHECKOUT_SESSION_ID}",
 
       customer_email: email || undefined,
       metadata: { email },
