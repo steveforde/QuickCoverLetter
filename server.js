@@ -359,6 +359,13 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
   res.json({ received: true });
 });
 
+// Handle Stripe cancel redirect with real session ID in path
+app.get("/cancel/:sessionId", (req, res) => {
+  const sessionId = req.params.sessionId;
+  console.log("CANCEL REDIRECT → session ID:", sessionId); // LOG THIS!
+  res.redirect(`/?status=cancelled&session_id=${sessionId}`);
+});
+
 // ===================================================
 // 🌐 JSON PARSER (MUST BE SECOND)
 // All other routes below this line will now be
@@ -459,8 +466,6 @@ app.get("/get-session-email/:sessionId", async (req, res) => {
 // 🌐 MIDDLEWARE
 // ===================================================
 
-app.use(express.static(__dirname));
-
 // ===================================================
 // 💳 STRIPE CHECKOUT SESSION (FINAL, static domain)
 // ===================================================
@@ -473,8 +478,8 @@ app.post("/create-checkout-session", async (req, res) => {
       line_items: [{ price: process.env.PRICE_ID, quantity: 1 }],
 
       success_url: "https://quickcoverletter-static.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url:
-        "https://quickcoverletter-static.onrender.com/?status=cancelled&session_id={CHECKOUT_SESSION_ID}",
+      // In /create-checkout-session route
+      cancel_url: "https://quickcoverletter-static.onrender.com/cancel/{CHECKOUT_SESSION_ID}",
 
       customer_email: email || undefined,
       metadata: { email },
@@ -539,6 +544,8 @@ app.get("/api/status", (req, res) => {
     time: new Date().toISOString(),
   });
 });
+
+app.use(express.static(__dirname));
 
 // ===================================================
 // 🚀 START SERVER
