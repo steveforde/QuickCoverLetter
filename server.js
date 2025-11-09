@@ -121,6 +121,8 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     }
   }
 
+  app.use(express.json());
+
   // ✅ 1. SUCCESSFUL PAYMENT (deduplicated)
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
@@ -447,7 +449,6 @@ app.post("/send-cancel-email", async (req, res) => {
   }
 });
 
-app.use(express.json());
 // ===================================================
 // 🌐 MIDDLEWARE
 // ===================================================
