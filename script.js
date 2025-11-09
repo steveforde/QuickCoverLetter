@@ -55,18 +55,28 @@ document.addEventListener("DOMContentLoaded", () => {
     history.replaceState({}, "", "/");
   }
 
+  // (Inside your DOMContentLoaded event listener)
+
   if (cancelled) {
     // Keep locked, keep form, optionally email
     isPro = false;
     sessionStorage.removeItem(K.PRO);
     updateLockState();
-    if (cancelEmail) {
+
+    // --- START OF FIX ---
+    // Get the email from the form field (which was restored from sessionStorage)
+    const emailFromForm = emailField.value.trim();
+
+    if (emailFromForm) {
+      // Send if we have an email
       fetch(`${BACKEND_URL}/send-cancel-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cancelEmail }),
+        body: JSON.stringify({ email: emailFromForm }),
       }).catch(() => {});
     }
+    // --- END OF FIX ---
+
     showToast("Payment cancelled — no charge made.", "info");
     history.replaceState({}, "", "/");
   }
