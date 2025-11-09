@@ -295,7 +295,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
   }
 
   // 🕓 3. CHECKOUT CANCELED / EXPIRED
-  if (event.type === "checkout.session.expired" || event.type === "checkout.session.canceled") {
+  if (event.type === "checkout.session.expired") {
     const session = event.data.object;
     const email = session.customer_details?.email || session.customer_email || null;
     const name = session.customer_details?.name || "Customer";
@@ -335,7 +335,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
 
               <p style="font-size:13px;color:#888;text-align:center;">
                 You will only ever be charged once. No subscriptions. ✅
-              </D>
+              </p>
             </td>
           </tr>
 
@@ -442,6 +442,18 @@ app.post("/send-cancel-email", async (req, res) => {
     res.status(500).json({ error: "Cancel email failed", details: err.message });
   }
 });
+app.get("/get-session-email/:sessionId", async (req, res) => {
+  console.log("📩 Fetching email for session:", req.params.sessionId); // LOG
+  try {
+    const session = await stripe.checkout.sessions.retrieve(req.params.sessionId);
+    const email = session.customer_details?.email || session.customer_email || null;
+    if (!email) throw new Error("No email in session");
+    res.json({ email });
+  } catch (err) {
+    console.error("❌ Session fetch error:", err.message);
+    res.status(404).json({ error: "Session not found" });
+  }
+});
 
 // ===================================================
 // 🌐 MIDDLEWARE
@@ -462,7 +474,7 @@ app.post("/create-checkout-session", async (req, res) => {
 
       success_url: "https://quickcoverletter-static.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
       cancel_url:
-        "https://quickcoverletter-static.onrender.com/?status=cancelled&email={CUSTOMER_EMAIL}",
+        "https://quickcoverletter-static.onrender.com/?status=cancelled&session_id={CHECKOUT_SESSION_ID}",
 
       customer_email: email || undefined,
       metadata: { email },
@@ -517,7 +529,7 @@ app.get("/api/unlock-status", (req, res) => {
   res.json({ ok: true });
 });
 
-// =================================G==================
+// ==================================================
 // 🔍 STATUS CHECK
 // ===================================================
 app.get("/api/status", (req, res) => {
