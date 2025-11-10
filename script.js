@@ -77,10 +77,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     showToast("✅ Templates unlocked! Your details are saved. Choose a letter style.", "success");
 
-    // Delay the URL clean-up to let the DOM render the form values
-    setTimeout(() => {
-      history.replaceState({}, "", "/");
-    }, 100); // 100ms delay
+    // CLEAN URL WITHOUT REFRESH — preserves form data 100%
+    if (window.location.search) {
+      history.replaceState({}, "", window.location.pathname);
+    }
   }
 
   if (cancelled) {
