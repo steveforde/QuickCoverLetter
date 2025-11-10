@@ -157,7 +157,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
       if (error) console.error("❌ DB insert error:", error.message);
     }
 
-    // 📧 SUCCESS EMAIL
+    // 📧 SUCCESS EMAIL (This is the master template)
     await sendBrevoEmail({
       toEmail: email,
       toName: name,
@@ -224,7 +224,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     });
   }
 
-  // ❌ PAYMENT FAILED (Friendly, non-pushy, correct event type)
+  // ❌ PAYMENT FAILED (UPDATED DESIGN)
   if (event.type === "charge.failed") {
     const charge = event.data.object;
 
@@ -245,23 +245,30 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
       toName: name,
       subject: "Your Cover Letter Payment Didn’t Go Through",
       html: `
-      <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+      <table width="100%" cellspacing="0" cellpadding="0" border="0"
+        style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
         <tr>
           <td align="center">
-            <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.08);overflow:hidden;">
+            <table width="600" cellspacing="0" cellpadding="0" border="0"
+              style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
               
               <tr>
-                <td align="center" style="background:#0070f3;padding:26px;">
-                  <h1 style="color:#ffffff;font-size:22px;margin:0;">QuickCoverLetter</h1>
-                  <p style="color:#dbeafe;font-size:13px;margin:4px 0 0;">Professional Cover Letter Templates</p>
+                <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
+                  <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
+                    alt="QuickCoverLetter"
+                    width="70" height="70"
+                    style="display:block;margin:auto;border-radius:50%;background:#fff;
+                           padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+                  <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
+                  <p style="color:#eaf1ff;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
                 </td>
               </tr>
 
               <tr>
-                <td style="padding:34px 42px;text-align:left;">
-                  <p style="font-size:17px;color:#333;margin:0 0 18px;">Hi ${name},</p>
-
-                  <p style="font-size:16px;color:#333;margin:0 0 16px;">
+                <td style="padding:35px 45px;text-align:left;">
+                  <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong>,</p>
+                  
+                  <p style="font-size:16px;color:#333;margin:0 0 18px;">
                     It looks like your €1.99 payment didn’t go through this time.
                   </p>
 
@@ -271,19 +278,26 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
 
                   <div style="text-align:center;margin:35px 0;">
                     <a href="${process.env.DOMAIN}"
-                      style="background:#0070f3;color:#fff;padding:14px 26px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">
+                      style="background:#0070f3;color:#fff;padding:14px 28px;border-radius:8px;
+                             text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
                       Resume My Cover Letter
                     </a>
                   </div>
 
-                  <p style="font-size:13px;color:#777;margin:0;">
-                    Made in Ireland<br>
-                    <span style="color:#999;">QuickCoverLetter · quickcoverletter.app</span>
+                  <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
+                    You will only ever be charged once – no subscriptions, no renewals. ✅
                   </p>
-
                 </td>
               </tr>
 
+              <tr>
+                <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
+                 <p style="font-size:13px;color:#777;margin:0;">
+                  Made in Ireland<br>
+                   <span style="color:#999;">QuickCoverLetter · quickcoverletter.app</span>
+                </p>
+                </td>
+              </tr>
             </table>
           </td>
         </tr>
@@ -294,7 +308,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     return res.json({ received: true });
   }
 
-  // 🕓 3. CHECKOUT CANCELED / EXPIRED
+  // 🕓 3. CHECKOUT CANCELED / EXPIRED (UPDATED DESIGN)
   if (event.type === "checkout.session.expired") {
     const session = event.data.object;
     const email = session.customer_details?.email || session.customer_email || null;
@@ -308,46 +322,60 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
         toName: name,
         subject: "⏳ You didn't finish your €1.99 cover letter",
         html: `
-  <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+  <table width="100%" cellspacing="0" cellpadding="0" border="0"
+    style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
     <tr>
       <td align="center">
-        <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
+        <table width="600" cellspacing="0" cellpadding="0" border="0"
+          style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
           
           <tr>
-            <td align="center" style="background:linear-gradient(135deg,#0f172a,#1f2937);padding:25px;">
-              <h1 style="color:#fff;font-size:22px;margin:0;">QuickCoverLetter</h1>
-              <p style="color:#e5e7eb;font-size:13px;margin:6px 0 0;">You can complete the purchase any time</p>
+            <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
+              <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
+                alt="QuickCoverLetter"
+                width="70" height="70"
+                style="display:block;margin:auto;border-radius:50%;background:#fff;
+                       padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+              <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
+              <p style="color:#eaf1ff;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
             </td>
           </tr>
 
           <tr>
-            <td style="padding:30px 40px;text-align:left;">
-              <p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>${name}</strong>,</p>
-              <p style="font-size:15px;color:#333;margin:0 0 15px;">You started buying your cover letter for <strong>€1.99</strong> but didn't finish.</p>
-              <p style="font-size:14px;color:#555;margin:0 0 25px;">No stress — just click below and you can complete it in seconds.</p>
+            <td style="padding:35px 45px;text-align:left;">
+              <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>${name}</strong>,</p>
+              
+              <p style="font-size:16px;color:#333;margin:0 0 18px;">
+                You started buying your cover letter for <strong>€1.99</strong> but didn't finish.
+              </p>
 
-              <div style="text-align:center;margin:30px 0;">
-                <a href="https://quickcoverletter.app"
-                  style="background:#0f172a;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">
+              <p style="font-size:16px;color:#333;margin:0 0 25px;">
+                No stress — just click below and you can complete it in seconds.
+              </p>
+
+              <div style="text-align:center;margin:35px 0;">
+                <a href="https"
+                  style="background:#0070f3;color:#fff;padding:14px 28px;border-radius:8px;
+                         text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
                   Continue Your Cover Letter
                 </a>
               </div>
 
-              <p style="font-size:13px;color:#888;text-align:center;">
-                You will only ever be charged once. No subscriptions. ✅
+              <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
+                You will only ever be charged once – no subscriptions, no renewals. ✅
               </p>
             </td>
           </tr>
 
           <tr>
-            <td align="center" style="background:#f9fafb;padding:18px;border-top:1px solid #eee;">
-              <p style="font-size:13px;color:#777;margin:0;">
-                Made in Ireland<br>
-                <span style="color:#999;">QuickCoverLetter · quickcoverletter.app</span>
-              </p>
+            <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
+             <p style="font-size:13px;color:#777;margin:0;">
+              Made in Ireland<br>
+               <span style="color:#999;">QuickCoverLetter · quickcoverletter.app</span>
+            </p>
+
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -376,7 +404,7 @@ app.get("/cancel/:sessionId", (req, res) => {
 // ===================================================
 app.use(express.json());
 
-// Immediate Cancel Email (User clicked cancel)
+// Immediate Cancel Email (User clicked cancel) (UPDATED DESIGN)
 app.post("/send-cancel-email", async (req, res) => {
   try {
     const { email } = req.body;
@@ -386,58 +414,63 @@ app.post("/send-cancel-email", async (req, res) => {
 
     await sendBrevoEmail({
       toEmail: email,
-      toName: "User",
+      toName: "User", // This is hardcoded to "User", so we'll say "Hi there,"
       subject: "⏳ You didn't finish your cover letter",
       html: `
-  <table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+  <table width="100%" cellspacing="0" cellpadding="0" border="0"
+    style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
     <tr>
       <td align="center">
-        <table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;">
-
+        <table width="600" cellspacing="0" cellpadding="0" border="0"
+          style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
+          
           <tr>
-            <td align="center" style="background:linear-gradient(135deg,#0f172a,#1f2937);padding:26px;">
-              <h1 style="color:#ffffff;font-size:22px;margin:0;">QuickCoverLetter</h1>
-              <p style="color:#e5e7eb;font-size:13px;margin:6px 0 0;">You can pick up where you left off</p>
+            <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
+              <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
+                alt="QuickCoverLetter"
+                width="70" height="70"
+                style="display:block;margin:auto;border-radius:50%;background:#fff;
+                       padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+              <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
+              <p style="color:#eaf1ff;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
             </td>
           </tr>
 
           <tr>
-            <td style="padding:32px 42px;text-align:left;">
+            <td style="padding:35px 45px;text-align:left;">
+              <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi there,</p>
               
-              <p style="font-size:16px;color:#333;margin:0 0 16px;">
-                Hi there,
-              </p>
-
               <p style="font-size:16px;color:#333;margin:0 0 18px;">
                 You started creating your cover letter but didn't finish the payment.
               </p>
 
-              <p style="font-size:15px;color:#555;margin:0 0 24px;">
+              <p style="font-size:16px;color:#333;margin:0 0 25px;">
                 No problem — nothing was charged. Your details are still on your device and you can resume instantly.
               </p>
 
-              <div style="text-align:center;margin:34px 0;">
-                <a href="https://quickcoverletter.app"
-                  style="background:#0f172a;color:#fff;padding:13px 26px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">
+              <div style="text-align:center;margin:35px 0;">
+                <a href="https"
+                  style="background:#0070f3;color:#fff;padding:14px 28px;border-radius:8px;
+                         text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
                   Continue My Cover Letter
                 </a>
               </div>
 
-              <p style="font-size:13px;color:#777;text-align:center;margin-top:25px;">
-                You will only ever be charged once. No subscriptions. ✅
+              <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
+                You will only ever be charged once – no subscriptions, no renewals. ✅
               </p>
             </td>
           </tr>
 
           <tr>
-            <td align="center" style="background:#f9fafb;padding:18px;border-top:1px solid #eee;">
-              <p style="font-size:13px;color:#777;margin:0;">
-                Made in Ireland<br>
-                <span style="color:#999;">QuickCoverLetter · quickcoverletter.app</span>
-              </p>
+            <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
+             <p style="font-size:13px;color:#777;margin:0;">
+              Made in Ireland<br>
+               <span style="color:#999;">QuickCoverLetter · quickcoverletter.app</span>
+            </p>
+
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -452,6 +485,7 @@ app.post("/send-cancel-email", async (req, res) => {
     res.status(500).json({ error: "Cancel email failed", details: err.message });
   }
 });
+
 app.get("/get-session-email/:sessionId", async (req, res) => {
   console.log("📩 Fetching email for session:", req.params.sessionId); // LOG
   try {
@@ -520,10 +554,67 @@ app.get("/api/test-email", async (req, res) => {
     await sendBrevoEmail({
       toEmail: "sforde08@gmail.com",
       toName: "Stephen",
-      subject: "Test: Cover Letter Ready!",
-      html: `<table width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;"><tr><td align="center"><table width="600" cellspacing="0" cellpadding="0" border="0" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05);overflow:hidden;"><tr><td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;"><img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png" alt="QuickCoverLetter" width="64" height="64" style="display:block;margin:auto;border-radius:50%;background:#fff;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);"><h1 style="color:#fff;font-size:22px;margin:12px 0 0;">QuickCoverLetter</h1><p style="color:#eaf1ff;font-size:13px;margin:4px 0 0;">Professional Cover Letter Templates</p></td></tr><tr><td style="padding:30px 40px;text-align:left;"><p style="font-size:16px;color:#333;margin:0 0 15px;">Hi <strong>Stephen</strong> 👋,</p><p style="font-size:16px;color:#333;margin:0 0 15px;">This is a <strong>test email</strong> confirming your setup is complete.</p><p style="font-size:16px;color:#333;margin:0 0 25px;">Payment: <strong>€1.99</strong></p><div style="text-align:center;margin:30px 0;"><a href="${process.env.DOMAIN}" style="background:#0070f3;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;display:inline-block;">Go to QuickCoverLetter</a></div><p style="font-size:14px;color:#666;text-align:center;">Thanks for choosing <strong>QuickCoverLetter</strong> 💙</p></td></tr></table></td></tr></table>`,
+      subject: "Test: Your New Email Template is Working!",
+      html: `<table width="100%" cellspacing="0" cellpadding="0" border="0"
+    style="background:#f4f7fc;padding:40px 0;font-family:Arial,sans-serif;">
+    <tr>
+      <td align="center">
+        <table width="600" cellspacing="0" cellpadding="0" border="0"
+          style="background:#ffffff;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,0.05);overflow:hidden;">
+          
+          <tr>
+            <td align="center" style="background:linear-gradient(135deg,#0070f3,#1d4ed8);padding:25px;">
+              <img src="https://raw.githubusercontent.com/steveforde/QuickCoverLetter/main/icon.png"
+                alt="QuickCoverLetter"
+                width="70" height="70"
+                style="display:block;margin:auto;border-radius:50%;background:#fff;
+                       padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+              <h1 style="color:#ffffff;font-size:22px;margin:14px 0 4px;">QuickCoverLetter</h1>
+              <p style="color:#eaf1ff;font-size:13px;margin:0;">Professional Cover Letter Templates</p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:35px 45px;text-align:left;">
+              <p style="font-size:17px;color:#333;margin:0 0 20px;">Hi <strong>Stephen</strong> 👋,</p>
+              
+              <p style="font-size:16px;color:#333;margin:0 0 18px;">
+                This is a <strong>test email</strong> confirming your new email template is working perfectly.
+              </p>
+
+              <p style="font-size:16px;color:#333;margin:0 0 25px;">
+                All your emails (Success, Failed, and Cancelled) will now have this professional design.
+              </p>
+
+              <div style="text-align:center;margin:35px 0;">
+                <a href="${process.env.DOMAIN}"
+                  style="background:#0070f3;color:#fff;padding:14px 28px;border-radius:8px;
+                         text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
+                  Go to QuickCoverLetter
+                </a>
+              </div>
+
+              <p style="font-size:14px;color:#555;text-align:center;margin-top:25px;">
+                This is just a test. No payment was processed.
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="background:#f9fafb;padding:20px;border-top:1px solid #eee;">
+             <p style="font-size:13px;color:#777;margin:0;">
+              Made in Ireland<br>
+               <span style="color:#999;">QuickCoverLetter · quickcoverletter.app</span>
+            </p>
+
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>`,
     });
-    res.send("✅ TEST EMAIL SENT!");
+    res.send("✅ TEST EMAIL SENT with new template!");
   } catch (err) {
     console.error("❌ TEST FAILED:", err.response?.body || err.message);
     res.status(500).send("Failed to send email");
