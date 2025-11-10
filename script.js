@@ -7,7 +7,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // (Optional) Supabase init
 createClient(
   "https://ztrsuveqeftmgoeiwjgz.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo"
+  "eyJhbGciOiJISInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo"
 );
 
 // ===== CONFIG =====
@@ -40,11 +40,24 @@ document.addEventListener("DOMContentLoaded", () => {
   // ------- State -------
   let isPro = sessionStorage.getItem(K.PRO) === "true";
 
-  // ------- URL handling (success / cancel) -------
+  // =================================================
+  // BLOCK 1: RESTORE FORM (MUST COME FIRST)
+  // This fills the email field *before* we check for cancel
+  // =================================================
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
+    if (saved.job) jobField.value = saved.job;
+    if (saved.company) companyField.value = saved.company;
+    if (saved.name) nameField.value = saved.name;
+    if (saved.email) emailField.value = saved.email;
+  } catch {}
+
+  // =================================================
+  // BLOCK 2: URL HANDLING (MUST COME SECOND)
+  // =================================================
   const params = new URLSearchParams(window.location.search);
   const sid = params.get("session_id");
   const cancelled = params.get("status") === "cancelled";
-  const cancelEmail = params.get("email");
 
   if (sid) {
     // Successful payment → unlock, keep form, clean URL
@@ -55,8 +68,6 @@ document.addEventListener("DOMContentLoaded", () => {
     history.replaceState({}, "", "/");
   }
 
-  // (Inside your DOMContentLoaded event listener)
-
   if (cancelled) {
     // Keep locked, keep form, optionally email
     isPro = false;
@@ -64,31 +75,25 @@ document.addEventListener("DOMContentLoaded", () => {
     updateLockState();
 
     // --- START OF FIX ---
-    // Get the email from the form field (which was restored from sessionStorage)
+    // Get the email from the form field (which was just restored)
     const emailFromForm = emailField.value.trim();
 
     if (emailFromForm) {
       // Send if we have an email
+      console.log("Sending cancel email to:", emailFromForm); // For testing
       fetch(`${BACKEND_URL}/send-cancel-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: emailFromForm }),
       }).catch(() => {});
+    } else {
+      console.log("Cancel detected, but no email in form to send."); // For testing
     }
     // --- END OF FIX ---
 
     showToast("Payment cancelled — no charge made.", "info");
     history.replaceState({}, "", "/");
   }
-
-  // ------- Restore form from sessionStorage -------
-  try {
-    const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
-    if (saved.job) jobField.value = saved.job;
-    if (saved.company) companyField.value = saved.company;
-    if (saved.name) nameField.value = saved.name;
-    if (saved.email) emailField.value = saved.email;
-  } catch {}
 
   // Save as user types (sessionStorage only)
   form?.addEventListener("input", () => {
