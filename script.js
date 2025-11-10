@@ -74,20 +74,29 @@ document.addEventListener("DOMContentLoaded", () => {
     sessionStorage.removeItem(K.PRO);
     updateLockState();
 
-    // --- START OF FIX ---
-    // Get the email from the form field (which was just restored)
-    const emailFromForm = emailField.value.trim();
+    // --- NEW BULLETPROOF FIX ---
+    let emailToSend = emailField.value.trim(); // Try the form field first
 
-    if (emailFromForm) {
+    // If that's empty, try sessionStorage directly (in case of timing issues)
+    if (!emailToSend) {
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
+        if (saved.email) {
+          emailToSend = saved.email;
+        }
+      } catch {}
+    }
+
+    if (emailToSend) {
       // Send if we have an email
-      console.log("Sending cancel email to:", emailFromForm); // For testing
+      console.log("Sending cancel email to:", emailToSend); // For testing
       fetch(`${BACKEND_URL}/send-cancel-email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailFromForm }),
+        body: JSON.stringify({ email: emailToSend }),
       }).catch(() => {});
     } else {
-      console.log("Cancel detected, but no email in form to send."); // For testing
+      console.log("Cancel detected, but no email found to send."); // For testing
     }
     // --- END OF FIX ---
 
