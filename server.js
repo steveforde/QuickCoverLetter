@@ -503,7 +503,7 @@ app.get("/get-session-email/:sessionId", async (req, res) => {
 // 🌐 MIDDLEWARE
 // ===================================================
 
-// =default================================================
+// ===================================================
 // 💳 STRIPE CHECKOUT SESSION (FINAL, static domain)
 // ===================================================
 app.post("/create-checkout-session", async (req, res) => {
@@ -514,9 +514,7 @@ app.post("/create-checkout-session", async (req, res) => {
       mode: "payment",
       line_items: [{ price: process.env.PRICE_ID, quantity: 1 }],
 
-      // === THIS IS THE NEW LINE ===
-      automatic_payment_methods: { enabled: true },
-      // ============================
+      // automatic_payment_methods: {enabled: true}, // REMOVE THIS LINE
 
       success_url: "https://quickcoverletter-static.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
       cancel_url: "https://quickcoverletter-backend.onrender.com/cancel/{CHECKOUT_SESSION_ID}",
