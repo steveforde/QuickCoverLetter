@@ -65,9 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
     isPro = true;
     updateLockState();
 
-    // NEW FIX: FORCE RE-APPLY FORM DATA after session ID is stripped from URL
+    // --- THIS IS THE FIX ---
+    // Force re-apply form data from storage
     try {
-      // Re-read from storage and re-apply to fields, ensuring they display.
       const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
       if (saved.job) jobField.value = saved.job;
       if (saved.company) companyField.value = saved.company;
@@ -76,7 +76,11 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch {}
 
     showToast("✅ Templates unlocked! Your details are saved. Choose a letter style.", "success");
-    history.replaceState({}, "", "/");
+
+    // Delay the URL clean-up to let the DOM render the form values
+    setTimeout(() => {
+      history.replaceState({}, "", "/");
+    }, 100); // 100ms delay
   }
 
   if (cancelled) {
