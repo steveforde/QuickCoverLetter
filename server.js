@@ -308,7 +308,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
     return res.json({ received: true });
   }
 
-  // 🕓 3. CHECKOUT CANCELED / EXPIRED (UPDATED DESIGN)
+  // 🕓 3. CHECKOUT CANCELED / EXPIRED (UPDATED DESIGN + BUG FIX)
   if (event.type === "checkout.session.expired") {
     const session = event.data.object;
     const email = session.customer_details?.email || session.customer_email || null;
@@ -354,7 +354,7 @@ app.post("/webhook", bodyParser.raw({ type: "application/json" }), async (req, r
               </p>
 
               <div style="text-align:center;margin:35px 0;">
-                <a href="https"
+                <a href="${process.env.DOMAIN}"
                   style="background:#0070f3;color:#fff;padding:14px 28px;border-radius:8px;
                          text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
                   Continue Your Cover Letter
@@ -404,7 +404,7 @@ app.get("/cancel/:sessionId", (req, res) => {
 // ===================================================
 app.use(express.json());
 
-// Immediate Cancel Email (User clicked cancel) (UPDATED DESIGN)
+// Immediate Cancel Email (User clicked cancel) (UPDATED DESIGN + BUG FIX)
 app.post("/send-cancel-email", async (req, res) => {
   try {
     const { email } = req.body;
@@ -449,7 +449,7 @@ app.post("/send-cancel-email", async (req, res) => {
               </p>
 
               <div style="text-align:center;margin:35px 0;">
-                <a href="https"
+                <a href="${process.env.DOMAIN}"
                   style="background:#0070f3;color:#fff;padding:14px 28px;border-radius:8px;
                          text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
                   Continue My Cover Letter
