@@ -276,22 +276,29 @@ ${name}`,
 
     payButton.disabled = true;
     const original = payButton.textContent;
-    payButton.textContent = "Redirecting…";
+    payButton.textContent = "Waking server…";
 
     try {
+      // Wake backend with a tiny request
+      await fetch(`${BACKEND_URL}/api/status`, { method: "GET" }).catch(() => {});
+
+      payButton.textContent = "Redirecting to Stripe…";
+
       const r = await fetch(`${BACKEND_URL}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
+
       const data = await r.json();
+
       if (data?.url) {
         window.location.href = data.url;
       } else {
-        throw new Error("No Stripe URL");
+        throw new Error("No URL");
       }
     } catch (e) {
-      showToast("Payment failed. Try again.", "error");
+      showToast("Server is waking up… try again in 10 seconds", "info");
       payButton.disabled = false;
       payButton.textContent = original;
     }
