@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // =================================================
   // BLOCK 1: RESTORE FORM (MUST COME FIRST)
-  // This fills the email field *before* we check for cancel
+  // This is the primary form restoration from storage.
   // =================================================
   try {
     const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
@@ -64,7 +64,18 @@ document.addEventListener("DOMContentLoaded", () => {
     sessionStorage.setItem(K.PRO, "true");
     isPro = true;
     updateLockState();
-    showToast("✅ Templates unlocked! Choose a letter style.", "success");
+
+    // NEW FIX: FORCE RE-APPLY FORM DATA after session ID is stripped from URL
+    try {
+      // Re-read from storage and re-apply to fields, ensuring they display.
+      const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
+      if (saved.job) jobField.value = saved.job;
+      if (saved.company) companyField.value = saved.company;
+      if (saved.name) nameField.value = saved.name;
+      if (saved.email) emailField.value = saved.email;
+    } catch {}
+
+    showToast("✅ Templates unlocked! Your details are saved. Choose a letter style.", "success");
     history.replaceState({}, "", "/");
   }
 
@@ -74,7 +85,6 @@ document.addEventListener("DOMContentLoaded", () => {
     sessionStorage.removeItem(K.PRO);
     updateLockState();
 
-    // --- NEW BULLETPROOF FIX ---
     let emailToSend = emailField.value.trim(); // Try the form field first
 
     // If that's empty, try sessionStorage directly (in case of timing issues)
@@ -98,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       console.log("Cancel detected, but no email found to send."); // For testing
     }
-    // --- END OF FIX ---
 
     showToast("Payment cancelled — no charge made.", "info");
     history.replaceState({}, "", "/");
