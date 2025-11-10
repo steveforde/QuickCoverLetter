@@ -307,7 +307,7 @@ ${name}`,
   // ------- Template clicks -------
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (!isPro) return showToast("Pay €1.99 to unlock templates.", "error");
+      if (!isPro) return showToast("Pay €1.99 to unlock a template.", "error");
 
       const name = nameField.value.trim();
       const job = jobField.value.trim();
