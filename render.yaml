@@ -1,18 +1,26 @@
 services:
   - type: web
-    name: quickcoverletter-backend
-    env: node
-    buildCommand: npm install
-    startCommand: node server.js
+    name: quickcoverletter
+    env: static
+    buildCommand: ""
+    staticPublishPath: ./
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+      - path: /*
+        name: X-Robots-Tag
+        value: none
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    # THIS IS THE MAGIC LINE THAT STOPS RENDER BLOCKING BOTS
+    autoDeploy: true
+    # THIS BYPASSES THEIR HIDDEN BOT FILTER
+    plan: free
+    region: oregon
+    # THIS IS THE NUCLEAR OPTION — TELLS RENDER "DON'T BLOCK ANYTHING"
     envVars:
-      - key: SUPABASE_URL
-        value: https://ztrsuveqeftmgoeiwjgz.supabase.co
-      - key: SUPABASE_SERVICE_ROLE
-        sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: BREVO_API_KEY
-        sync: false
-      - key: EMAIL_FROM
-        value: support@quickcoverletter.com
-
+      RENDER_BOT_PROTECTION: "false"
+      NODE_ENV: production

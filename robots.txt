@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+# PWABuilder user agent
+User-agent: PWABuilder
+Allow: /
+
+# Applebot (for App Store validation)
+User-agent: Applebot
+Allow: /
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://quickcoverletter.app/sitemap.xml
