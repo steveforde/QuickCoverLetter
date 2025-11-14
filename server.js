@@ -78,7 +78,7 @@ try {
 app.use(
   cors({
     origin: [
-      "https://quickcoverletter-static.onrender.com",
+      "https://quickcoverletter.onrender.com",
       "https://quickcoverletter.app",
       "https://www.quickcoverletter.app",
       "http://localhost:3000",
@@ -392,9 +392,7 @@ app.get("/cancel/:sessionId", (req, res) => {
   const sessionId = req.params.sessionId;
   console.log("CANCEL REDIRECT → session ID:", sessionId); // LOG THIS!
   // Add the full frontend URL here
-  res.redirect(
-    `https://quickcoverletter-static.onrender.com/?status=cancelled&session_id=${sessionId}`
-  );
+  res.redirect(`https://quickcoverletter.onrender.com/?status=cancelled&session_id=${sessionId}`);
 });
 
 // ===================================================
@@ -516,8 +514,8 @@ app.post("/create-checkout-session", async (req, res) => {
 
       // automatic_payment_methods: {enabled: true}, // REMOVE THIS LINE
 
-      success_url: "https://quickcoverletter-static.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
-      cancel_url: "https://quickcoverletter-backend.onrender.com/cancel/{CHECKOUT_SESSION_ID}",
+      success_url: "https://quickcoverletter.onrender.com/?session_id={CHECKOUT_SESSION_ID}",
+      cancel_url: "https://quickcoverletter.onrender.com/cancel/{CHECKOUT_SESSION_ID}",
 
       customer_email: email || undefined,
       metadata: { email },

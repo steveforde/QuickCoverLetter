@@ -11,7 +11,7 @@ createClient(
 );
 
 // ===== CONFIG =====
-const BACKEND_URL = "https://quickcoverletter-backend.onrender.com";
+const BACKEND_URL = "https://quickcoverletter.onrender.com";
 
 // ===== KEYS (sessionStorage only) =====
 const K = {
