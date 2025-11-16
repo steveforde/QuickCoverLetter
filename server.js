@@ -23,6 +23,7 @@ const __dirname = path.dirname(__filename);
 dotenv.config();
 const app = express();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+// const cors = require("cors"); // <-- DELETED THIS LINE (Deployment Fix)
 
 // ===================================================
 // 🟦 BREVO (Transactional Email API)
@@ -74,19 +75,6 @@ try {
 } catch (e) {
   console.error("❌ Supabase init failed:", e.message);
 }
-
-app.use(
-  cors({
-    origin: [
-      "https://quickcoverletter.onrender.com",
-      "https://quickcoverletter.app",
-      "https://www.quickcoverletter.app",
-      "http://localhost:3000",
-    ],
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type"],
-  })
-);
 
 // ===================================================
 // 🪝 STRIPE WEBHOOK (MUST BE FIRST)
@@ -396,10 +384,24 @@ app.get("/cancel/:sessionId", (req, res) => {
 });
 
 // ===================================================
-// 🌐 JSON PARSER (MUST BE SECOND)
-// All other routes below this line will now be
-// able to read JSON from req.body.
+// 🌐 MIDDLEWARE
 // ===================================================
+// ADDED CORS HERE (CORS Fix)
+app.use(
+  cors({
+    origin: [
+      "https://quickcoverletter.onrender.com",
+      "https://quickcoverletter.app",
+      "https://www.quickcoverletter.app",
+      "http://localhost:3000",
+      "https://quickcoverletter-backend.onrender.com", // <-- Added this just in case your frontend is trying to call the backend from the backend's domain
+    ],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
+// JSON PARSER (MUST COME AFTER WEBHOOK)
 app.use(express.json());
 
 // Immediate Cancel Email (User clicked cancel) (UPDATED DESIGN + BUG FIX)
@@ -496,10 +498,6 @@ app.get("/get-session-email/:sessionId", async (req, res) => {
     res.status(404).json({ error: "Session not found" });
   }
 });
-
-// ===================================================
-// 🌐 MIDDLEWARE
-// ===================================================
 
 // ===================================================
 // 💳 STRIPE CHECKOUT SESSION (FINAL, static domain)
