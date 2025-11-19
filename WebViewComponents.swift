@@ -2,33 +2,29 @@ import SwiftUI
 import WebKit
 import Foundation
 
-// NOTE: This file assumes your StoreKitService class is defined and accessible.
-
 // ===================================================
-// 1. WebViewCoordinator (The JavaScript Listener)
+// 1. WebViewCoordinator (The JavaScript Listener & Page Loader)
+// This class handles all communication events from the WebView.
 // ===================================================
-class WebViewCoordinator: NSObject, WKScriptMessageHandler {
+class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate { 
     
-    // Reference to your StoreKit service to initiate the IAP
     var storeKitService: StoreKitService
     
     init(storeKitService: StoreKitService) {
         self.storeKitService = storeKitService
     }
     
-    // This method is called when JavaScript sends a message via 'webkit.messageHandlers'
+    // --- WKScriptMessageHandler (Receives "purchase" message from JS) ---
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         
-        // Check if the message name is the one we expect from script.js ("purchase")
+        // Check if the message name is the one we expect: "purchase"
         if message.name == "purchase" {
             
-            // The body contains the user's email address (String)
             if let email = message.body as? String {
                 print("Received purchase request from JS for email: \(email)")
                 
                 // Start the StoreKit purchase flow asynchronously
                 Task {
-                    // The purchaseCoverLetter function handles the IAP logic
                     let success = await storeKitService.purchaseCoverLetter(email: email)
                     
                     if !success {
@@ -38,10 +34,24 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler {
                             self.storeKitService.webView?.evaluateJavaScript(script)
                         }
                     }
-                    // If successful, the StoreKitService handles the JS callback (handleIAPSuccess) internally.
                 }
             }
         }
+    }
+    
+    // 🟢 WKNavigationDelegate (Fixes the "Service Not Available" Error) 🟢
+    // This runs AFTER the webpage content is fully loaded and ready to talk to Swift.
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        print("Web content loaded. Unlocking JavaScript button.")
+        
+        // CRITICAL FIX: Send a JavaScript command to ENABLE the pay button only now
+        // This ensures the button is not tapped before the message handler is ready.
+        let enableScript = """
+            document.getElementById('payButton').disabled = false; 
+            document.getElementById('payButton').textContent = 'Pay €1.99 to Unlock a letter';
+        """
+        // Evaluate JavaScript to enable the button
+        webView.evaluateJavaScript(enableScript)
     }
 }
 
@@ -51,18 +61,16 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler {
 // ===================================================
 struct WebKitView: UIViewRepresentable {
     
-    // Inject the ObservableObject (StoreKitService) to share data and methods
+    // Inject the ObservableObject (StoreKitService)
     @ObservedObject var storeKitService: StoreKitService 
     
-    // The hosted URL for your frontend
     private let urlString = "https://quickcoverletter.onrender.com" 
 
     func makeUIView(context: Context) -> WKWebView {
         
         let contentController = WKUserContentController()
         
-        // CRITICAL STEP: Add the Coordinator as a message handler for the name "purchase"
-        // This creates the link: window.webkit.messageHandlers.purchase
+        // Add the Coordinator as a message handler for the name "purchase"
         contentController.add(context.coordinator, name: "purchase")
         
         let configuration = WKWebViewConfiguration()
@@ -70,8 +78,10 @@ struct WebKitView: UIViewRepresentable {
         
         let webView = WKWebView(frame: .zero, configuration: configuration)
         
-        // Store the webView reference in the service. This allows the StoreKitService 
-        // (after a successful IAP) to send messages back to the JavaScript frontend.
+        // Set the Coordinator as the navigation delegate
+        webView.navigationDelegate = context.coordinator 
+        
+        // Store the webView reference for the success callback
         storeKitService.webView = webView 
         
         // Load the website
@@ -89,7 +99,6 @@ struct WebKitView: UIViewRepresentable {
     
     // Creates the instance of the Coordinator when the View is initialized
     func makeCoordinator() -> WebViewCoordinator {
-        // Pass the StoreKitService to the coordinator so it can access the payment logic
         return WebViewCoordinator(storeKitService: storeKitService)
     }
 }
