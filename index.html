@@ -9,7 +9,6 @@
       content="Instant, professional cover letters. No subscriptions. Pay once per letter, get your PDF. Works on any device."
     />
 
-    <!-- PWA Essentials -->
     <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/png" href="/icon.png" />
     <link rel="apple-touch-icon" href="/icon.png" />
@@ -17,12 +16,46 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="theme-color" content="#0070f3" />
 
-    <!-- Core Styles -->
     <link rel="stylesheet" href="style.css" />
+
+    <script>
+      // 1. Function called by Swift/WKNavigationDelegate to ENABLE the button.
+      // This is called AFTER the page loads, guaranteeing the handler is ready.
+      window.enablePayButton = function (price) {
+        const btn = document.getElementById("payButton");
+        if (!btn) return;
+
+        btn.disabled = false;
+        btn.textContent = `Pay ${price} to Unlock a letter`;
+        console.log("Pay button enabled – ready to buy");
+      };
+
+      // 2. Success callback from Swift/StoreKit.
+      window.handleIAPSuccess = function (email) {
+        console.log("IAP SUCCESS for", email);
+        // Uses the key you defined (K.PRO = "qcl_isPro")
+        sessionStorage.setItem("qcl_isPro", "true");
+
+        // This is where you call the function in your script.js that updates the UI:
+        if (typeof updateLockState === "function") {
+          updateLockState();
+        }
+        showToast("Templates unlocked!", "success");
+      };
+
+      // Simple toast function (needed because success/error callbacks from Swift use it)
+      function showToast(msg, type = "info") {
+        const toast = document.getElementById("toast");
+        if (!toast) return;
+        toast.textContent = msg;
+        toast.className = `toast ${type} show`;
+        clearTimeout(toast._hide);
+        toast._hide = setTimeout(() => toast.classList.remove("show"), 4000);
+      }
+    </script>
   </head>
 
   <body>
-    <!-- HERO HEADER -->
     <header class="hero">
       <div class="hero-content">
         <h1>QuickCoverLetter</h1>
@@ -31,10 +64,8 @@
       <button id="themeToggle" class="theme-btn" aria-label="Toggle dark mode">Dark Mode</button>
     </header>
 
-    <!-- TOAST NOTIFICATIONS -->
     <div id="toast" class="toast" role="alert" aria-live="assertive"></div>
 
-    <!-- MAIN FORM -->
     <main>
       <form id="form" class="form-box" novalidate>
         <label for="jobTitle">Job Title <span class="required">*</span></label>
@@ -54,9 +85,7 @@
         </button>
       </form>
 
-      <!-- TEMPLATE SELECTION -->
       <section class="template-section" aria-labelledby="template-heading">
-        <!-- Heading moved INSIDE grid, spans all columns -->
         <div class="template-buttons">
           <h2
             id="template-heading"
@@ -88,7 +117,6 @@
               Clean and confident — ideal for corporate, tech, or government roles.
             </p>
           </div>
-
           <div class="template-option">
             <button class="template-btn" data-type="formal" aria-describedby="desc-formal">
               Formal
@@ -139,20 +167,16 @@
       </section>
     </main>
 
-    <!-- PDF LIBRARY -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- SUPABASE (Public) -->
     <script>
       window.__SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
       window.__SUPABASE_ANON_KEY =
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo";
     </script>
 
-    <!-- MAIN LOGIC -->
     <script type="module" src="script.js"></script>
 
-    <!-- FOOTER -->
     <footer>
       <p>
         © 2025 <strong>QuickCoverLetter</strong> — Made in Ireland |
@@ -160,22 +184,5 @@
         <a href="privacy.html">Privacy</a>
       </p>
     </footer>
-
-    <script>
-      document.getElementById("payButton")?.addEventListener("click", () => {
-        const email = document.getElementById("userEmail")?.value.trim();
-        if (!email) return alert("Enter email first");
-
-        if (window.webkit?.messageHandlers?.purchase) {
-          window.webkit.messageHandlers.purchase.postMessage(email);
-        }
-      });
-
-      window.handleIAPSuccess = () => {
-        sessionStorage.setItem("qcl_isPro", "true");
-        document.querySelectorAll(".template-btn").forEach((b) => (b.disabled = false));
-        alert("Unlocked!");
-      };
-    </script>
   </body>
 </html>

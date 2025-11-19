@@ -1,25 +1,74 @@
 import SwiftUI
 import WebKit
+import Foundation
 
-struct WebKitView: UIViewRepresentable {
-    @ObservedObject var storeKitService: StoreKitService
+// ===================================================
+// 1. Coordinator (The Listener & Delegate)
+// Must inherit from NSObject and conform to both protocols
+// ===================================================
+class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate { 
     
-    func makeCoordinator() -> Coordinator {
-        Coordinator(storeKitService)
+    // Reference to the payment service
+    var storeKitService: StoreKitService 
+    
+    init(storeKitService: StoreKitService) {
+        self.storeKitService = storeKitService
     }
     
+    // In your WebViewCoordinator class:
+func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+    if message.name == "purchase", let email = message.body as? String {
+        print("JS → Swift: purchase requested for \(email)")
+        Task {
+            // 🟢 CRITICAL FIX: Change the name here to match the StoreKitService function
+            await service.purchase(email: email) 
+        }
+    }
+}
+    
+    // --- 1b. WKNavigationDelegate (Fixes the Timing Error) ---
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        print("Web content loaded. Unlocking JavaScript button.")
+        
+        // CRITICAL FIX: The minimal and safest command to enable the button.
+        let enableScript = """
+            document.getElementById('payButton').disabled = false; 
+            document.getElementById('payButton').textContent = 'Pay €1.99 to Unlock a letter';
+        """
+        // Evaluate JavaScript to enable the button
+        webView.evaluateJavaScript(enableScript)
+    }
+}
+
+
+// ===================================================
+// 2. WebKitView (The SwiftUI View)
+// ===================================================
+struct WebKitView: UIViewRepresentable {
+    
+    @ObservedObject var storeKitService: StoreKitService 
+    private let urlString = "https://quickcoverletter.onrender.com" 
+
     func makeUIView(context: Context) -> WKWebView {
-        let controller = WKUserContentController()
-        controller.add(context.coordinator, name: "purchase")
         
-        let config = WKWebViewConfiguration()
-        config.userContentController = controller
+        let contentController = WKUserContentController()
         
-        let webView = WKWebView(frame: .zero, configuration: config)
-        webView.navigationDelegate = context.coordinator
-        storeKitService.webView = webView
+        // Add the Coordinator as a message handler for the name "purchase"
+        contentController.add(context.coordinator, name: "purchase")
         
-        if let url = URL(string: "https://quickcoverletter.onrender.com") {
+        let configuration = WKWebViewConfiguration()
+        configuration.userContentController = contentController
+        
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        
+        // Set both delegates to the Coordinator
+        webView.navigationDelegate = context.coordinator 
+        
+        // Store the webView reference for the success callback
+        storeKitService.webView = webView 
+        
+        // Load the website
+        if let url = URL(string: urlString) {
             webView.load(URLRequest(url: url))
         }
         
@@ -28,46 +77,9 @@ struct WebKitView: UIViewRepresentable {
     
     func updateUIView(_ uiView: WKWebView, context: Context) {}
     
-    class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
-        let service: StoreKitService
-        
-        init(_ service: StoreKitService) {
-            self.service = service
-        }
-        
-        func userContentController(_ userContentController: WKUserContentController,
-                                   didReceive message: WKScriptMessage) {
-            if message.name == "purchase", let email = message.body as? String {
-                print("IAP REQUESTED FOR: \(email)")
-                Task { await service.purchase(email: email) }
-            }
-        }
-        
-        // THIS IS THE ONLY PART THAT WAS FAILING BEFORE
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            print("PAGE LOADED – FORCING PAY BUTTON ENABLE")
-            
-            let forceEnable = """
-            (function() {
-                const btn = document.getElementById('payButton');
-                if (btn) {
-                    btn.disabled = false;
-                    btn.textContent = '€1.99';
-                    console.log('PAY BUTTON FORCE-ENABLED');
-                }
-                if (typeof enablePayButton === 'function') {
-                    enablePayButton('€1.99');
-                }
-            })();
-            """
-            
-            webView.evaluateJavaScript(forceEnable) { _, error in
-                if let error = error {
-                    print("JS ERROR: \(error)")
-                } else {
-                    print("PAY BUTTON IS NOW CLICKABLE")
-                }
-            }
-        }
+    // Creates the instance of the Coordinator 
+    func makeCoordinator() -> WebViewCoordinator {
+        // Pass the StoreKitService to the coordinator 
+        return WebViewCoordinator(storeKitService: storeKitService)
     }
 }
