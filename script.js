@@ -1,5 +1,5 @@
 // =========================================================
-// QuickCoverLetter — FINAL FRONTEND (sessionStorage-only)
+// QuickCoverLetter — FINAL FRONTEND (StoreKit Ready & Templates Restored)
 // =========================================================
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -9,9 +9,6 @@ createClient(
   "https://ztrsuveqeftmgoeiwjgz.supabase.co",
   "eyJhbGciOiJISInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo"
 );
-
-// ===== CONFIG =====
-const BACKEND_URL = "https://quickcoverletter.onrender.com";
 
 // ===== KEYS (sessionStorage only) =====
 const K = {
@@ -41,8 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let isPro = sessionStorage.getItem(K.PRO) === "true";
 
   // =================================================
-  // BLOCK 1: RESTORE FORM (MUST COME FIRST)
-  // This is the primary form restoration from storage.
+  // BLOCK 1: RESTORE FORM
   // =================================================
   try {
     const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
@@ -53,69 +49,27 @@ document.addEventListener("DOMContentLoaded", () => {
   } catch {}
 
   // =================================================
-  // BLOCK 2: URL HANDLING (MUST COME SECOND)
+  // BLOCK 2: URL HANDLING (Stripe related code REMOVED)
+  // This block is empty, as it relied on Stripe redirects.
   // =================================================
-  const params = new URLSearchParams(window.location.search);
-  const sid = params.get("session_id");
-  const cancelled = params.get("status") === "cancelled";
 
-  if (sid) {
-    // Successful payment → unlock, keep form, clean URL
+  // =================================================
+  // BLOCK 3: IAP SUCCESS HANDLER (NEW)
+  // This function is called by the native Swift code upon successful payment.
+  // =================================================
+  window.handleIAPSuccess = (emailAddress) => {
     sessionStorage.setItem(K.PRO, "true");
     isPro = true;
     updateLockState();
 
-    // --- THIS IS THE FIX ---
-    // Force re-apply form data from storage
-    try {
-      const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
-      if (saved.job) jobField.value = saved.job;
-      if (saved.company) companyField.value = saved.company;
-      if (saved.name) nameField.value = saved.name;
-      if (saved.email) emailField.value = saved.email;
-    } catch {}
+    // Log success email request
+    console.log("IAP Success - Sending receipt email to:", emailAddress);
 
-    showToast("✅ Templates unlocked! Your details are saved. Choose a letter style.", "success");
+    showToast("✅ Templates unlocked! Choose a letter style.", "success");
 
-    // CLEAN URL WITHOUT REFRESH — preserves form data 100%
-    if (window.location.search) {
-      history.replaceState({}, "", window.location.pathname);
-    }
-  }
-
-  if (cancelled) {
-    // Keep locked, keep form, optionally email
-    isPro = false;
-    sessionStorage.removeItem(K.PRO);
+    // Rerun updateLockState after unlocking
     updateLockState();
-
-    let emailToSend = emailField.value.trim(); // Try the form field first
-
-    // If that's empty, try sessionStorage directly (in case of timing issues)
-    if (!emailToSend) {
-      try {
-        const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
-        if (saved.email) {
-          emailToSend = saved.email;
-        }
-      } catch {}
-    }
-
-    if (emailToSend) {
-      // Send if we have an email
-      console.log("Sending cancel email to:", emailToSend); // For testing
-      fetch(`${BACKEND_URL}/send-cancel-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailToSend }),
-      }).catch(() => {});
-    } else {
-      console.log("Cancel detected, but no email found to send."); // For testing
-    }
-
-    showToast("Payment cancelled — no charge made.", "info");
-    history.replaceState({}, "", "/");
-  }
+  };
 
   // Save as user types (sessionStorage only)
   form?.addEventListener("input", () => {
@@ -177,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
     toast._hide = setTimeout(() => toast.classList.remove("show"), 4000);
   }
 
-  // ------- Templates -------
+  // ------- Templates (RESTORED) -------
   const templates = {
     professional: (name, job, company, date) => `${name}
 [Your Address]
@@ -260,7 +214,7 @@ Kind regards,
 ${name}`,
   };
 
-  // ------- Pay → save form in session + redirect to Stripe -------
+  // ------- Pay → Trigger Native IAP Purchase (RESTORED LOGIC) -------
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
     const company = companyField.value.trim();
@@ -272,39 +226,32 @@ ${name}`,
       return;
     }
 
+    // 1. Save all details to session (in case the purchase window is closed)
     sessionStorage.setItem(K.FORM, JSON.stringify({ job, company, name, email }));
 
     payButton.disabled = true;
     const original = payButton.textContent;
-    payButton.textContent = "Waking server…";
+    payButton.textContent = "Processing Payment...";
 
     try {
-      // Wake backend with a tiny request
-      await fetch(`${BACKEND_URL}/api/status`, { method: "GET" }).catch(() => {});
-
-      payButton.textContent = "Redirecting to Stripe…";
-
-      const r = await fetch(`${BACKEND_URL}/create-checkout-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await r.json();
-
-      if (data?.url) {
-        window.location.href = data.url;
+      // 2. IMPORTANT: Call native Swift code to start the IAP process
+      if (window.webkit && window.webkit.messageHandlers.purchase) {
+        // Pass the email for potential use in the success email later
+        window.webkit.messageHandlers.purchase.postMessage(email);
       } else {
-        throw new Error("No URL");
+        // Fallback or error message if running outside the iOS app
+        showToast("Payment service not available (Must be run in iOS App).", "error");
+        payButton.disabled = false;
+        payButton.textContent = original;
       }
     } catch (e) {
-      showToast("Server is waking up… try again in 10 seconds", "info");
+      showToast("Error starting payment process.", "error");
       payButton.disabled = false;
       payButton.textContent = original;
     }
   });
 
-  // ------- Template clicks -------
+  // ------- Template clicks (RESTORED) -------
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       if (!isPro) return showToast("Pay €1.99 to unlock a template.", "error");
@@ -331,7 +278,7 @@ ${name}`,
     });
   });
 
-  // ------- PDF + Copy -------
+  // ------- PDF + Copy (RESTORED) -------
   const { jsPDF } = window.jspdf;
 
   function renderExact(pdf, text, x, y, maxW, lineH = 7) {
@@ -369,7 +316,7 @@ ${name}`,
       .catch(() => showToast("Copy failed.", "error"));
   });
 
-  // ------- Clear (reset + relock) -------
+  // ------- Clear (reset + relock) (RESTORED) -------
   clearBtn?.addEventListener("click", () => {
     form.reset();
     coverLetter.value = "";
@@ -382,4 +329,7 @@ ${name}`,
     updateLockState();
     showToast("All cleared — pay again to start a new letter.", "info");
   });
+
+  // Rerun updateLockState after all listeners are set up
+  updateLockState();
 });

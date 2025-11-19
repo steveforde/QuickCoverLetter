@@ -150,14 +150,6 @@
     <!-- MAIN LOGIC -->
     <script type="module" src="script.js"></script>
 
-    <!-- BACKEND KEEP-ALIVE -->
-    <script>
-      const keepAlive = () =>
-        fetch("https://quickcoverletter-backend.onrender.com/api/status").catch(() => {});
-      keepAlive();
-      setInterval(keepAlive, 10 * 60 * 1000);
-    </script>
-
     <!-- FOOTER -->
     <footer>
       <p>
