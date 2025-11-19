@@ -161,43 +161,20 @@
       </p>
     </footer>
 
-    <!-- THIS SCRIPT MUST BE AT THE END OF <body> -->
     <script>
-      // Called from Swift when the page loads
-      window.enablePayButton = function (price) {
-        const btn = document.getElementById("payButton");
-        if (!btn) return;
-
-        btn.disabled = false;
-        btn.textContent = price;
-        console.log("Pay button enabled – ready to buy");
-      };
-
-      // Called when user taps the button
-      document.getElementById("payButton").addEventListener("click", () => {
+      document.getElementById("payButton")?.addEventListener("click", () => {
         const email = document.getElementById("userEmail")?.value.trim();
-        if (!email) {
-          showToast("Please enter your email first", "error");
-          return;
-        }
+        if (!email) return alert("Enter email first");
 
-        // THIS IS THE ONLY LINE THAT MATTERS
         if (window.webkit?.messageHandlers?.purchase) {
-          console.log("Sending purchase request to Swift for:", email);
           window.webkit.messageHandlers.purchase.postMessage(email);
-          showToast("Opening Apple payment...", "info");
-        } else {
-          console.error("window.webkit.messageHandlers.purchase NOT AVAILABLE");
-          showToast("In-App Purchase not available – open in the iOS app", "error");
         }
       });
 
-      // Success callback from Swift
-      window.handleIAPSuccess = function (email) {
-        console.log("IAP SUCCESS for", email);
+      window.handleIAPSuccess = () => {
         sessionStorage.setItem("qcl_isPro", "true");
         document.querySelectorAll(".template-btn").forEach((b) => (b.disabled = false));
-        showToast("Templates unlocked!", "success");
+        alert("Unlocked!");
       };
     </script>
   </body>

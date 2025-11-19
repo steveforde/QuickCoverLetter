@@ -2,7 +2,6 @@ import SwiftUI
 import WebKit
 
 struct WebKitView: UIViewRepresentable {
-    
     @ObservedObject var storeKitService: StoreKitService
     
     func makeCoordinator() -> Coordinator {
@@ -36,33 +35,37 @@ struct WebKitView: UIViewRepresentable {
             self.service = service
         }
         
-        // ← THIS WAS MISSING A ) ←
         func userContentController(_ userContentController: WKUserContentController,
                                    didReceive message: WKScriptMessage) {
             if message.name == "purchase", let email = message.body as? String {
-                print("JS → Swift: purchase requested for \(email)")
-                Task {
-                    await service.purchase(email: email)
-                }
+                print("IAP REQUESTED FOR: \(email)")
+                Task { await service.purchase(email: email) }
             }
         }
         
+        // THIS IS THE ONLY PART THAT WAS FAILING BEFORE
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            print("WEB PAGE FULLY LOADED — NOW ENABLING PAY BUTTON")
+            print("PAGE LOADED – FORCING PAY BUTTON ENABLE")
             
-            let js = """
-            if (typeof enablePayButton === 'function') {
-                enablePayButton('€1.99');
-            } else {
-                console.log('enablePayButton not found yet');
-            }
+            let forceEnable = """
+            (function() {
+                const btn = document.getElementById('payButton');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = '€1.99';
+                    console.log('PAY BUTTON FORCE-ENABLED');
+                }
+                if (typeof enablePayButton === 'function') {
+                    enablePayButton('€1.99');
+                }
+            })();
             """
             
-            webView.evaluateJavaScript(js) { result, error in
+            webView.evaluateJavaScript(forceEnable) { _, error in
                 if let error = error {
                     print("JS ERROR: \(error)")
                 } else {
-                    print("enablePayButton CALLED SUCCESSFULLY")
+                    print("PAY BUTTON IS NOW CLICKABLE")
                 }
             }
         }
