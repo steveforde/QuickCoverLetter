@@ -98,6 +98,14 @@ document.addEventListener("DOMContentLoaded", () => {
     applyTheme();
   });
 
+  window.enablePayButton = (price) => {
+    const btn = document.getElementById("payButton");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = `Pay ${price} to Unlock a letter`;
+    }
+  };
+
   // ------- Lock/Unlock UI -------
   function updateLockState() {
     payButton?.classList.remove("hidden");

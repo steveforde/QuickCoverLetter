@@ -39,21 +39,18 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         }
     }
     
-    // 🟢 WKNavigationDelegate (Fixes the "Service Not Available" Error) 🟢
+// 🟢 WKNavigationDelegate (Fixes the Timing Error) 🟢
     // This runs AFTER the webpage content is fully loaded and ready to talk to Swift.
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         print("Web content loaded. Unlocking JavaScript button.")
         
-        // CRITICAL FIX: Send a JavaScript command to ENABLE the pay button only now
-        // This ensures the button is not tapped before the message handler is ready.
-        let enableScript = """
-            document.getElementById('payButton').disabled = false; 
-            document.getElementById('payButton').textContent = 'Pay €1.99 to Unlock a letter';
-        """
+        // CRITICAL FIX: Call the simple JavaScript function we just created.
+        // We pass '€1.99' directly to the function in the WebView.
+        let enableScript = "enablePayButton('€1.99')"
+        
         // Evaluate JavaScript to enable the button
         webView.evaluateJavaScript(enableScript)
     }
-}
 
 
 // ===================================================
