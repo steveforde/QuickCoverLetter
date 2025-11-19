@@ -3,28 +3,27 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QuickCoverLetter App Support</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>QuickCoverLetter App Support - Contact & Legal</title>
     <style>
-      /* Basic styling to ensure readability, centered for professionalism */
       body {
         font-family: Arial, sans-serif;
         line-height: 1.6;
         padding: 40px 20px;
-        max-width: 600px;
+        max-width: 700px;
         margin: auto;
         color: #333;
       }
       h1 {
-        font-size: 24px;
-        color: #0070f3; /* App Primary Color (adjust if needed) */
-        margin-bottom: 5px;
+        font-size: 28px;
+        color: #0070f3;
+        border-bottom: 2px solid #0070f3;
+        padding-bottom: 10px;
+        margin-bottom: 10px;
       }
       h2 {
-        font-size: 18px;
-        border-bottom: 1px solid #eee;
-        padding-bottom: 5px;
+        font-size: 20px;
         margin-top: 30px;
+        color: #555;
       }
       .back-link {
         display: inline-block;
@@ -35,34 +34,56 @@
       }
       .contact-info strong {
         display: inline-block;
-        min-width: 80px;
+        min-width: 100px;
         font-weight: bold;
-        color: #555;
+        color: #333;
+      }
+      .legal-links ul {
+        list-style: none;
+        padding-left: 0;
+      }
+      .legal-links li {
+        margin-bottom: 10px;
+      }
+      .legal-links a {
+        font-weight: bold;
+        color: #c90000; /* Use a distinct color to highlight legal links */
+        text-decoration: none;
+      }
+      .legal-links a:hover {
+        text-decoration: underline;
       }
       .made-in-ireland {
         margin-top: 50px;
         font-size: 12px;
         color: #999;
         text-align: center;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
       }
     </style>
   </head>
   <body>
-    <a href="index.html" class="back-link">← Return to QuickCoverLetter App</a>
+    <a href="index.html" class="back-link">← Return to QuickCoverLetter App Homepage</a>
 
-    <h1>QuickCoverLetter Support</h1>
-    <p>Thank you for using the QuickCoverLetter App. We're here to help you secure that job!</p>
-
-    <h2>Need Assistance?</h2>
+    <h1>QuickCoverLetter App Support</h1>
     <p>
-      If you have any questions, encounter issues with payment, downloading, or require assistance
-      with the app's functionality, please contact us directly. We aim to resolve all support
-      queries promptly.
+      Thank you for using the QuickCoverLetter App. We are committed to providing excellent support
+      to help you secure that job!
+    </p>
+
+    <hr />
+
+    <h2>Need Assistance? (Contact Us)</h2>
+    <p>
+      If you have any questions, encounter issues with the app, or need help with a purchase, please
+      contact the developer directly using the details below. We aim to resolve all support queries
+      promptly.
     </p>
 
     <div class="contact-info">
       <p>
-        <strong>Email:</strong>
+        <strong>Support Email:</strong>
         <a href="mailto:sforde08@gmail.com" style="color: #0070f3">sforde08@gmail.com</a>
       </p>
       <p>
@@ -71,8 +92,31 @@
       </p>
     </div>
 
-    <p style="margin-top: 25px">We usually respond within 24 hours.</p>
+    <p style="margin-top: 25px">
+      *We typically respond to all support emails within 24 hours (Monday - Friday).*
+    </p>
 
-    <p class="made-in-ireland">© 2025 QuickCoverLetter App. Developed in Ireland.</p>
+    <hr />
+
+    <h2>Legal Information & Policies</h2>
+    <p>
+      For complete information regarding the use of the app and how your data is handled, please
+      review our legal documents:
+    </p>
+
+    <div class="legal-links">
+      <ul>
+        <li>
+          <a href="/privacy.html">Privacy Policy</a>
+        </li>
+        <li>
+          <a href="/terms.html">Terms of Use / EULA</a>
+        </li>
+      </ul>
+    </div>
+
+    <p class="made-in-ireland">
+      © 2025 QuickCoverLetter App. Developed by Stuart Forde in Ireland.
+    </p>
   </body>
 </html>
