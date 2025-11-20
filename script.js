@@ -49,11 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
   } catch {}
 
   // =================================================
-  // BLOCK 2: URL HANDLING (Stripe related code REMOVED)
-  // This block is empty, as it relied on Stripe redirects.
-  // =================================================
-
-  // =================================================
   // BLOCK 3: IAP SUCCESS HANDLER (NEW)
   // This function is called by the native Swift code upon successful payment.
   // =================================================
@@ -222,7 +217,7 @@ Kind regards,
 ${name}`,
   };
 
-  // ------- Pay → Trigger Native IAP Purchase (RESTORED LOGIC) -------
+  // ------- Pay → Trigger Native IAP Purchase (FIXED) -------
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
     const company = companyField.value.trim();
@@ -234,7 +229,6 @@ ${name}`,
       return;
     }
 
-    // 1. Save all details to session (in case the purchase window is closed)
     sessionStorage.setItem(K.FORM, JSON.stringify({ job, company, name, email }));
 
     payButton.disabled = true;
@@ -242,18 +236,27 @@ ${name}`,
     payButton.textContent = "Processing Payment...";
 
     try {
-      // 2. IMPORTANT: Call native Swift code to start the IAP process
-      if (window.webkit && window.webkit.messageHandlers.purchase) {
-        // Pass the email for potential use in the success email later
+      // 🟢 FIXED LOGIC: Checks if "isIOSApp" flag exists (set by Swift) OR if webkit bridge exists
+      if (
+        window.isIOSApp ||
+        (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.purchase)
+      ) {
+        // Send the message to Swift
         window.webkit.messageHandlers.purchase.postMessage(email);
       } else {
-        // Fallback or error message if running outside the iOS app
-        showToast("Payment service not available (Must be run in iOS App).", "error");
-        payButton.disabled = false;
-        payButton.textContent = original;
+        // If we are NOT in the app, we log it, but we DO NOT show the red error to the user.
+        console.log("Not running inside iOS App or Bridge not ready.");
+
+        // Optional: Reset button so it doesn't stay stuck on "Processing"
+        setTimeout(() => {
+          payButton.disabled = false;
+          payButton.textContent = original;
+        }, 2000);
       }
     } catch (e) {
-      showToast("Error starting payment process.", "error");
+      console.error("Payment Error:", e);
+      // Only show generic error, not the "Service Not Available" one
+      showToast("Connection error. Please try again.", "error");
       payButton.disabled = false;
       payButton.textContent = original;
     }

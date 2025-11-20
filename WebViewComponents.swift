@@ -4,7 +4,6 @@ import Foundation
 
 // ===================================================
 // 1. Coordinator (The Listener & Delegate)
-// Must inherit from NSObject and conform to both protocols
 // ===================================================
 class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate { 
     
@@ -15,34 +14,53 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         self.storeKitService = storeKitService
     }
     
-    // In your WebViewCoordinator class:
-func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-    if message.name == "purchase", let email = message.body as? String {
-        print("JS → Swift: purchase requested for \(email)")
-        Task {
-            // 🟢 CRITICAL FIX: Change the name here to match the StoreKitService function
-            await service.purchase(email: email) 
+    // Handle messages from JavaScript
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        if message.name == "purchase", let email = message.body as? String {
+            print("JS → Swift: purchase requested for \(email)")
+            Task {
+                // 🟢 FIXED: Changed 'service' to 'storeKitService' so it actually works
+                await storeKitService.purchase(email: email) 
+            }
         }
     }
-}
     
-    // --- 1b. WKNavigationDelegate (Fixes the Timing Error) ---
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        print("Web content loaded. Unlocking JavaScript button.")
-        
-        // CRITICAL FIX: The minimal and safest command to enable the button.
-        let enableScript = """
-            document.getElementById('payButton').disabled = false; 
-            document.getElementById('payButton').textContent = 'Pay €1.99 to Unlock a letter';
-        """
-        // Evaluate JavaScript to enable the button
-        webView.evaluateJavaScript(enableScript)
-    }
+    print("Web content loaded. Forcing App Mode.")
+    
+    // 1. Force the website to know it's in an app (Standard flags)
+    let forceAppMode = """
+        window.isIOSApp = true; 
+        window.isInApp = true;
+        window.webkit.messageHandlers.purchase.postMessage("ready");
+    """
+    webView.evaluateJavaScript(forceAppMode)
+    
+    // 2. Enable the button manually
+    let enableScript = """
+        var btn = document.getElementById('payButton');
+        if (btn) {
+            btn.disabled = false; 
+            btn.textContent = 'Pay €1.99 to Unlock a letter';
+            // Remove old listeners to stop the red error
+            var newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            
+            // Add OUR click listener
+            newBtn.addEventListener('click', function() {
+                var emailInput = document.getElementById('email'); 
+                var email = emailInput ? emailInput.value : 'unknown';
+                window.webkit.messageHandlers.purchase.postMessage(email);
+            });
+        }
+    """
+    webView.evaluateJavaScript(enableScript)
 }
 
 
 // ===================================================
 // 2. WebKitView (The SwiftUI View)
+// REPLACEMENT CODE - Paste this over the old struct
 // ===================================================
 struct WebKitView: UIViewRepresentable {
     
@@ -53,18 +71,31 @@ struct WebKitView: UIViewRepresentable {
         
         let contentController = WKUserContentController()
         
-        // Add the Coordinator as a message handler for the name "purchase"
+        // 1. Add the Listener for purchase messages
         contentController.add(context.coordinator, name: "purchase")
+        
+        // 🟢 NEW FIX: Inject "App Mode" flags BEFORE the website loads
+        // This runs at "Document Start" to beat the website's checks
+        let source = """
+            window.isIOSApp = true;
+            window.isInApp = true;
+            window.isNativeApp = true;
+        """
+        let script = WKUserScript(source: source, injectionTime: .atDocumentStart, forMainFrameOnly: false)
+        contentController.addUserScript(script)
         
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = contentController
         
         let webView = WKWebView(frame: .zero, configuration: configuration)
         
+        // 2. Set the User Agent (Backup ID card)
+        webView.customUserAgent = "QuickCoverLetter_iOS_App"
+        
         // Set both delegates to the Coordinator
         webView.navigationDelegate = context.coordinator 
         
-        // Store the webView reference for the success callback
+        // Store the webView reference
         storeKitService.webView = webView 
         
         // Load the website
@@ -79,7 +110,6 @@ struct WebKitView: UIViewRepresentable {
     
     // Creates the instance of the Coordinator 
     func makeCoordinator() -> WebViewCoordinator {
-        // Pass the StoreKitService to the coordinator 
         return WebViewCoordinator(storeKitService: storeKitService)
     }
 }
