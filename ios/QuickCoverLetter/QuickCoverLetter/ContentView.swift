@@ -52,7 +52,6 @@ class StoreKitService: ObservableObject {
             switch result {
             case .success(let verification):
                 print("🎉 PURCHASE SUCCESSFUL!")
-                // Tell the website we won!
                 await callJS("handleIAPSuccess('\(email)')")
                 
                 if case .verified(let transaction) = verification {
@@ -97,47 +96,49 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
             Task { await storeKitService.purchase(email: email) }
         }
         
-        // CASE B: Download PDF Request (Added for the Fix)
-        // JS Usage: window.webkit.messageHandlers.downloadPDF.postMessage("https://url.com/file.pdf")
-        if message.name == "downloadPDF", let urlString = message.body as? String, let url = URL(string: urlString) {
-            print("📥 DOWNLOAD REQUEST RECEIVED: \(url)")
-            downloadAndShare(url: url)
+        // CASE B: Download PDF Request (Handles Base64 Data from jsPDF)
+        if message.name == "downloadPDF",
+           let dataDict = message.body as? [String: String],
+           let base64String = dataDict["fileData"],
+           let fileName = dataDict["fileName"] {
+            
+            print("📥 PDF DATA RECEIVED for: \(fileName)")
+            saveAndShareBase64(base64String: base64String, fileName: fileName)
         }
     }
     
-    // Logic to download file to temp storage then show Share Sheet
-    func downloadAndShare(url: URL) {
-        let task = URLSession.shared.downloadTask(with: url) { localURL, response, error in
-            guard let localURL = localURL, error == nil else {
-                print("Download failed: \(error?.localizedDescription ?? "Unknown error")")
-                return
-            }
-            
-            // Move file to a temporary location with correct extension (e.g., .pdf)
-            let fileManager = FileManager.default
-            let tempDirectory = fileManager.temporaryDirectory
-            let fileName = response?.suggestedFilename ?? "CoverLetter.pdf"
-            let finalURL = tempDirectory.appendingPathComponent(fileName)
-            
-            do {
-                // Remove existing file if necessary
-                if fileManager.fileExists(atPath: finalURL.path) {
-                    try fileManager.removeItem(at: finalURL)
-                }
-                try fileManager.moveItem(at: localURL, to: finalURL)
-                
-                // Present Share Sheet on Main Thread
-                DispatchQueue.main.async {
-                    self.presentShareSheet(for: finalURL)
-                }
-            } catch {
-                print("File move error: \(error)")
-            }
+    // Logic to convert Base64 string to file and Share
+    func saveAndShareBase64(base64String: String, fileName: String) {
+        // 1. Clean the data string (remove "data:application/pdf;base64," prefix)
+        let cleanString = base64String.components(separatedBy: ",").last ?? base64String
+        
+        // 2. Convert to Data
+        guard let pdfData = Data(base64Encoded: cleanString, options: .ignoreUnknownCharacters) else {
+            print("❌ Error: Could not convert base64 to data")
+            return
         }
-        task.resume()
+        
+        // 3. Save to Temp Directory
+        let fileManager = FileManager.default
+        let tempDirectory = fileManager.temporaryDirectory
+        let finalURL = tempDirectory.appendingPathComponent(fileName)
+        
+        do {
+            // Overwrite if exists
+            try? fileManager.removeItem(at: finalURL)
+            try pdfData.write(to: finalURL)
+            print("✅ File saved to: \(finalURL.path)")
+            
+            // 4. Present Share Sheet on Main Thread
+            DispatchQueue.main.async {
+                self.presentShareSheet(for: finalURL)
+            }
+        } catch {
+            print("❌ File write error: \(error)")
+        }
     }
     
-    // 🟢 THE FIX: Robust Share Sheet for iPad
+    // 🟢 ROBUST SHARE SHEET FOR IPAD
     func presentShareSheet(for url: URL) {
         guard let rootVC = UIApplication.shared.findKeyWindow()?.rootViewController else { return }
         
@@ -146,7 +147,7 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         // IPAD CRASH FIX: Anchor the popover
         if let popover = activityVC.popoverPresentationController {
             popover.sourceView = rootVC.view
-            // Center it on screen since we don't have a specific button frame
+            // Center it on screen
             popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
             popover.permittedArrowDirections = []
         }
@@ -154,13 +155,11 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         rootVC.present(activityVC, animated: true)
     }
     
-    // When page loads, tell it we are an App
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         print("⚡️ Page Loaded.")
         let setupScript = """
             window.isIOSApp = true;
             window.isInApp = true;
-            
             var btn = document.getElementById('payButton');
             if(btn) { 
                 btn.disabled = false; 
@@ -180,20 +179,29 @@ struct WebKitView: UIViewRepresentable {
         
         // Register Handlers
         contentController.add(context.coordinator, name: "purchase")
-        contentController.add(context.coordinator, name: "downloadPDF") // <--- Added this
+        contentController.add(context.coordinator, name: "downloadPDF") // <--- ENSURE THIS IS HERE
         
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
         
+        // 🔴 FORCE NO CACHE (The "Incognito" mode)
+        config.websiteDataStore = WKWebsiteDataStore.nonPersistent()
+        
         let webView = WKWebView(frame: .zero, configuration: config)
         
-        // 🟢 CRITICAL FOR APPLE REVIEW (Guideline 3.1.1)
+        // 🟢 GUIDELINE 3.1.1
         webView.customUserAgent = "QuickCoverLetter_iOS_App"
         
         webView.navigationDelegate = context.coordinator
         storeKitService.webView = webView
         
-        if let url = URL(string: urlString) {
+        // 🔴 FORCE SERVER UPDATE
+        // Adds ?t=12345 to the URL so the server sends fresh files
+        let timestamp = Date().timeIntervalSince1970
+        let uniqueURLString = "\(urlString)?t=\(timestamp)"
+        
+        if let url = URL(string: uniqueURLString) {
+            print("🌍 Loading URL: \(uniqueURLString)")
             webView.load(URLRequest(url: url))
         }
         return webView
@@ -206,27 +214,18 @@ struct WebKitView: UIViewRepresentable {
     }
 }
 
-// ==========================================
-// 4. THE DASHBOARD (ContentView)
-// ==========================================
 struct ContentView: View {
-    
     @StateObject private var storeKitService = StoreKitService()
 
     var body: some View {
-        // The Website fills the whole screen
         WebKitView(storeKitService: storeKitService)
             .edgesIgnoringSafeArea(.all)
-            .onAppear {
-                print("✅ ContentView Loaded. Ready for business.")
-            }
     }
 }
 
 // ==========================================
 // 5. HELPER EXTENSION
 // ==========================================
-// This helps us find the "Main Screen" to attach the iPad popup to
 extension UIApplication {
     func findKeyWindow() -> UIWindow? {
         return connectedScenes

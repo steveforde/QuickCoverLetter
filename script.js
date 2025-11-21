@@ -290,39 +290,75 @@ ${name}`,
   });
 
   // ------- PDF + Copy (RESTORED) -------
-  downloadBtn?.addEventListener("click", () => {
-    if (!coverLetter.value.trim()) return;
+  document.addEventListener("DOMContentLoaded", () => {
+    // 1. FIND ELEMENTS (Debug Mode)
+    const downloadBtn = document.getElementById("downloadBtn");
+    const coverLetter = document.getElementById("coverLetter");
+    const jobField = document.getElementById("jobField");
+    const companyField = document.getElementById("companyField");
 
-    // 1. Generate PDF in memory
-    const pdf = new jsPDF({ unit: "mm", format: "a4" });
-    pdf.setFont("times", "normal").setFontSize(12);
-    renderExact(pdf, coverLetter.value, 20, 20, 170);
-
-    const safeJob = jobField.value.trim().replace(/\s+/g, "_");
-    const safeCompany = companyField.value.trim().replace(/\s+/g, "_");
-    const fileName = safeJob && safeCompany ? `${safeJob}-${safeCompany}.pdf` : "CoverLetter.pdf";
-
-    // 2. CHECK: Are we in the iOS App?
-    if (
-      window.webkit &&
-      window.webkit.messageHandlers &&
-      window.webkit.messageHandlers.downloadPDF
-    ) {
-      // 🟢 iOS MODE: Send the raw data string to the app
-      const pdfData = pdf.output("datauristring"); // Returns "data:application/pdf;base64,JVBERi..."
-
-      // We send an object containing the name and the data
-      window.webkit.messageHandlers.downloadPDF.postMessage({
-        fileName: fileName,
-        fileData: pdfData,
-      });
-
-      showToast("PDF sent to App.", "success");
-    } else {
-      // ⚪️ REGULAR WEB MODE: Download normally
-      pdf.save(fileName);
-      showToast("PDF downloaded.", "success");
+    // 2. VERIFY BUTTON EXISTS
+    if (!downloadBtn) {
+      alert("CRITICAL ERROR: Could not find element with ID 'downloadBtn'. Check your HTML!");
+      return;
     }
+
+    // 3. ATTACH LISTENER
+    downloadBtn.addEventListener("click", () => {
+      alert("DEBUG: Button Clicked!"); // 🟢 Alert 1
+
+      // Check if text is empty
+      if (!coverLetter || !coverLetter.value.trim()) {
+        alert("DEBUG: Cover letter is empty or missing!");
+        return;
+      }
+
+      // Check for jsPDF
+      if (!window.jspdf) {
+        alert("CRITICAL ERROR: jsPDF library is missing!");
+        return;
+      }
+
+      try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({ unit: "mm", format: "a4" });
+        pdf.setFont("times", "normal").setFontSize(12);
+
+        // Render PDF (assuming renderExact exists)
+        renderExact(pdf, coverLetter.value, 20, 20, 170);
+
+        const safeJob = jobField ? jobField.value.trim().replace(/\s+/g, "_") : "Job";
+        const safeCompany = companyField
+          ? companyField.value.trim().replace(/\s+/g, "_")
+          : "Company";
+        const fileName = `${safeJob}-${safeCompany}.pdf`;
+
+        alert("DEBUG: PDF Generated. Checking for App..."); // 🟢 Alert 2
+
+        // CHECK FOR IOS APP
+        if (
+          window.webkit &&
+          window.webkit.messageHandlers &&
+          window.webkit.messageHandlers.downloadPDF
+        ) {
+          alert("DEBUG: iOS App Detected! Sending Data..."); // 🟢 Alert 3
+
+          const pdfData = pdf.output("datauristring");
+
+          window.webkit.messageHandlers.downloadPDF.postMessage({
+            fileName: fileName,
+            fileData: pdfData,
+          });
+
+          // Note: The toast might not show if the Alert blocks execution, but that's okay for testing.
+        } else {
+          alert("DEBUG: Not in App. Downloading normally.");
+          pdf.save(fileName);
+        }
+      } catch (err) {
+        alert("CRASH: " + err.message);
+      }
+    });
   });
 
   copyBtn?.addEventListener("click", () => {
