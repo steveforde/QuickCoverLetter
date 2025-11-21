@@ -291,7 +291,7 @@ ${name}`,
 
   // ------- PDF + Copy (RESTORED) -------
   document.addEventListener("DOMContentLoaded", () => {
-    // 1. FIND ELEMENTS (Debug Mode)
+    // 1. FIND ELEMENTS
     const downloadBtn = document.getElementById("downloadBtn");
     const coverLetter = document.getElementById("coverLetter");
     const jobField = document.getElementById("jobField");
@@ -299,64 +299,81 @@ ${name}`,
 
     // 2. VERIFY BUTTON EXISTS
     if (!downloadBtn) {
-      alert("CRITICAL ERROR: Could not find element with ID 'downloadBtn'. Check your HTML!");
+      console.error("CRITICAL: 'downloadBtn' not found.");
       return;
     }
 
     // 3. ATTACH LISTENER
     downloadBtn.addEventListener("click", () => {
-      alert("DEBUG: Button Clicked!"); // 🟢 Alert 1
+      // alert("DEBUG: Button Clicked!"); // ⚠️ Comment out for production
 
-      // Check if text is empty
+      // A. Validation
       if (!coverLetter || !coverLetter.value.trim()) {
-        alert("DEBUG: Cover letter is empty or missing!");
+        alert("Please enter a cover letter first.");
         return;
       }
 
-      // Check for jsPDF
       if (!window.jspdf) {
-        alert("CRITICAL ERROR: jsPDF library is missing!");
+        alert("Error: PDF Library not loaded. Please refresh.");
         return;
       }
 
       try {
         const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({ unit: "mm", format: "a4" });
-        pdf.setFont("times", "normal").setFontSize(12);
+        // 'p' = portrait, 'mm' = millimeters, 'a4' = format
+        const pdf = new jsPDF("p", "mm", "a4");
 
-        // Render PDF (assuming renderExact exists)
-        renderExact(pdf, coverLetter.value, 20, 20, 170);
+        pdf.setFont("times", "normal");
+        pdf.setFontSize(12);
 
+        // --- B. THE FIX FOR 'renderExact' ---
+        // We use splitTextToSize to handle word wrapping automatically
+        const text = coverLetter.value;
+        const margin = 20;
+        const pageWidth = 210; // A4 width in mm
+        const maxWidth = pageWidth - margin * 2; // 170mm
+
+        // Break text into an array of lines that fit the width
+        const lines = pdf.splitTextToSize(text, maxWidth);
+
+        // Draw the text at x=20, y=20
+        pdf.text(lines, margin, 20);
+        // ------------------------------------
+
+        // C. Filename Generation
         const safeJob = jobField ? jobField.value.trim().replace(/\s+/g, "_") : "Job";
         const safeCompany = companyField
           ? companyField.value.trim().replace(/\s+/g, "_")
           : "Company";
-        const fileName = `${safeJob}-${safeCompany}.pdf`;
+        // Remove any non-alphanumeric chars for safety, keep underscores
+        const cleanJob = safeJob.replace(/[^a-zA-Z0-9_]/g, "");
+        const cleanCompany = safeCompany.replace(/[^a-zA-Z0-9_]/g, "");
 
-        alert("DEBUG: PDF Generated. Checking for App..."); // 🟢 Alert 2
+        const fileName = `CoverLetter_${cleanJob}_${cleanCompany}.pdf`;
 
-        // CHECK FOR IOS APP
+        // D. iOS Detection & Send
         if (
           window.webkit &&
           window.webkit.messageHandlers &&
           window.webkit.messageHandlers.downloadPDF
         ) {
-          alert("DEBUG: iOS App Detected! Sending Data..."); // 🟢 Alert 3
+          // alert("DEBUG: Sending to iOS App..."); // ⚠️ Comment out for production
 
+          // Get the Base64 string (Data URI)
           const pdfData = pdf.output("datauristring");
 
+          // Send to Swift
           window.webkit.messageHandlers.downloadPDF.postMessage({
             fileName: fileName,
             fileData: pdfData,
           });
-
-          // Note: The toast might not show if the Alert blocks execution, but that's okay for testing.
         } else {
-          alert("DEBUG: Not in App. Downloading normally.");
+          // Fallback for standard web browser
           pdf.save(fileName);
         }
       } catch (err) {
-        alert("CRASH: " + err.message);
+        alert("PDF Error: " + err.message);
+        console.error(err);
       }
     });
   });

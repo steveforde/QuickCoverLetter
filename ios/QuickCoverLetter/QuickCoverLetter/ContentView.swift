@@ -16,11 +16,30 @@ class StoreKitService: ObservableObject {
     
     @Published var product: Product?
     @Published var isPurchasing = false
-    var webView: WKWebView?
+    
+    // ⚠️ IMPORTANT: This must be 'weak' to prevent memory leaks (Retain Cycle)
+    weak var webView: WKWebView?
     
     init() {
         print("🚀 STOREKIT SERVICE STARTED")
         Task { await loadProduct() }
+    }
+    
+    // ✅ FIX: The missing function has been added here
+    @MainActor
+    func callJS(_ script: String) async {
+        guard let webView = webView else {
+            print("⚠️ WebView is nil, cannot execute JS")
+            return
+        }
+        
+        do {
+            // Executes the JavaScript on the Main Thread
+            try await webView.evaluateJavaScript(script)
+            print("📤 JS Executed: \(script)")
+        } catch {
+            print("❌ JS Execution Error: \(error.localizedDescription)")
+        }
     }
     
     func loadProduct() async {
@@ -40,8 +59,13 @@ class StoreKitService: ObservableObject {
     
     func purchase(email: String) async {
         print("💰 PURCHASE REQUESTED FOR: \(email)")
+        
+        // 1. CHECK IF PRODUCT IS LOADED
         guard let product = product else {
             print("💀 FATAL: Cannot buy because 'product' is missing.")
+            
+            // 🔴 TELL THE USER IT FAILED
+            await callJS("alert('Error: In-App Purchase Product not found. Check Xcode Console for details.');")
             return
         }
         
@@ -59,6 +83,8 @@ class StoreKitService: ObservableObject {
                 }
             case .userCancelled:
                 print("⚠️ User cancelled.")
+                // Alert user they cancelled
+                await callJS("alert('Purchase Cancelled');")
             case .pending:
                 print("⏳ Pending.")
             @unknown default:
@@ -66,14 +92,9 @@ class StoreKitService: ObservableObject {
             }
         } catch {
             print("❌ PURCHASE FAILED: \(error)")
+            await callJS("alert('Purchase Failed: \(error.localizedDescription)');")
         }
         await MainActor.run { isPurchasing = false }
-    }
-    
-    private func callJS(_ javascript: String) async {
-        await MainActor.run {
-            webView?.evaluateJavaScript(javascript)
-        }
     }
 }
 
@@ -157,6 +178,7 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         print("⚡️ Page Loaded.")
+        // Injecting flags so your website knows it's running inside the iOS App
         let setupScript = """
             window.isIOSApp = true;
             window.isInApp = true;
@@ -179,13 +201,14 @@ struct WebKitView: UIViewRepresentable {
         
         // Register Handlers
         contentController.add(context.coordinator, name: "purchase")
-        contentController.add(context.coordinator, name: "downloadPDF") // <--- ENSURE THIS IS HERE
+        contentController.add(context.coordinator, name: "downloadPDF")
         
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
         
-        // 🔴 FORCE NO CACHE (The "Incognito" mode)
-        config.websiteDataStore = WKWebsiteDataStore.nonPersistent()
+        // ✅ FIX: Changed to .default() so User Login/Session is saved.
+        // If you use .nonPersistent(), users have to log in every time they open the app.
+        config.websiteDataStore = WKWebsiteDataStore.default()
         
         let webView = WKWebView(frame: .zero, configuration: config)
         
@@ -195,13 +218,15 @@ struct WebKitView: UIViewRepresentable {
         webView.navigationDelegate = context.coordinator
         storeKitService.webView = webView
         
-        // 🔴 FORCE SERVER UPDATE
-        // Adds ?t=12345 to the URL so the server sends fresh files
-        let timestamp = Date().timeIntervalSince1970
-        let uniqueURLString = "\(urlString)?t=\(timestamp)"
+        // ⚠️ NOTE: In production, remove the timestamp part.
+        // It forces a reload every time, ignoring the cache, which makes the app feel slow.
+        // I have commented out the timestamp version for better performance.
         
-        if let url = URL(string: uniqueURLString) {
-            print("🌍 Loading URL: \(uniqueURLString)")
+        // let timestamp = Date().timeIntervalSince1970
+        // let uniqueURLString = "\(urlString)?t=\(timestamp)"
+        
+        if let url = URL(string: urlString) {
+            print("🌍 Loading URL: \(urlString)")
             webView.load(URLRequest(url: url))
         }
         return webView
