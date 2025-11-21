@@ -17,7 +17,7 @@ class StoreKitService: ObservableObject {
     @Published var product: Product?
     @Published var isPurchasing = false
     
-    // ⚠️ IMPORTANT: This must be 'weak' to prevent memory leaks (Retain Cycle)
+    // ⚠️ IMPORTANT: This must be 'weak' to prevent memory leaks
     weak var webView: WKWebView?
     
     init() {
@@ -25,7 +25,7 @@ class StoreKitService: ObservableObject {
         Task { await loadProduct() }
     }
     
-    // ✅ FIX: The missing function has been added here
+    // ✅ JS EXECUTOR
     @MainActor
     func callJS(_ script: String) async {
         guard let webView = webView else {
@@ -34,7 +34,6 @@ class StoreKitService: ObservableObject {
         }
         
         do {
-            // Executes the JavaScript on the Main Thread
             try await webView.evaluateJavaScript(script)
             print("📤 JS Executed: \(script)")
         } catch {
@@ -60,12 +59,9 @@ class StoreKitService: ObservableObject {
     func purchase(email: String) async {
         print("💰 PURCHASE REQUESTED FOR: \(email)")
         
-        // 1. CHECK IF PRODUCT IS LOADED
         guard let product = product else {
             print("💀 FATAL: Cannot buy because 'product' is missing.")
-            
-            // 🔴 TELL THE USER IT FAILED
-            await callJS("alert('Error: In-App Purchase Product not found. Check Xcode Console for details.');")
+            await callJS("alert('Error: In-App Purchase Product not found.');")
             return
         }
         
@@ -83,7 +79,6 @@ class StoreKitService: ObservableObject {
                 }
             case .userCancelled:
                 print("⚠️ User cancelled.")
-                // Alert user they cancelled
                 await callJS("alert('Purchase Cancelled');")
             case .pending:
                 print("⏳ Pending.")
@@ -111,13 +106,19 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
     // Listen for messages from the Website
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         
-        // CASE A: Purchase Request
+        // ✅ CASE A: LOGGING (Kept for safety/debugging)
+        if message.name == "log", let logStr = message.body as? String {
+            print("JavaScript 📢: \(logStr)")
+            return
+        }
+        
+        // CASE B: Purchase Request
         if message.name == "purchase", let email = message.body as? String {
             print("✅ PURCHASE CLICK RECEIVED! Email: \(email)")
             Task { await storeKitService.purchase(email: email) }
         }
         
-        // CASE B: Download PDF Request (Handles Base64 Data from jsPDF)
+        // CASE C: Download PDF Request
         if message.name == "downloadPDF",
            let dataDict = message.body as? [String: String],
            let base64String = dataDict["fileData"],
@@ -128,29 +129,23 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         }
     }
     
-    // Logic to convert Base64 string to file and Share
     func saveAndShareBase64(base64String: String, fileName: String) {
-        // 1. Clean the data string (remove "data:application/pdf;base64," prefix)
         let cleanString = base64String.components(separatedBy: ",").last ?? base64String
         
-        // 2. Convert to Data
         guard let pdfData = Data(base64Encoded: cleanString, options: .ignoreUnknownCharacters) else {
             print("❌ Error: Could not convert base64 to data")
             return
         }
         
-        // 3. Save to Temp Directory
         let fileManager = FileManager.default
         let tempDirectory = fileManager.temporaryDirectory
         let finalURL = tempDirectory.appendingPathComponent(fileName)
         
         do {
-            // Overwrite if exists
             try? fileManager.removeItem(at: finalURL)
             try pdfData.write(to: finalURL)
             print("✅ File saved to: \(finalURL.path)")
             
-            // 4. Present Share Sheet on Main Thread
             DispatchQueue.main.async {
                 self.presentShareSheet(for: finalURL)
             }
@@ -159,16 +154,13 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         }
     }
     
-    // 🟢 ROBUST SHARE SHEET FOR IPAD
     func presentShareSheet(for url: URL) {
         guard let rootVC = UIApplication.shared.findKeyWindow()?.rootViewController else { return }
         
         let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
         
-        // IPAD CRASH FIX: Anchor the popover
         if let popover = activityVC.popoverPresentationController {
             popover.sourceView = rootVC.view
-            // Center it on screen
             popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
             popover.permittedArrowDirections = []
         }
@@ -178,7 +170,6 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         print("⚡️ Page Loaded.")
-        // Injecting flags so your website knows it's running inside the iOS App
         let setupScript = """
             window.isIOSApp = true;
             window.isInApp = true;
@@ -199,34 +190,25 @@ struct WebKitView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let contentController = WKUserContentController()
         
-        // Register Handlers
+        // ✅ REGISTER HANDLERS
         contentController.add(context.coordinator, name: "purchase")
         contentController.add(context.coordinator, name: "downloadPDF")
+        contentController.add(context.coordinator, name: "log")
         
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
-        
-        // ✅ FIX: Changed to .default() so User Login/Session is saved.
-        // If you use .nonPersistent(), users have to log in every time they open the app.
+        // ✅ Keep persistence so users stay logged in/keep session
         config.websiteDataStore = WKWebsiteDataStore.default()
         
         let webView = WKWebView(frame: .zero, configuration: config)
-        
-        // 🟢 GUIDELINE 3.1.1
         webView.customUserAgent = "QuickCoverLetter_iOS_App"
-        
         webView.navigationDelegate = context.coordinator
         storeKitService.webView = webView
         
-        // ⚠️ NOTE: In production, remove the timestamp part.
-        // It forces a reload every time, ignoring the cache, which makes the app feel slow.
-        // I have commented out the timestamp version for better performance.
-        
-        // let timestamp = Date().timeIntervalSince1970
-        // let uniqueURLString = "\(urlString)?t=\(timestamp)"
-        
+        // ✅ PRODUCTION MODE: No timestamp.
+        // This allows the app to load instantly from cache.
         if let url = URL(string: urlString) {
-            print("🌍 Loading URL: \(urlString)")
+            print("🌍 Loading Production URL: \(urlString)")
             webView.load(URLRequest(url: url))
         }
         return webView
