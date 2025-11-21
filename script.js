@@ -290,33 +290,39 @@ ${name}`,
   });
 
   // ------- PDF + Copy (RESTORED) -------
-  const { jsPDF } = window.jspdf;
-
-  function renderExact(pdf, text, x, y, maxW, lineH = 7) {
-    const pageH = pdf.internal.pageSize.getHeight();
-    for (const line of text.split("\n")) {
-      const chunks = pdf.splitTextToSize(line, maxW);
-      for (const chunk of chunks) {
-        if (y > pageH - 20) {
-          pdf.addPage();
-          y = 20;
-        }
-        pdf.text(chunk, x, y);
-        y += lineH;
-      }
-    }
-  }
-
   downloadBtn?.addEventListener("click", () => {
     if (!coverLetter.value.trim()) return;
+
+    // 1. Generate PDF in memory
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     pdf.setFont("times", "normal").setFontSize(12);
     renderExact(pdf, coverLetter.value, 20, 20, 170);
+
     const safeJob = jobField.value.trim().replace(/\s+/g, "_");
     const safeCompany = companyField.value.trim().replace(/\s+/g, "_");
     const fileName = safeJob && safeCompany ? `${safeJob}-${safeCompany}.pdf` : "CoverLetter.pdf";
-    pdf.save(fileName);
-    showToast("PDF downloaded.", "success");
+
+    // 2. CHECK: Are we in the iOS App?
+    if (
+      window.webkit &&
+      window.webkit.messageHandlers &&
+      window.webkit.messageHandlers.downloadPDF
+    ) {
+      // 🟢 iOS MODE: Send the raw data string to the app
+      const pdfData = pdf.output("datauristring"); // Returns "data:application/pdf;base64,JVBERi..."
+
+      // We send an object containing the name and the data
+      window.webkit.messageHandlers.downloadPDF.postMessage({
+        fileName: fileName,
+        fileData: pdfData,
+      });
+
+      showToast("PDF sent to App.", "success");
+    } else {
+      // ⚪️ REGULAR WEB MODE: Download normally
+      pdf.save(fileName);
+      showToast("PDF downloaded.", "success");
+    }
   });
 
   copyBtn?.addEventListener("click", () => {

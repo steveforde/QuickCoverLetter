@@ -2,13 +2,12 @@ import SwiftUI
 import WebKit
 import StoreKit
 import Combine
+import UIKit
 
 // ==========================================
 // 1. THE SETTINGS (CONFIG)
 // ==========================================
-// 🟢 UPDATED: This now matches your new App Store Connect ID
 private let productID = "com.steveforde.quickcoverletter.credit_v2"
-
 
 // ==========================================
 // 2. THE ENGINE (StoreKitService)
@@ -89,12 +88,70 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         self.storeKitService = storeKitService
     }
     
-    // Listen for the website button click
+    // Listen for messages from the Website
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        
+        // CASE A: Purchase Request
         if message.name == "purchase", let email = message.body as? String {
-            print("✅ CLICK RECEIVED! Email: \(email)")
+            print("✅ PURCHASE CLICK RECEIVED! Email: \(email)")
             Task { await storeKitService.purchase(email: email) }
         }
+        
+        // CASE B: Download PDF Request (Added for the Fix)
+        // JS Usage: window.webkit.messageHandlers.downloadPDF.postMessage("https://url.com/file.pdf")
+        if message.name == "downloadPDF", let urlString = message.body as? String, let url = URL(string: urlString) {
+            print("📥 DOWNLOAD REQUEST RECEIVED: \(url)")
+            downloadAndShare(url: url)
+        }
+    }
+    
+    // Logic to download file to temp storage then show Share Sheet
+    func downloadAndShare(url: URL) {
+        let task = URLSession.shared.downloadTask(with: url) { localURL, response, error in
+            guard let localURL = localURL, error == nil else {
+                print("Download failed: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+            
+            // Move file to a temporary location with correct extension (e.g., .pdf)
+            let fileManager = FileManager.default
+            let tempDirectory = fileManager.temporaryDirectory
+            let fileName = response?.suggestedFilename ?? "CoverLetter.pdf"
+            let finalURL = tempDirectory.appendingPathComponent(fileName)
+            
+            do {
+                // Remove existing file if necessary
+                if fileManager.fileExists(atPath: finalURL.path) {
+                    try fileManager.removeItem(at: finalURL)
+                }
+                try fileManager.moveItem(at: localURL, to: finalURL)
+                
+                // Present Share Sheet on Main Thread
+                DispatchQueue.main.async {
+                    self.presentShareSheet(for: finalURL)
+                }
+            } catch {
+                print("File move error: \(error)")
+            }
+        }
+        task.resume()
+    }
+    
+    // 🟢 THE FIX: Robust Share Sheet for iPad
+    func presentShareSheet(for url: URL) {
+        guard let rootVC = UIApplication.shared.findKeyWindow()?.rootViewController else { return }
+        
+        let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        
+        // IPAD CRASH FIX: Anchor the popover
+        if let popover = activityVC.popoverPresentationController {
+            popover.sourceView = rootVC.view
+            // Center it on screen since we don't have a specific button frame
+            popover.sourceRect = CGRect(x: rootVC.view.bounds.midX, y: rootVC.view.bounds.midY, width: 0, height: 0)
+            popover.permittedArrowDirections = []
+        }
+        
+        rootVC.present(activityVC, animated: true)
     }
     
     // When page loads, tell it we are an App
@@ -103,7 +160,7 @@ class WebViewCoordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate
         let setupScript = """
             window.isIOSApp = true;
             window.isInApp = true;
-            // Enable button if hidden
+            
             var btn = document.getElementById('payButton');
             if(btn) { 
                 btn.disabled = false; 
@@ -120,7 +177,10 @@ struct WebKitView: UIViewRepresentable {
 
     func makeUIView(context: Context) -> WKWebView {
         let contentController = WKUserContentController()
+        
+        // Register Handlers
         contentController.add(context.coordinator, name: "purchase")
+        contentController.add(context.coordinator, name: "downloadPDF") // <--- Added this
         
         let config = WKWebViewConfiguration()
         config.userContentController = contentController
@@ -160,5 +220,19 @@ struct ContentView: View {
             .onAppear {
                 print("✅ ContentView Loaded. Ready for business.")
             }
+    }
+}
+
+// ==========================================
+// 5. HELPER EXTENSION
+// ==========================================
+// This helps us find the "Main Screen" to attach the iPad popup to
+extension UIApplication {
+    func findKeyWindow() -> UIWindow? {
+        return connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .first(where: { $0 is UIWindowScene })
+            .flatMap({ $0 as? UIWindowScene })?.windows
+            .first(where: \.isKeyWindow)
     }
 }
