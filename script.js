@@ -1,5 +1,5 @@
 // =========================================================
-// QuickCoverLetter — FINAL FRONTEND (StoreKit Ready & Templates Restored)
+// QuickCoverLetter — FINAL LOGIC
 // =========================================================
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -7,10 +7,10 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // (Optional) Supabase init
 createClient(
   "https://ztrsuveqeftmgoeiwjgz.supabase.co",
-  "eyJhbGciOiJISInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0cnN1dmVxZWZ0bWdvZWl3amd6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE2NzQ0MDYsImV4cCI6MjA3NzI1MDQwNn0.efQI0fEnz_2wyCF-mlb-JnZAHtI-6xhNH8S7tdFLGyo"
 );
 
-// ===== KEYS (sessionStorage only) =====
+// ===== KEYS =====
 const K = {
   PRO: "qcl_isPro",
   FORM: "qcl_form",
@@ -29,16 +29,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const coverLetter = document.getElementById("coverLetter");
   const resultBox = document.getElementById("resultBox");
   const clearBtn = document.getElementById("clearBtn");
-  const downloadBtn = document.getElementById("downloadBtn");
   const copyBtn = document.getElementById("copyBtn");
   const toast = document.getElementById("toast");
   const themeToggle = document.getElementById("themeToggle");
 
   // ------- State -------
+  // We check session storage to see if user already paid in this session
   let isPro = sessionStorage.getItem(K.PRO) === "true";
 
   // =================================================
-  // BLOCK 1: RESTORE FORM
+  // 1. RESTORE FORM DATA
   // =================================================
   try {
     const saved = JSON.parse(sessionStorage.getItem(K.FORM) || "{}");
@@ -48,25 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (saved.email) emailField.value = saved.email;
   } catch {}
 
-  // =================================================
-  // BLOCK 3: IAP SUCCESS HANDLER (NEW)
-  // This function is called by the native Swift code upon successful payment.
-  // =================================================
-  window.handleIAPSuccess = (emailAddress) => {
-    sessionStorage.setItem(K.PRO, "true");
-    isPro = true;
-    updateLockState();
-
-    // Log success email request
-    console.log("IAP Success - Sending receipt email to:", emailAddress);
-
-    showToast("✅ Templates unlocked! Choose a letter style.", "success");
-
-    // Rerun updateLockState after unlocking
-    updateLockState();
-  };
-
-  // Save as user types (sessionStorage only)
+  // Save as user types
   form?.addEventListener("input", () => {
     sessionStorage.setItem(
       K.FORM,
@@ -79,7 +61,9 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   });
 
-  // ------- Theme (sessionStorage only) -------
+  // =================================================
+  // 2. THEME LOGIC
+  // =================================================
   const applyTheme = () => {
     const t = sessionStorage.getItem(K.THEME) || "light";
     document.body.classList.toggle("dark", t === "dark");
@@ -93,17 +77,16 @@ document.addEventListener("DOMContentLoaded", () => {
     applyTheme();
   });
 
-  window.enablePayButton = (price) => {
-    const btn = document.getElementById("payButton");
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = `Pay ${price} to Unlock a letter`;
-    }
-  };
+  // =================================================
+  // 3. LOCK/UNLOCK LOGIC (CRITICAL FIX)
+  // We attach this to 'window' so index.html can call it when IAP succeeds!
+  // =================================================
+  window.updateLockState = function () {
+    // Re-read state just in case
+    isPro = sessionStorage.getItem(K.PRO) === "true";
 
-  // ------- Lock/Unlock UI -------
-  function updateLockState() {
-    payButton?.classList.remove("hidden");
+    if (payButton) payButton.classList.remove("hidden");
+
     templateButtons.forEach((btn) => {
       let lock = btn.querySelector(".lock-icon");
       if (!isPro) {
@@ -122,10 +105,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (lock) lock.remove();
       }
     });
-  }
-  updateLockState();
+  };
 
-  // ------- Toast -------
+  // Run on load
+  window.updateLockState();
+
+  // ------- Toast Helper -------
   function showToast(msg, type = "info") {
     if (!toast) return;
     toast.textContent = msg;
@@ -134,7 +119,9 @@ document.addEventListener("DOMContentLoaded", () => {
     toast._hide = setTimeout(() => toast.classList.remove("show"), 4000);
   }
 
-  // ------- Templates (RESTORED) -------
+  // =================================================
+  // 4. TEMPLATES
+  // =================================================
   const templates = {
     professional: (name, job, company, date) => `${name}
 [Your Address]
@@ -217,7 +204,9 @@ Kind regards,
 ${name}`,
   };
 
-  // ------- Pay → Trigger Native IAP Purchase (FIXED) -------
+  // =================================================
+  // 5. PAY BUTTON (Sends request to Swift)
+  // =================================================
   payButton?.addEventListener("click", async () => {
     const job = jobField.value.trim();
     const company = companyField.value.trim();
@@ -236,18 +225,16 @@ ${name}`,
     payButton.textContent = "Processing Payment...";
 
     try {
-      // 🟢 FIXED LOGIC: Checks if "isIOSApp" flag exists (set by Swift) OR if webkit bridge exists
+      // Check for iOS Bridge
       if (
-        window.isIOSApp ||
-        (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.purchase)
+        window.webkit &&
+        window.webkit.messageHandlers &&
+        window.webkit.messageHandlers.purchase
       ) {
-        // Send the message to Swift
+        // Send to Swift
         window.webkit.messageHandlers.purchase.postMessage(email);
       } else {
-        // If we are NOT in the app, we log it, but we DO NOT show the red error to the user.
         console.log("Not running inside iOS App or Bridge not ready.");
-
-        // Optional: Reset button so it doesn't stay stuck on "Processing"
         setTimeout(() => {
           payButton.disabled = false;
           payButton.textContent = original;
@@ -255,14 +242,15 @@ ${name}`,
       }
     } catch (e) {
       console.error("Payment Error:", e);
-      // Only show generic error, not the "Service Not Available" one
       showToast("Connection error. Please try again.", "error");
       payButton.disabled = false;
       payButton.textContent = original;
     }
   });
 
-  // ------- Template clicks (RESTORED) -------
+  // =================================================
+  // 6. GENERATE LETTER (On Template Click)
+  // =================================================
   templateButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       if (!isPro) return showToast("Pay €1.99 to unlock a template.", "error");
@@ -270,6 +258,7 @@ ${name}`,
       const name = nameField.value.trim();
       const job = jobField.value.trim();
       const company = companyField.value.trim();
+
       if (!name || !job || !company) {
         showToast("Fill name, job & company first.", "error");
         return;
@@ -285,98 +274,18 @@ ${name}`,
       coverLetter.value = templates[type](name, job, company, date);
       resultBox.classList.remove("hidden");
       showToast("Letter generated.", "success");
-      coverLetter.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      // Scroll to result
+      setTimeout(() => {
+        coverLetter.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
     });
   });
 
-  // ------- PDF + Copy (RESTORED) -------
-  document.addEventListener("DOMContentLoaded", () => {
-    // 1. FIND ELEMENTS
-    const downloadBtn = document.getElementById("downloadBtn");
-    const coverLetter = document.getElementById("coverLetter");
-    const jobField = document.getElementById("jobField");
-    const companyField = document.getElementById("companyField");
-
-    // 2. VERIFY BUTTON EXISTS
-    if (!downloadBtn) {
-      console.error("CRITICAL: 'downloadBtn' not found.");
-      return;
-    }
-
-    // 3. ATTACH LISTENER
-    downloadBtn.addEventListener("click", () => {
-      // alert("DEBUG: Button Clicked!"); // ⚠️ Comment out for production
-
-      // A. Validation
-      if (!coverLetter || !coverLetter.value.trim()) {
-        alert("Please enter a cover letter first.");
-        return;
-      }
-
-      if (!window.jspdf) {
-        alert("Error: PDF Library not loaded. Please refresh.");
-        return;
-      }
-
-      try {
-        const { jsPDF } = window.jspdf;
-        // 'p' = portrait, 'mm' = millimeters, 'a4' = format
-        const pdf = new jsPDF("p", "mm", "a4");
-
-        pdf.setFont("times", "normal");
-        pdf.setFontSize(12);
-
-        // --- B. THE FIX FOR 'renderExact' ---
-        // We use splitTextToSize to handle word wrapping automatically
-        const text = coverLetter.value;
-        const margin = 20;
-        const pageWidth = 210; // A4 width in mm
-        const maxWidth = pageWidth - margin * 2; // 170mm
-
-        // Break text into an array of lines that fit the width
-        const lines = pdf.splitTextToSize(text, maxWidth);
-
-        // Draw the text at x=20, y=20
-        pdf.text(lines, margin, 20);
-        // ------------------------------------
-
-        // C. Filename Generation
-        const safeJob = jobField ? jobField.value.trim().replace(/\s+/g, "_") : "Job";
-        const safeCompany = companyField
-          ? companyField.value.trim().replace(/\s+/g, "_")
-          : "Company";
-        // Remove any non-alphanumeric chars for safety, keep underscores
-        const cleanJob = safeJob.replace(/[^a-zA-Z0-9_]/g, "");
-        const cleanCompany = safeCompany.replace(/[^a-zA-Z0-9_]/g, "");
-
-        const fileName = `CoverLetter_${cleanJob}_${cleanCompany}.pdf`;
-
-        // D. iOS Detection & Send
-        if (
-          window.webkit &&
-          window.webkit.messageHandlers &&
-          window.webkit.messageHandlers.downloadPDF
-        ) {
-          // alert("DEBUG: Sending to iOS App..."); // ⚠️ Comment out for production
-
-          // Get the Base64 string (Data URI)
-          const pdfData = pdf.output("datauristring");
-
-          // Send to Swift
-          window.webkit.messageHandlers.downloadPDF.postMessage({
-            fileName: fileName,
-            fileData: pdfData,
-          });
-        } else {
-          // Fallback for standard web browser
-          pdf.save(fileName);
-        }
-      } catch (err) {
-        alert("PDF Error: " + err.message);
-        console.error(err);
-      }
-    });
-  });
+  // =================================================
+  // 7. UTILITIES (Copy & Clear)
+  // Note: Download is now handled in index.html!
+  // =================================================
 
   copyBtn?.addEventListener("click", () => {
     if (!coverLetter.value.trim()) return;
@@ -386,7 +295,6 @@ ${name}`,
       .catch(() => showToast("Copy failed.", "error"));
   });
 
-  // ------- Clear (reset + relock) (RESTORED) -------
   clearBtn?.addEventListener("click", () => {
     form.reset();
     coverLetter.value = "";
@@ -396,10 +304,7 @@ ${name}`,
     sessionStorage.removeItem(K.PRO);
 
     isPro = false;
-    updateLockState();
+    window.updateLockState(); // Relock buttons
     showToast("All cleared — pay again to start a new letter.", "info");
   });
-
-  // Rerun updateLockState after all listeners are set up
-  updateLockState();
 });

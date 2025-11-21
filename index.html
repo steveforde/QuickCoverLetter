@@ -18,32 +18,41 @@
 
     <link rel="stylesheet" href="style.css" />
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <script>
+      // ✅ FIX 2: ADDED LOGGING BRIDGE TO XCODE
+      function logToXcode(message) {
+        console.log(message);
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.log) {
+          window.webkit.messageHandlers.log.postMessage(message);
+        }
+      }
+
       // 1. Function called by Swift/WKNavigationDelegate to ENABLE the button.
-      // This is called AFTER the page loads, guaranteeing the handler is ready.
       window.enablePayButton = function (price) {
         const btn = document.getElementById("payButton");
         if (!btn) return;
 
         btn.disabled = false;
         btn.textContent = `Pay ${price} to Unlock a letter`;
-        console.log("Pay button enabled – ready to buy");
+        logToXcode("💰 Pay button enabled via Swift");
       };
 
       // 2. Success callback from Swift/StoreKit.
       window.handleIAPSuccess = function (email) {
-        console.log("IAP SUCCESS for", email);
+        logToXcode("🎉 IAP SUCCESS for " + email);
         // Uses the key you defined (K.PRO = "qcl_isPro")
         sessionStorage.setItem("qcl_isPro", "true");
 
-        // This is where you call the function in your script.js that updates the UI:
+        // This updates the UI in your script.js
         if (typeof updateLockState === "function") {
           updateLockState();
         }
         showToast("Templates unlocked!", "success");
       };
 
-      // Simple toast function (needed because success/error callbacks from Swift use it)
+      // Simple toast function
       function showToast(msg, type = "info") {
         const toast = document.getElementById("toast");
         if (!toast) return;
@@ -80,7 +89,6 @@
         <label for="userEmail">Your Email <span class="required">*</span></label>
         <input type="email" id="userEmail" placeholder="e.g. jsmith08@gmail.com" required />
 
-        <!-- AFTER (works forever) -->
         <button id="payButton" type="button" class="pay-btn">Pay €1.99 to Unlock</button>
       </form>
 
@@ -166,8 +174,6 @@
       </section>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
     <script>
       window.__SUPABASE_URL = "https://ztrsuveqeftmgoeiwjgz.supabase.co";
       window.__SUPABASE_ANON_KEY =
@@ -183,5 +189,90 @@
         <a href="privacy.html">Privacy</a>
       </p>
     </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        logToXcode("🟢 DOM Loaded - Initializing Override PDF Logic");
+
+        const downloadBtn = document.getElementById("downloadBtn");
+
+        if (!downloadBtn) {
+          logToXcode("🔴 Error: downloadBtn not found");
+          return;
+        }
+
+        // We use .onclick to force our logic to be the primary handler
+        // This prevents the 'broken' logic in script.js from running silently
+        downloadBtn.onclick = function (e) {
+          e.preventDefault();
+          e.stopPropagation(); // Stop other scripts from interfering
+
+          logToXcode("🟡 Download Clicked (Override)");
+
+          // 1. GET DATA
+          const coverLetter = document.getElementById("coverLetter");
+          const jobField = document.getElementById("jobTitle");
+          const companyField = document.getElementById("companyName");
+
+          const textVal = coverLetter ? coverLetter.value : "";
+
+          if (!textVal) {
+            alert("Cover letter is empty!");
+            return;
+          }
+
+          // 2. CHECK LIBRARY
+          if (!window.jspdf) {
+            logToXcode("🔴 FATAL: jsPDF library missing");
+            alert("Error: PDF Library missing. Refresh page.");
+            return;
+          }
+
+          try {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF("p", "mm", "a4");
+
+            pdf.setFont("times", "normal");
+            pdf.setFontSize(12);
+
+            // 3. WRAP TEXT
+            const margin = 20;
+            const pageWidth = 210;
+            const maxWidth = pageWidth - margin * 2;
+            const lines = pdf.splitTextToSize(textVal, maxWidth);
+
+            pdf.text(lines, margin, 20);
+
+            // 4. FILENAME
+            let job = jobField ? jobField.value : "Job";
+            let comp = companyField ? companyField.value : "Company";
+            let fileName = `CoverLetter_${job}_${comp}.pdf`.replace(/[^a-zA-Z0-9_.]/g, "");
+
+            logToXcode("✅ PDF Created: " + fileName);
+
+            // 5. SEND TO IOS
+            const pdfData = pdf.output("datauristring");
+
+            if (
+              window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers.downloadPDF
+            ) {
+              logToXcode("🚀 Sending to Swift...");
+              window.webkit.messageHandlers.downloadPDF.postMessage({
+                fileName: fileName,
+                fileData: pdfData,
+              });
+            } else {
+              logToXcode("⚠️ Browser Download");
+              pdf.save(fileName);
+            }
+          } catch (err) {
+            logToXcode("❌ CRASH: " + err.message);
+            alert("Error: " + err.message);
+          }
+        };
+      });
+    </script>
   </body>
 </html>
